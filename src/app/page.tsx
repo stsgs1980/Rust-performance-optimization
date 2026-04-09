@@ -137,14 +137,20 @@ const SCORES = [
 ];
 
 const ACHIEVEMENTS = [
-  { value: "5,2 млрд руб.", label: "Оборот", company: "Мясницкий ряд", icon: BarChart3 },
-  { value: "40 чел.", label: "Команда, текучесть -60%", company: "Мясницкий ряд", icon: Users },
-  { value: "4,2 млн руб.", label: "Рост выручки, продуктивность +35%, затраты -25%", company: "Мясницкий ряд", icon: TrendingUp },
-  { value: "62%", label: "Конверсия (с 27% за 7 мес.)", company: "Мясницкий ряд", icon: Target },
-  { value: "20", label: "Крупных B2B-клиентов", company: "Мясницкий ряд", icon: Handshake },
+  { value: "5,2 млрд руб.", label: "Годовой оборот", company: "Мясницкий ряд", icon: BarChart3 },
+  { value: "1835", label: "Активных клиентов, 95% охвата рынка", company: "Мясницкий ряд", icon: Globe },
+  { value: "40 чел.", label: "Команда выросла с 5 до 40 человек", company: "Мясницкий ряд", icon: Users },
+  { value: "-60%", label: "Снижение текучести кадров (грейды)", company: "Мясницкий ряд", icon: TrendingUp },
+  { value: "4,2 млн руб.", label: "Рост выручки отдела", company: "ЭкспертБаланс", icon: BarChart3 },
+  { value: "+35%", label: "Продуктивность менеджеров", company: "ЭкспертБаланс", icon: TrendingUp },
+  { value: "-25%", label: "Снижение операционных затрат", company: "ЭкспертБаланс", icon: Target },
+  { value: "1,4 → 3,8 млн", label: "Рост выручки за 7 месяцев", company: "ИП Петров М.В.", icon: ArrowUpRight },
+  { value: "27% → 62%", label: "Рост конверсии продаж", company: "ИП Петров М.В.", icon: Target },
+  { value: "20", label: "Крупных B2B-клиентов привлечено", company: "Флумли", icon: Handshake },
+  { value: "+30%", label: "Рост выручки у клиентов сервиса", company: "Флумли", icon: TrendingUp },
   { value: "+40%", label: "Прирост выручки за 1-й год", company: "Мастерфуд", icon: ArrowUpRight },
-  { value: "1835", label: "Активных клиентов, охват 95% рынка", company: "Мясницкий ряд", icon: Globe },
-  { value: "+750%", label: "Товарооборот", company: "LOBI-M", icon: Rocket },
+  { value: "35 партнёров", label: "Дилерская сеть создана с нуля", company: "LOBI-M", icon: Globe },
+  { value: "+750%", label: "Рост товарооборота", company: "LOBI-M", icon: Rocket },
 ];
 
 const RECOMMENDATIONS = {
@@ -934,10 +940,10 @@ export default function CareerDashboard() {
 
         {/* ═══════ ACHIEVEMENTS SECTION ═══════ */}
         <section ref={registerSection("achievements")} id="achievements">
-          <SectionTitle>Ключевые достижения</SectionTitle>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SectionTitle>Ключевые достижения по компаниям</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {ACHIEVEMENTS.map((ach, i) => (
-              <FadeInCard key={i} delay={i * 0.06}>
+              <FadeInCard key={i} delay={i * 0.04}>
                 <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-default">
                   <CardContent className="pt-6 text-center space-y-3">
                     <div className="mx-auto size-12 rounded-full bg-gradient-to-br from-emerald-100 to-amber-100 dark:from-emerald-900/50 dark:to-amber-900/30 flex items-center justify-center">
@@ -945,7 +951,7 @@ export default function CareerDashboard() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold gradient-text">{ach.value}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{ach.label}</p>
+                      <p className="text-sm text-muted-foreground mt-1 leading-snug">{ach.label}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px]">
                       <Briefcase className="size-2.5 mr-0.5" />

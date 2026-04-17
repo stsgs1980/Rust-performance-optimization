@@ -694,3 +694,57 @@ Performance Lab is an extremely feature-rich single-page application at ~2690 li
 4. Consider adding a light industrial minimalism theme variant
 5. Add i18n support for English/Russian language toggle
 6. Add task difficulty scoring or gamification (achievements for reviewing all tasks)
+
+---
+Task ID: 10
+Agent: Main Agent
+Task: Fix hydration error, integrate Vibe Coder's Guide, CSS polish
+
+Work Log:
+- Read worklog.md for full project context (16 prior sessions, 7 QA passes)
+- Read current page.tsx (~2881 lines) and globals.css (~1500 lines)
+- All 5 TASKS data objects preserved identically — zero changes to task code, benchmarks, techniques
+
+Bug Fixes:
+- Fix 1 (Hydration Error — reviewedCount): Root cause: `usePersistedSet` hook's `getSnapshot()` read localStorage eagerly during hydration while `getServerSnapshot()` returned empty Set → server rendered N, client rendered 0. Fix: restructured hook to use `loadedRef` flag — both server and client initially return a stable empty Set via `useRef`, localStorage is read only in `useEffect` after mount. Subscribers notified after load to trigger re-render with actual data. This eliminates all hydration mismatches for `reviewedTasks` and `starredTasks` states.
+
+New Features:
+- Feature 1 (Vibe Coder's Guide Section): New section between Methodology and Results with yellow (#fbbf24) left-border accent. Contains: warning banner about memory leaks (Box::leak) and unsafe Send/Sync; mantra quote with glow animation ("Все эти оптимизации уже написаны грустными людьми на Rust и C++. Моя задача — найти их npm-пакет и импортировать."); 5 task translation cards (vibe coder thinks / document says / practical tip for each task with unique color coding); Quick Reference table mapping 8 Rust concepts to Web equivalents with npm packages (String Interning→Cache/Memoization→lru-cache, Lock-free CAS→Message Queue→BullMQ, etc.); Final rule callout about Array.prototype.map().filter().reduce() on 50K elements. Added "Vibe Guide" to navItems.
+
+Styling Improvements:
+- Style 1 (Vibe Card Hover): .vibe-card class with colored top border (::before pseudo-element) that appears on hover using CSS custom property --vibe-color
+- Style 2 (Quote Glow): .quote-glow animation — subtle text-shadow pulse on the mantra quote (3s cycle)
+- Style 3 (Vibe Code): .vibe-code class — dark inline code styling for the "vibe coder thinks" snippets
+- Style 4 (Vibe Row Hover): .vibe-row class — subtle orange-tinted background on reference table row hover
+- Style 5 (Tip Callout Pulse): .tip-callout class — animated border-left color pulse (4s cycle)
+- Style 6 (Warning Stripe): .warning-stripe class — animated diagonal stripe pattern (scrolling -45deg stripes, 2s cycle)
+
+Stage Summary:
+- 1 critical bug fix (hydration error), 1 new feature section, 6 CSS enhancements
+- Lint passes cleanly with zero errors
+- Dev server compiles and serves 200 OK
+- Console verified: zero errors on fresh page load
+- TASKS data completely untouched
+- page.tsx: ~3020 lines (up from ~2881)
+- globals.css: ~1577 lines (up from ~1500)
+
+---
+Task ID: 10b
+Agent: QA Agent (cron-review round 7)
+Task: QA verification of hydration fix and Vibe Coder's Guide
+
+Work Log:
+- Ran bun run lint — zero errors
+- Confirmed dev server returns 200 OK
+- Opened page in agent-browser, took full-page screenshot
+- Verified zero console errors on fresh page load ✓
+- Verified Vibe Guide button in header navigation ✓
+- Verified vibe-coder section renders: 5 vibe-card elements, 1 warning-stripe banner, 1 quote-glow mantra, 5 tip-callout elements, 8 vibe-row reference table rows ✓
+- Verified hydration fix: no hydration mismatch warnings in console ✓
+- Verified all pre-existing features still functional ✓
+
+Stage Summary:
+- Hydration fix verified — zero hydration errors
+- Vibe Coder's Guide section fully functional
+- Zero console errors, zero lint errors
+- All 30+ pre-existing features confirmed working

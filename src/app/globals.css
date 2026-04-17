@@ -1497,3 +1497,80 @@ hr.industrial {
 .breathe {
   animation: subtle-breathe 4s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════════
+   VIBE CODER SECTION — Extra Styles
+   ═══════════════════════════════════════════════ */
+
+/* ── Vibe task card hover: colored top border ── */
+.vibe-card {
+  position: relative;
+  overflow: hidden;
+}
+.vibe-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--vibe-color, #ff6b2b);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.vibe-card:hover::before {
+  opacity: 1;
+}
+
+/* ── Quote highlight animation ── */
+@keyframes quote-glow {
+  0%, 100% { text-shadow: 0 0 0 transparent; }
+  50% { text-shadow: 0 0 8px rgba(251, 191, 36, 0.15); }
+}
+.quote-glow {
+  animation: quote-glow 3s ease-in-out infinite;
+}
+
+/* ── Code snippet inline style ── */
+.vibe-code {
+  background: #080808;
+  border: 1px solid #1c1c1c;
+  padding: 2px 8px;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.65rem;
+  color: #525252;
+  word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* ── Hover row highlight for reference table ── */
+.vibe-row:hover {
+  background: rgba(255, 107, 43, 0.03);
+}
+
+/* ── Tip callout pulse ── */
+@keyframes tip-pulse {
+  0%, 100% { border-left-color: rgba(251, 191, 36, 0.2); }
+  50% { border-left-color: rgba(251, 191, 36, 0.5); }
+}
+.tip-callout {
+  animation: tip-pulse 4s ease-in-out infinite;
+}
+
+/* ── Warning stripe pattern ── */
+@keyframes warning-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 0; }
+}
+.warning-stripe {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    rgba(251, 191, 36, 0.05) 8px,
+    rgba(251, 191, 36, 0.05) 16px
+  );
+  background-size: 40px 40px;
+  animation: warning-scroll 2s linear infinite;
+}

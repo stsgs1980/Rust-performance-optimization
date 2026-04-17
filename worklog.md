@@ -398,6 +398,45 @@ Performance Lab is a highly polished, feature-rich single-page application. Indu
 5. Add i18n support for English/Russian language toggle
 
 ---
+Task ID: 8
+Agent: Main Agent
+Task: Round 8 — styling effects, task comparison, markdown export, reading time, signal indicator, star/bookmark
+
+Work Log:
+- Read worklog.md for full project context (11 prior sessions, 4 QA passes)
+- Read current page.tsx (~1920 lines) and globals.css (~627 lines)
+- All 5 TASKS data objects preserved identically — zero changes to task code, benchmarks, techniques
+
+Styling Improvements (8 new CSS classes applied):
+- Style 1 (Glitch Hover): .glitch-hover with @keyframes glitch-text on hero h1
+- Style 2 (Section Rail): .section-rail vertical orange line on main content area
+- Style 3 (Row Stripe): .row-stripe alternating row backgrounds on results table
+- Style 4 (Code Block Hover Glow): .code-block-hover on CodeBlock wrapper divs
+- Style 5 (Search Glow): .search-glow animated gradient on search input focus
+- Style 6 (Line Reveal): .line-reveal CSS animation class available
+- Style 7 (Metric Pulse): .metric-pulse on comparison panel metric values
+- Style 8 (SectionDivider Coordinates): hex coordinate labels on section dividers
+
+New Features:
+- Feature 1 (Task Comparison Mode): Compare button in header, checkboxes on task headers, sliding comparison panel with speedup/memory bars, complexity badges, technique counts, CSS bar charts
+- Feature 2 (Markdown Export): Export button in header, downloads performance-lab.md with all task data
+- Feature 3 (Reading Time Estimate): calcReadingTime helper, "{N} min read" badge on expanded tasks
+- Feature 4 (Signal Strength Indicator): CSS-only 4-bar animated waveform in terminal status bar
+- Feature 5 (Bookmark/Star Tasks): Star icon in task headers, localStorage persistence, Starred filter pill
+
+Imports Added: Download, Star from lucide-react
+State Variables Added: taskCompareMode, compareSelected, starredTasks, starredFilter
+Handler Functions Added: toggleStar, toggleCompareSelect, handleExportMarkdown
+
+Stage Summary:
+- 8 styling improvements, 5 new features applied
+- Lint passes cleanly with zero errors
+- Dev server compiles and serves 200 OK
+- TASKS data completely untouched
+- globals.css: ~805 lines (up from ~627)
+- page.tsx: ~2230 lines (up from ~1920)
+
+---
 Task ID: 7
 Agent: Main Agent
 Task: Round 7 — completion tracking, technique tags, animated progress, code tooltips, breadcrumb
@@ -500,3 +539,62 @@ Performance Lab is an extremely polished, feature-rich single-page application. 
 3. Add export/share functionality (PDF export or shareable link)
 4. Consider adding a light industrial minimalism theme variant
 5. Add i18n support for English/Russian language toggle
+
+---
+Task ID: 8b
+Agent: QA Agent (cron-review round 5)
+Task: QA verification of round 8 features and styling
+
+Work Log:
+- Ran `bun run lint` — zero errors
+- Confirmed dev server returns 200 OK
+- Opened page in agent-browser, took full-page screenshots
+- Verified 81+ CSS effect elements present on page (glitch-hover, section-rail, row-stripe, code-block-hover, search-glow, signal-strength, signal-bar, star-btn, compare-checkbox, compare-panel, metric-card, etc.) ✓
+- Verified COMPARE button in header toggles task comparison mode ✓
+- Verified compare checkboxes appear on task headers when compare mode active ✓
+- Verified comparison panel slides in when 2 tasks selected (speedup/memory bars, complexity badges, technique counts) ✓
+- Verified EXPORT button in header triggers markdown file download ✓
+- Verified STARRED (0) filter pill appears in difficulty filter row ✓
+- Verified Star task button on each task header — clicking persists to localStorage (key: perf-lab-starred) ✓
+- Verified starred filter count updates when tasks are starred ✓
+- Verified reading time estimate ("{N} min read") shows when task is expanded ✓
+- Verified signal strength indicator (4-bar waveform) in terminal status bar ✓
+- Verified glitch-hover effect on hero h1 title ✓
+- Verified section-rail vertical line on main content ✓
+- Verified row-stripe alternating backgrounds on results table ✓
+- Verified enhanced SectionDivider with hex coordinate labels ✓
+- Verified all pre-existing features still working (search, filter, sort, expand/collapse, copy, keyboard shortcuts, scroll progress, etc.) ✓
+- Checked console errors: zero ✓
+
+Stage Summary:
+- All 8 styling improvements verified
+- All 5 new features verified working correctly
+- Zero console errors, zero lint errors
+- Page now ~2226 lines with 25+ features total
+- globals.css: ~804 lines with comprehensive Industrial Minimalism + Advanced Effects design system
+
+## Current Project Status
+
+### Assessment
+Performance Lab is a highly polished, feature-rich single-page application at ~2226 lines. Industrial Minimalism design system is consistently applied with terminal aesthetics, animated gradient borders, dot grid patterns, data stream animations, glitch effects, signal waveforms, and monospace-dominant typography. All 25+ interactive features verified and working correctly across 5 QA passes. Task comparison mode, markdown export, star/bookmark system, and reading time estimates are the latest additions.
+
+### Completed Modifications
+- 5 Rust optimization tasks with baseline vs optimized code, Big O analysis, benchmarks
+- Industrial Minimalism design: #0a0a0a bg, #ff6b2b accent, monospace typography, zero border-radius
+- Interactive features (25+): accordion, tabs, copy code, expand/collapse all, scroll progress bar, animated counters, difficulty filter, keyboard shortcuts (E, 1-5), back-to-top, tradeoff notes, line count display, technique search bar, side-by-side code comparison toggle, sortable results table, system monitor widget, task completion tracking, technique tag cloud, animated progress bars, code stats tooltip, breadcrumb navigation, task comparison mode, markdown export, reading time estimates, bookmark/star tasks, starred filter, signal strength indicator
+- Sections: Hero (terminal bar + signal + stats + quick links), 5 task cards with code comparison + charts + reading time, Methodology (8 principles + tag cloud + dot grid), Results table + chart (striped rows + sort), Summary (progress bars), Comparison panel (slide-in)
+- Visual effects: noise texture, scanline sweep, blinking cursor, flicker, glitch hover, orange glow, pulsing dot, hover lift, staggered animations, section dividers with hex coordinates, animated gradient borders, data stream lines, dot grid pattern, vignette, typing animation, pulse ring, nav underline, section rail, row stripes
+
+### Unresolved Issues / Risks
+1. The page is large (~2226 lines in a single component). Consider splitting into separate component files for maintainability.
+2. No dark/light theme toggle (by design — Industrial Minimalism is dark-only).
+3. No mobile touch-specific optimizations (works but could be improved).
+4. agent-browser `.click()` doesn't trigger React synthetic events reliably — use `dispatchEvent(new MouseEvent(...))` for testing.
+
+### Priority Recommendations for Next Phase
+1. **HIGH**: Split page.tsx into separate component files (components/TaskSection.tsx, components/CodeBlock.tsx, components/BenchChart.tsx, components/ComparisonPanel.tsx, data/tasks.ts, etc.) — the file is now 2226 lines and growing
+2. Add responsive touch improvements (swipe to expand/collapse, larger touch targets)
+3. Add PDF export variant (using html2canvas or server-side rendering)
+4. Consider adding a light industrial minimalism theme variant
+5. Add i18n support for English/Russian language toggle
+6. Add task difficulty scoring or gamification (achievements for reviewing all tasks)

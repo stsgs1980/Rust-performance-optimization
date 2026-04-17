@@ -624,3 +624,540 @@ hr.industrial {
   background: #ff6b2b;
   transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
+/* ═══════════════════════════════════════════════ ROUND 8 — NEW CSS RULES ═══ */
+
+/* ── Glitch text effect on hover ── */
+.glitch-hover {
+  position: relative;
+  transition: text-shadow 0.15s ease;
+}
+.glitch-hover:hover {
+  animation: glitch-text 0.3s ease both;
+}
+@keyframes glitch-text {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); text-shadow: -2px 0 #ff6b2b, 2px 0 #4ade80; }
+  40% { transform: translate(-2px, -2px); text-shadow: 2px 0 #ff6b2b, -2px 0 #4ade80; }
+  60% { transform: translate(2px, 2px); text-shadow: -1px 0 #ff6b2b, 1px 0 #4ade80; }
+  80% { transform: translate(2px, -1px); text-shadow: -1px 0 #4ade80, 1px 0 #ff6b2b; }
+  100% { transform: translate(0); text-shadow: none; }
+}
+
+/* ── Section rail (vertical connecting line) ── */
+.section-rail {
+  position: relative;
+}
+.section-rail::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, #ff6b2b 10%, #ff6b2b 90%, transparent);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ── Table row alternating bands ── */
+.row-stripe:nth-child(even) {
+  background: #0f0f0f;
+}
+
+/* ── Code block hover glow ── */
+.code-block-hover {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.code-block-hover:hover {
+  border-color: rgba(255, 107, 43, 0.3);
+  box-shadow: 0 0 12px -2px rgba(255, 107, 43, 0.15);
+}
+
+/* ── Search glow animated background ── */
+.search-glow {
+  transition: all 0.3s ease;
+}
+.search-glow:focus {
+  background: linear-gradient(135deg, #0f0f0f 0%, #141414 50%, #0f0f0f 100%);
+  background-size: 200% 200%;
+  animation: search-glow-anim 3s ease infinite;
+}
+@keyframes search-glow-anim {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Line reveal animation ── */
+.line-reveal {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: line-reveal-anim 0.3s ease forwards;
+}
+@keyframes line-reveal-anim {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Metric pulse animation ── */
+@keyframes metric-pulse-anim {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+.metric-pulse {
+  animation: metric-pulse-anim 0.6s ease;
+}
+
+/* ── Signal strength indicator ── */
+.signal-strength {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+.signal-bar {
+  width: 2px;
+  background: #4ade80;
+  animation: signal-wave 1.5s ease-in-out infinite;
+}
+.signal-bar:nth-child(1) { height: 3px; animation-delay: 0s; }
+.signal-bar:nth-child(2) { height: 6px; animation-delay: 0.15s; }
+.signal-bar:nth-child(3) { height: 9px; animation-delay: 0.3s; }
+.signal-bar:nth-child(4) { height: 12px; animation-delay: 0.45s; }
+@keyframes signal-wave {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ── Comparison panel slide ── */
+.compare-panel {
+  position: fixed;
+  top: 48px;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 90vw;
+  background: #0a0a0a;
+  border-left: 1px solid #262626;
+  z-index: 40;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+.compare-panel.open {
+  transform: translateX(0);
+}
+
+/* ── Compare checkbox ── */
+.compare-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #262626;
+  background: #0f0f0f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.compare-checkbox.checked {
+  border-color: #ff6b2b;
+  background: rgba(255, 107, 43, 0.1);
+}
+
+/* ── Star button ── */
+.star-btn {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.star-btn:hover {
+  transform: scale(1.15);
+}
+.star-btn.starred {
+  color: #fbbf24;
+  fill: #fbbf24;
+}
+
+/* ── Compare bar chart ── */
+.compare-bar-track {
+  height: 6px;
+  background: #1c1c1c;
+  overflow: hidden;
+}
+.compare-bar-fill {
+  height: 100%;
+  transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── Hex coordinate labels for section divider ── */
+.hex-coord {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 8px;
+  color: #262626;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════ ROUND 9 — NEW CSS RULES ═══ */
+
+/* ── Command Palette Overlay ── */
+.cmd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: cmd-overlay-in 0.15s ease;
+}
+@keyframes cmd-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cmd-palette {
+  width: 520px;
+  max-width: 92vw;
+  max-height: 60vh;
+  background: #0f0f0f;
+  border: 1px solid #262626;
+  overflow: hidden;
+  animation: cmd-slide-in 0.15s ease;
+}
+@keyframes cmd-slide-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cmd-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #262626;
+  color: #d4d4d4;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.8rem;
+  padding: 12px 16px;
+  outline: none;
+  caret-color: #ff6b2b;
+}
+.cmd-input::placeholder {
+  color: #333;
+}
+
+.cmd-list {
+  overflow-y: auto;
+  max-height: calc(60vh - 48px);
+  padding: 4px;
+}
+.cmd-list::-webkit-scrollbar {
+  width: 4px;
+}
+.cmd-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cmd-list::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+.cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  border: 1px solid transparent;
+}
+.cmd-item:hover, .cmd-item.active {
+  background: #1c1c1c;
+  border-color: #262626;
+}
+.cmd-item .cmd-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #141414;
+  border: 1px solid #262626;
+  flex-shrink: 0;
+}
+.cmd-item .cmd-label {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.75rem;
+  color: #d4d4d4;
+  flex: 1;
+  min-width: 0;
+}
+.cmd-item .cmd-label span {
+  color: #ff6b2b;
+  font-weight: 600;
+}
+.cmd-item .cmd-hint {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.6rem;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.cmd-group-label {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.6rem;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  padding: 8px 12px 4px;
+}
+
+/* ── Code Diff View ── */
+.diff-line-added {
+  background: rgba(74, 222, 128, 0.06);
+  border-left: 2px solid rgba(74, 222, 128, 0.3);
+}
+.diff-line-removed {
+  background: rgba(248, 113, 113, 0.06);
+  border-left: 2px solid rgba(248, 113, 113, 0.3);
+}
+.diff-line-context {
+  border-left: 2px solid transparent;
+}
+.diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.diff-badge-added {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+.diff-badge-removed {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+}
+
+/* ── Radar Chart Area ── */
+.radar-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* ── Help Modal Overlay ── */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cmd-overlay-in 0.15s ease;
+}
+.help-modal {
+  width: 480px;
+  max-width: 92vw;
+  background: #0f0f0f;
+  border: 1px solid #262626;
+  overflow: hidden;
+  animation: cmd-slide-in 0.15s ease;
+}
+.help-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  border-bottom: 1px solid #1c1c1c;
+  transition: background 0.1s ease;
+}
+.help-shortcut-row:last-child {
+  border-bottom: none;
+}
+.help-shortcut-row:hover {
+  background: #141414;
+}
+.help-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  background: #1c1c1c;
+  border: 1px solid #262626;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.65rem;
+  color: #737373;
+  text-transform: uppercase;
+}
+
+/* ── Ambient Particles ── */
+.ambient-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.particle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  background: rgba(255, 107, 43, 0.3);
+  animation: particle-float linear infinite;
+}
+@keyframes particle-float {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+}
+
+/* ── Gradient Mesh Background ── */
+.gradient-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.4;
+  background:
+    radial-gradient(ellipse at 10% 20%, rgba(255, 107, 43, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(74, 222, 128, 0.02) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 187, 36, 0.015) 0%, transparent 60%);
+  animation: mesh-drift 20s ease-in-out infinite alternate;
+}
+@keyframes mesh-drift {
+  0% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+  100% { background-position: 10% 10%, 90% 90%, 45% 55%; }
+}
+
+/* ── Enhanced Card Depth System ── */
+.card-depth {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-depth:hover {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 107, 43, 0.05);
+  transform: translateY(-1px);
+}
+
+/* ── Scrollbar Glow (visible scrollbar) ── */
+.scrollbar-glow::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-glow::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+.scrollbar-glow::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ff6b2b, #262626);
+  border-radius: 0;
+}
+.scrollbar-glow::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #ff6b2b, #3a3a3a);
+}
+
+/* ── Print Styles ── */
+@media print {
+  body::before {
+    display: none !important;
+  }
+  .gradient-mesh,
+  .scroll-progress-industrial,
+  .scanline::after,
+  .vignette::after,
+  .data-stream,
+  .signal-strength,
+  .pulse-dot,
+  .cursor-blink::after,
+  .flicker {
+    display: none !important;
+    animation: none !important;
+  }
+  header, footer, .compare-panel, .cmd-overlay, .help-overlay {
+    position: static !important;
+    display: block !important;
+  }
+  .compare-panel {
+    transform: none !important;
+    border-left: 1px solid #ccc;
+  }
+  .card-lift:hover {
+    transform: none !important;
+  }
+  * {
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    background: white !important;
+    color: #111 !important;
+  }
+  .bg-\[\#0a0a0a\], .bg-\[\#141414\], .bg-\[\#0f0f0f\], .bg-\[\#1c1c1c\] {
+    background: white !important;
+  }
+  .text-\[\#d4d4d4\], .text-\[\#737373\], .text-\[\#525252\] {
+    color: #333 !important;
+  }
+  .border-\[\#262626\], .border-\[\#1c1c1c\] {
+    border-color: #ddd !important;
+  }
+  pre, code {
+    background: #f5f5f5 !important;
+    color: #333 !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
+/* ── Loading Shimmer ── */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 107, 43, 0.03), transparent);
+  animation: shimmer-slide 2s ease infinite;
+}
+@keyframes shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Tag Color Coding ── */
+.tag-performance { color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+.tag-memory { color: #22d3ee; border-color: rgba(34, 211, 238, 0.3); }
+.tag-safety { color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); }
+.tag-io { color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); }
+
+/* ── Performance Grade Badges ── */
+.grade-s { color: #4ade80; background: rgba(74, 222, 128, 0.08); border-color: rgba(74, 222, 128, 0.2); }
+.grade-a { color: #22d3ee; background: rgba(34, 211, 238, 0.08); border-color: rgba(34, 211, 238, 0.2); }
+.grade-b { color: #fbbf24; background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.2); }
+.grade-c { color: #ff6b2b; background: rgba(255, 107, 43, 0.08); border-color: rgba(255, 107, 43, 0.2); }

@@ -53,6 +53,15 @@ import {
   Monitor,
   AlertTriangle,
   RotateCcw,
+  Download,
+  Star,
+  Command,
+  Hash,
+  Filter,
+  Keyboard,
+  Plus,
+  Minus,
+  Sparkles,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -554,6 +563,19 @@ const ALL_TECHNIQUES = (() => {
     .map(([name, count]) => ({ name, count }));
 })();
 
+/* ─────────────────────── HELPERS ─────────────────────── */
+
+function calcReadingTime(task: TaskData): number {
+  const codeLines = task.baseline.code.split('\n').length + task.optimized.code.split('\n').length;
+  const textChars = task.problem.length + task.techniques.reduce((a, t) => a + t.desc.length + t.name.length, 0);
+  return Math.max(1, Math.ceil(codeLines / 30 + textChars / 250));
+}
+
+function formatTimeBenchmark(ms: number): string {
+  if (ms >= 1000) return `${(ms / 1000).toFixed(ms >= 10000 ? 0 : 1)}s`;
+  return `${ms.toFixed(0)}ms`;
+}
+
 /* ─────────────────────── SMALL COMPONENTS ─────────────────────── */
 
 function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -612,11 +634,15 @@ function AnimatedCounter({ value, suffix = "" }: { value: string; suffix?: strin
 }
 
 function SectionDivider({ label }: { label: string }) {
+  const hexLeft = ('0x' + (label.charCodeAt(0) || 0x30).toString(16).toUpperCase().padStart(2, '0'));
+  const hexRight = ('0x' + (label.charCodeAt(label.length - 1) || 0x30).toString(16).toUpperCase().padStart(2, '0'));
   return (
     <div className="flex items-center gap-3 py-2">
+      <span className="hex-coord">{hexLeft}</span>
       <div className="flex-1 h-px bg-[#1c1c1c]" />
       <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-[0.3em]">{label}</span>
       <div className="flex-1 h-px bg-[#1c1c1c]" />
+      <span className="hex-coord">{hexRight}</span>
     </div>
   );
 }
@@ -633,7 +659,7 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
   };
 
   return (
-    <div className="overflow-hidden border border-[#262626]">
+    <div className="overflow-hidden border border-[#262626] code-block-hover">
       <div className="px-4 py-2 flex items-center justify-between border-b border-[#262626] bg-[#0f0f0f]">
         <div className="flex items-center gap-2 min-w-0">
           <Code2 className="size-3.5 text-[#525252] shrink-0" />
@@ -793,6 +819,347 @@ function BenchChart({ task }: { task: TaskData }) {
   );
 }
 
+/* ── Ambient Particles Component ── */
+function AmbientParticles() {
+  const particles = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    bottom: `${Math.random() * 30}%`,
+    delay: `${Math.random() * 6}s`,
+    duration: `${3 + Math.random() * 4}s`,
+    size: Math.random() > 0.5 ? 1 : 2,
+    opacity: 0.1 + Math.random() * 0.3,
+  }));
+  return (
+    <div className="ambient-particles">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            left: p.left,
+            bottom: p.bottom,
+            animationDelay: p.delay,
+            animationDuration: p.duration,
+            width: p.size,
+            height: p.size,
+            opacity: p.opacity,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ── Performance Grade Helper ── */
+function getGrade(speedup: number): { letter: string; className: string } {
+  if (speedup >= 30) return { letter: "S", className: "grade-s" };
+  if (speedup >= 10) return { letter: "A", className: "grade-a" };
+  if (speedup >= 3) return { letter: "B", className: "grade-b" };
+  return { letter: "C", className: "grade-c" };
+}
+
+/* ── Code Diff Component ── */
+function CodeDiff({ baseline, optimized, title }: { baseline: string; optimized: string; title: string }) {
+  const bLines = baseline.split('\n');
+  const oLines = optimized.split('\n');
+  const maxLines = Math.max(bLines.length, oLines.length);
+
+  const diffLines = [];
+  for (let i = 0; i < maxLines; i++) {
+    if (i < bLines.length && i < oLines.length) {
+      if (bLines[i] === oLines[i]) {
+        diffLines.push({ type: 'context', line: oLines[i], num: i + 1 });
+      } else {
+        diffLines.push({ type: 'removed', line: bLines[i], num: i + 1 });
+        diffLines.push({ type: 'added', line: oLines[i], num: i + 1 });
+      }
+    } else if (i < bLines.length) {
+      diffLines.push({ type: 'removed', line: bLines[i], num: i + 1 });
+    } else {
+      diffLines.push({ type: 'added', line: oLines[i], num: i + 1 });
+    }
+  }
+
+  const addedCount = diffLines.filter(d => d.type === 'added').length;
+  const removedCount = diffLines.filter(d => d.type === 'removed').length;
+
+  return (
+    <div className="overflow-hidden border border-[#262626] code-block-hover">
+      <div className="px-4 py-2 flex items-center justify-between border-b border-[#262626] bg-[#0f0f0f]">
+        <div className="flex items-center gap-2 min-w-0">
+          <GitCompareArrows className="size-3.5 text-[#525252] shrink-0" />
+          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] truncate">{title}</span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="diff-badge diff-badge-added"><Plus className="size-2.5" />{addedCount}</span>
+          <span className="diff-badge diff-badge-removed"><Minus className="size-2.5" />{removedCount}</span>
+        </div>
+      </div>
+      <div className="max-h-[480px] overflow-auto scrollbar-glow bg-[#0d0d0d]">
+        <div className="text-[11px] font-[family-name:var(--font-ibm-mono)] leading-[1.6]">
+          {diffLines.map((d, i) => (
+            <div
+              key={i}
+              className={`flex items-start px-3 ${
+                d.type === 'added' ? 'diff-line-added' : d.type === 'removed' ? 'diff-line-removed' : 'diff-line-context'
+              }`}
+            >
+              <span className="w-8 shrink-0 text-right text-[#333] select-none mr-3 text-[10px]">{d.num}</span>
+              <span className={`w-4 shrink-0 text-center select-none mr-3 ${
+                d.type === 'added' ? 'text-[#4ade80]' : d.type === 'removed' ? 'text-[#f87171]' : 'text-[#333]'
+              }`}>
+                {d.type === 'added' ? '+' : d.type === 'removed' ? '−' : ' '}
+              </span>
+              <span className={`flex-1 whitespace-pre ${d.type === 'added' ? 'text-[#4ade80]/80' : d.type === 'removed' ? 'text-[#f87171]/60 line-through' : 'text-[#525252]'}`}>
+                {d.line}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Radar Chart Component (pure CSS/SVG) ── */
+function RadarChart({ tasks }: { tasks: TaskData[] }) {
+  const dimensions = ["Speed", "Memory", "Complexity", "Techniques", "Code Quality"];
+  const n = dimensions.length;
+  const cx = 150, cy = 150, r = 110;
+  const angleStep = (2 * Math.PI) / n;
+
+  const getPoint = (angle: number, dist: number) => ({
+    x: cx + dist * Math.cos(angle - Math.PI / 2),
+    y: cy + dist * Math.sin(angle - Math.PI / 2),
+  });
+
+  const getTaskData = (task: TaskData) => {
+    const sp = task.baseline.time / task.optimized.time;
+    const maxSp = Math.max(...tasks.map(t => t.baseline.time / t.optimized.time));
+    const memDelta = task.optimized.memory < task.baseline.memory ? 1 : 0.5;
+    const complexScore = task.optimized.timeComplexity.length < task.baseline.timeComplexity.length ? 1 : 0.7;
+    const techScore = Math.min(task.techniques.length / 5, 1);
+    const codeScore = task.optimized.code.length > task.baseline.code.length ? 0.9 : 0.7;
+    return [sp / maxSp, memDelta, complexScore, techScore, codeScore];
+  };
+
+  const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
+
+  const colors = ["#ff6b2b", "#4ade80", "#fbbf24", "#22d3ee", "#a78bfa"];
+
+  return (
+    <div className="radar-container p-4">
+      <svg viewBox="0 0 300 300" className="w-full h-auto">
+        {/* Grid */}
+        {gridLevels.map((level, li) => {
+          const pts = Array.from({ length: n }, (_, i) => {
+            const p = getPoint(i * angleStep, r * level);
+            return `${p.x},${p.y}`;
+          }).join(" ");
+          return <polygon key={li} points={pts} fill="none" stroke="#1c1c1c" strokeWidth="0.5" />;
+        })}
+        {/* Axis lines */}
+        {Array.from({ length: n }, (_, i) => {
+          const p = getPoint(i * angleStep, r);
+          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#1c1c1c" strokeWidth="0.5" />;
+        })}
+        {/* Labels */}
+        {dimensions.map((dim, i) => {
+          const p = getPoint(i * angleStep, r + 16);
+          const anchor = Math.abs(p.x - cx) < 10 ? "middle" : p.x > cx ? "start" : "end";
+          return (
+            <text key={dim} x={p.x} y={p.y} textAnchor={anchor} fill="#525252" fontSize="9" fontFamily="var(--font-ibm-mono), monospace">
+              {dim}
+            </text>
+          );
+        })}
+        {/* Task polygons */}
+        {tasks.map((task, ti) => {
+          const data = getTaskData(task);
+          const pts = data.map((val, i) => {
+            const p = getPoint(i * angleStep, r * val);
+            return `${p.x},${p.y}`;
+          }).join(" ");
+          return (
+            <g key={task.id}>
+              <polygon
+                points={pts}
+                fill={`${colors[ti]}10`}
+                stroke={colors[ti]}
+                strokeWidth="1"
+                opacity={0.7}
+              />
+              {/* Data points */}
+              {data.map((val, i) => {
+                const p = getPoint(i * angleStep, r * val);
+                return <circle key={i} cx={p.x} cy={p.y} r="2.5" fill={colors[ti]} />;
+              })}
+            </g>
+          );
+        })}
+      </svg>
+      {/* Legend */}
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+        {tasks.map((task, i) => (
+          <div key={task.id} className="flex items-center gap-1.5">
+            <span className="size-2" style={{ background: colors[i] }} />
+            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">#{task.id}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Command Palette Component ── */
+function CommandPalette({
+  open,
+  onClose,
+  onNavigate,
+  onAction,
+  allTasks,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onNavigate: (id: string) => void;
+  onAction: (action: string) => void;
+  allTasks: TaskData[];
+}) {
+  const [query, setQuery] = useState("");
+  const [activeIdx, setActiveIdx] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const navItems = [
+    { id: "hero", label: "Overview", icon: Sparkles, group: "Navigation" },
+    ...allTasks.map(t => ({ id: `task-${t.id}`, label: `#${t.id} ${t.title}`, icon: Hash, group: "Tasks" })),
+    { id: "methodology", label: "Methodology", icon: Brain, group: "Navigation" },
+    { id: "results", label: "Results", icon: Award, group: "Navigation" },
+    { id: "summary", label: "Summary", icon: Target, group: "Navigation" },
+  ];
+
+  const actions = [
+    { id: "expand-all", label: "Expand All Tasks", icon: ChevronDown, group: "Actions" },
+    { id: "collapse-all", label: "Collapse All Tasks", icon: ChevronUp, group: "Actions" },
+    { id: "export-md", label: "Export as Markdown", icon: Download, group: "Actions" },
+    { id: "compare", label: "Toggle Compare Mode", icon: GitCompareArrows, group: "Actions" },
+    { id: "starred-filter", label: "Filter Starred Tasks", icon: Star, group: "Actions" },
+  ];
+
+  const q = query.toLowerCase().trim();
+  const filteredNav = q ? navItems.filter(item => item.label.toLowerCase().includes(q)) : navItems;
+  const filteredActions = q ? actions.filter(a => a.label.toLowerCase().includes(q)) : actions;
+  const allItems = [...filteredNav.map(i => ({ ...i, type: 'nav' as const })), ...filteredActions.map(a => ({ ...a, type: 'action' as const }))];
+
+  const executeItem = (item: typeof allItems[number]) => {
+    if (item.type === 'nav') onNavigate(item.id);
+    else onAction(item.id);
+    onClose();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, allItems.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)); }
+    else if (e.key === "Enter" && allItems[activeIdx]) { executeItem(allItems[activeIdx]); }
+    else if (e.key === "Escape") { onClose(); }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="cmd-overlay" onClick={onClose}>
+      <div className="cmd-palette" onClick={e => e.stopPropagation()}>
+        <input
+          ref={inputRef}
+          className="cmd-input"
+          placeholder="Type a command or search..."
+          value={query}
+          onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
+          onKeyDown={handleKeyDown}
+        />
+        <div className="cmd-list">
+          {allItems.length === 0 ? (
+            <div className="p-4 text-center text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">No results</div>
+          ) : (
+            allItems.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.id}
+                  className={`cmd-item ${i === activeIdx ? 'active' : ''}`}
+                  onClick={() => executeItem(item)}
+                  onMouseEnter={() => setActiveIdx(i)}
+                >
+                  <div className="cmd-icon">
+                    <Icon className="size-3.5 text-[#525252]" />
+                  </div>
+                  <div className="cmd-label">{item.label}</div>
+                  <span className="cmd-hint">{item.type === 'nav' ? 'Go to' : 'Action'}</span>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <div className="px-3 py-2 border-t border-[#1c1c1c] flex items-center gap-3">
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] flex items-center gap-1"><span className="help-key text-[8px]">↑↓</span> Navigate</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] flex items-center gap-1"><span className="help-key text-[8px]">↵</span> Select</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] flex items-center gap-1"><span className="help-key text-[8px]">Esc</span> Close</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Help Modal Component ── */
+function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  const shortcuts = [
+    { keys: ["Ctrl+K"], desc: "Open command palette" },
+    { keys: ["?"], desc: "Show keyboard shortcuts" },
+    { keys: ["E"], desc: "Expand / Collapse all tasks" },
+    { keys: ["1", "-", "5"], desc: "Jump to task 1-5" },
+    { keys: ["Esc"], desc: "Close dialogs" },
+  ];
+
+  return (
+    <div className="help-overlay" onClick={onClose}>
+      <div className="help-modal" onClick={e => e.stopPropagation()}>
+        <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Keyboard className="size-3.5 text-[#ff6b2b]" />
+            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Keyboard Shortcuts</span>
+          </div>
+          <button onClick={onClose} className="text-[#333] hover:text-[#d4d4d4] transition-colors">
+            <ChevronUp className="size-4 rotate-45" />
+          </button>
+        </div>
+        <div className="py-2">
+          {shortcuts.map((s, i) => (
+            <div key={i} className="help-shortcut-row">
+              <span className="text-xs text-[#737373]">{s.desc}</span>
+              <div className="flex items-center gap-1">
+                {s.keys.map((k, ki) => (
+                  <span key={ki} className="help-key">{k}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="px-4 py-2 border-t border-[#1c1c1c]">
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+            Tip: Press <span className="help-key text-[8px]">Ctrl+K</span> anytime for quick access
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ComplexityBadge({ label, complexity }: { label: string; complexity: string }) {
   const isBad = complexity.includes("n³") || complexity === "O(n×m)" || complexity === "O(n) sequential" || complexity === "O(n) + contention";
   const isMedium = complexity === "O(n)" || complexity === "O(n) avg" || complexity === "O(n²)";
@@ -826,7 +1193,7 @@ function AnimatedProgressBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void; reviewed: boolean }) {
+function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed, starred, onToggleStar, taskCompareMode, onCompareSelect, compareSelected, readingTime, diffMode, onToggleDiff }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void; reviewed: boolean; starred: boolean; onToggleStar: () => void; taskCompareMode: boolean; onCompareSelect: () => void; compareSelected: boolean; readingTime: number; diffMode: boolean; onToggleDiff: () => void }) {
   const Icon = task.icon;
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
 
@@ -844,6 +1211,14 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
+                {taskCompareMode && (
+                  <div
+                    className={`compare-checkbox ${compareSelected ? 'checked' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); onCompareSelect(); }}
+                  >
+                    {compareSelected && <Check className="size-2.5 text-[#ff6b2b]" />}
+                  </div>
+                )}
                 <div className="size-10 bg-[#1c1c1c] flex items-center justify-center shrink-0">
                   <Icon className="size-4 text-[#737373]" />
                 </div>
@@ -852,6 +1227,13 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                     <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
                       #{task.id}
                     </span>
+                    <button
+                      className={`star-btn p-0 ${starred ? 'starred' : 'text-[#333]'}`}
+                      onClick={(e) => { e.stopPropagation(); onToggleStar(); }}
+                      aria-label={starred ? 'Unstar task' : 'Star task'}
+                    >
+                      <Star className="size-3" fill={starred ? '#fbbf24' : 'none'} />
+                    </button>
                     {reviewed && (
                       <Check className="size-3 text-[#4ade80]" />
                     )}
@@ -873,6 +1255,14 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                     >
                       {speedup}×
                     </Badge>
+                    <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${getGrade(parseFloat(speedup)).className}`}>
+                      {getGrade(parseFloat(speedup)).letter}
+                    </span>
+                    {expanded && (
+                      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+                        {readingTime} min read
+                      </span>
+                    )}
                   </div>
                   <CardTitle className="text-sm font-medium text-[#d4d4d4]">
                     {task.title}
@@ -921,18 +1311,42 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
 
           {/* Code Comparison + Bench Chart */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {compareMode ? (
-              /* Side-by-side comparison */
+            {diffMode ? (
+              /* Diff view */
               <div className="xl:col-span-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Code Comparison</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Code Diff</span>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
+                    onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
                     className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
                     title="Switch to tabbed view"
                   >
                     <Rows3 className="size-3.5" />
                   </button>
+                </div>
+                <CodeDiff baseline={task.baseline.code} optimized={task.optimized.code} title={task.title} />
+              </div>
+            ) : compareMode ? (
+              /* Side-by-side comparison */
+              <div className="xl:col-span-1">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Code Comparison</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
+                      className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                      title="Switch to diff view"
+                    >
+                      <GitCompareArrows className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
+                      className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                      title="Switch to tabbed view"
+                    >
+                      <Rows3 className="size-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="code-compare-grid">
                   <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
@@ -942,7 +1356,14 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
             ) : (
               /* Tabbed view */
               <div className="xl:col-span-1">
-                <div className="flex items-center justify-end mb-0">
+                <div className="flex items-center justify-end mb-0 gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
+                    className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                    title="Switch to diff view"
+                  >
+                    <GitCompareArrows className="size-3.5" />
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
                     className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
@@ -1075,6 +1496,20 @@ export default function PerformanceLab() {
     return new Set<number>();
   });
   const [techniqueTag, setTechniqueTag] = useState<string | null>(null);
+  const [taskCompareMode, setTaskCompareMode] = useState(false);
+  const [compareSelected, setCompareSelected] = useState<Set<number>>(new Set());
+  const [starredTasks, setStarredTasks] = useState<Set<number>>(() => {
+    if (typeof window === 'undefined') return new Set<number>();
+    try {
+      const saved = localStorage.getItem('perf-lab-starred');
+      if (saved) return new Set(JSON.parse(saved) as number[]);
+    } catch {}
+    return new Set<number>();
+  });
+  const [starredFilter, setStarredFilter] = useState(false);
+  const [showCmdPalette, setShowCmdPalette] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [diffMode, setDiffMode] = useState(false);
   const reviewTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
 
@@ -1091,6 +1526,77 @@ export default function PerformanceLab() {
     if (typeof window !== 'undefined') {
       try { localStorage.setItem('perf-lab-reviewed', JSON.stringify(Array.from(ids))); } catch {}
     }
+  }, []);
+
+  // Star/unstar task handler
+  const toggleStar = useCallback((id: number) => {
+    setStarredTasks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('perf-lab-starred', JSON.stringify(Array.from(next))); } catch {}
+      }
+      return next;
+    });
+  }, []);
+
+  // Compare select handler
+  const toggleCompareSelect = useCallback((id: number) => {
+    setCompareSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 2) next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Markdown export handler
+  const handleExportMarkdown = useCallback(() => {
+    const lines: string[] = [];
+    lines.push('# Performance Lab — Rust Optimization Challenges\n');
+    lines.push(`> ${TASKS.length} tasks · Total speedup: ×\n`);
+    for (const t of TASKS) {
+      const sp = (t.baseline.time / t.optimized.time).toFixed(1);
+      const memSave = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
+      lines.push(`## ${t.id}. ${t.title}`);
+      lines.push(`**Category:** ${t.category} · **Difficulty:** ${t.difficulty} · **Speedup:** ${sp}×\n`);
+      lines.push('### Problem');
+      lines.push(t.problem + '\n');
+      lines.push('### Constraints');
+      t.constraints.forEach(c => { lines.push(`- ${c}`); });
+      lines.push('');
+      lines.push('### Baseline Code');
+      lines.push('```rust');
+      lines.push(t.baseline.code);
+      lines.push('```\n');
+      lines.push('### Optimized Code');
+      lines.push('```rust');
+      lines.push(t.optimized.code);
+      lines.push('```\n');
+      lines.push('### Benchmarks');
+      lines.push('| Metric | Baseline | Optimized |');
+      lines.push('|--------|----------|-----------|');
+      lines.push(`| Time | ${formatTimeBenchmark(t.baseline.time)} | ${formatTimeBenchmark(t.optimized.time)} |`);
+      lines.push(`| Memory | ${t.baseline.memory} MB | ${t.optimized.memory} MB |`);
+      lines.push(`| Speedup | — | ${sp}× |`);
+      lines.push(`| Memory Delta | — | ${parseInt(memSave) > 0 ? '-' : '+'}${Math.abs(parseInt(memSave))}% |\n`);
+      lines.push('### Complexity');
+      lines.push(`- **Baseline:** Time ${t.baseline.timeComplexity}, Space ${t.baseline.spaceComplexity}`);
+      lines.push(`- **Optimized:** Time ${t.optimized.timeComplexity}, Space ${t.optimized.spaceComplexity}\n`);
+      lines.push('### Key Techniques');
+      t.techniques.forEach((tech, i) => { lines.push(`${i + 1}. **${tech.name}** — ${tech.desc}`); });
+      lines.push('\n---\n');
+    }
+    const ts = TASKS.reduce((a, t) => a + t.baseline.time / t.optimized.time, 0);
+    lines.splice(1, 1, `> ${TASKS.length} tasks · Total speedup: ${ts.toFixed(0)}×\n`);
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'performance-lab.md';
+    a.click();
+    URL.revokeObjectURL(url);
   }, []);
 
   // Mark task as reviewed after 3 seconds of being expanded
@@ -1126,13 +1632,14 @@ export default function PerformanceLab() {
 
   const filteredTasks = TASKS.filter((t) => {
     const matchDiff = difficultyFilter === "all" || t.difficulty === difficultyFilter;
-    if (!activeSearch.trim()) return matchDiff;
+    const matchStarred = !starredFilter || starredTasks.has(t.id);
+    if (!activeSearch.trim()) return matchDiff && matchStarred;
     const q = activeSearch.toLowerCase();
     const matchSearch =
       t.title.toLowerCase().includes(q) ||
       t.problem.toLowerCase().includes(q) ||
       t.techniques.some((tech) => tech.name.toLowerCase().includes(q) || tech.desc.toLowerCase().includes(q));
-    return matchDiff && matchSearch;
+    return matchDiff && matchSearch && matchStarred;
   });
 
   const difficulties = ["all", "Advanced", "Expert"];
@@ -1191,10 +1698,37 @@ export default function PerformanceLab() {
     });
   };
 
-  // Keyboard shortcuts: E to expand all, 1-5 to jump to task
+  // Command palette action handler
+  const handleCmdAction = useCallback((action: string) => {
+    switch (action) {
+      case "expand-all": setExpandedTasks(new Set(TASKS.map(t => t.id))); break;
+      case "collapse-all": setExpandedTasks(new Set()); break;
+      case "export-md": handleExportMarkdown(); break;
+      case "compare": setTaskCompareMode(c => !c); break;
+      case "starred-filter": setStarredFilter(f => !f); break;
+    }
+  }, [handleExportMarkdown]);
+
+  // Keyboard shortcuts: Ctrl+K for command palette, ? for help, E to expand all, 1-5 to jump to task
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+K — command palette
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCmdPalette(c => !c);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setShowCmdPalette(false);
+        setShowHelpModal(false);
+        return;
+      }
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // ? — help modal
+      if (e.key === '?') {
+        setShowHelpModal(h => !h);
+        return;
+      }
       if (e.key === 'e' || e.key === 'E' || e.key === 'к' || e.key === 'К') {
         toggleAll();
       }
@@ -1286,6 +1820,9 @@ export default function PerformanceLab() {
       {/* ─── SCROLL PROGRESS BAR ─── */}
       <div className="scroll-progress-industrial" style={{ width: `${scrollProgress}%` }} />
 
+      {/* ─── GRADIENT MESH BACKGROUND ─── */}
+      <div className="gradient-mesh" />
+
       {/* ─── STICKY HEADER ─── */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a] border-b border-[#262626]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1308,6 +1845,30 @@ export default function PerformanceLab() {
               ))}
             </div>
             <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => setTaskCompareMode(c => !c)}
+                className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] transition-colors flex items-center gap-1 ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#525252] hover:text-[#ff6b2b]'}`}
+                title="Compare tasks"
+              >
+                <GitCompareArrows className="size-3" />
+                <span className="hidden sm:inline">Compare</span>
+              </button>
+              <button
+                onClick={handleExportMarkdown}
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                title="Export as Markdown"
+              >
+                <Download className="size-3" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+              <button
+                onClick={() => setShowCmdPalette(true)}
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                title="Command palette (Ctrl+K)"
+              >
+                <Command className="size-3" />
+                <span className="hidden sm:inline">Cmd</span>
+              </button>
               <button
                 onClick={toggleAll}
                 className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors"
@@ -1358,7 +1919,7 @@ export default function PerformanceLab() {
       </header>
 
       {/* ─── MAIN ─── */}
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 space-y-10 section-rail">
         {/* ═══ HERO SECTION ═══ */}
         <section ref={registerSection("hero")} id="hero">
           {/* Terminal status bar */}
@@ -1367,6 +1928,15 @@ export default function PerformanceLab() {
             <span className="font-[family-name:var(--font-ibm-mono)]">
               <span className="typing-text text-[#525252]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
             </span>
+            <div className="ml-auto flex items-center gap-2">
+              <div className="signal-strength">
+                <div className="signal-bar" />
+                <div className="signal-bar" />
+                <div className="signal-bar" />
+                <div className="signal-bar" />
+              </div>
+              <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333]">SIG</span>
+            </div>
           </div>
 
           <FadeIn>
@@ -1376,9 +1946,12 @@ export default function PerformanceLab() {
               <div className="data-stream" style={{ left: "55%", height: "80px", animationDelay: "2.5s" }} />
               <div className="data-stream" style={{ left: "85%", height: "100px", animationDelay: "5s" }} />
 
+              {/* Ambient Particles */}
+              <AmbientParticles />
+
               <div className="space-y-6 relative z-10">
                 <div>
-                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker">
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker glitch-hover">
                     Performance Lab
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
@@ -1393,7 +1966,11 @@ export default function PerformanceLab() {
                     объяснением каждой оптимизации.
                   </p>
                   {/* Keyboard shortcut hints */}
-                  <div className="flex items-center gap-3 mt-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">Ctrl+K</kbd>
+                    <span className="text-[10px] text-[#333]">Command palette</span>
+                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">?</kbd>
+                    <span className="text-[10px] text-[#333]">Shortcuts</span>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">E</kbd>
                     <span className="text-[10px] text-[#333]">Expand all</span>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">1-5</kbd>
@@ -1470,6 +2047,9 @@ export default function PerformanceLab() {
                         <p className="text-sm font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] mt-2">
                           {sp}×
                         </p>
+                        <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0.5 ${getGrade(parseFloat(sp)).className}`}>
+                          {getGrade(parseFloat(sp)).letter}
+                        </span>
                       </motion.button>
                     );
                   })}
@@ -1505,6 +2085,17 @@ export default function PerformanceLab() {
               {d} ({diffCounts[d as keyof typeof diffCounts]})
             </button>
           ))}
+          <button
+            onClick={() => setStarredFilter(f => !f)}
+            className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors flex items-center gap-1 ${
+              starredFilter
+                ? "text-[#fbbf24] border-[#fbbf24]/30"
+                : "text-[#525252] border-[#262626] hover:text-[#737373]"
+            }`}
+          >
+            <Star className="size-3" fill={starredFilter ? '#fbbf24' : 'none'} />
+            Starred ({starredTasks.size})
+          </button>
         </div>
 
         {/* ═══ TECHNIQUE SEARCH BAR ═══ */}
@@ -1515,7 +2106,7 @@ export default function PerformanceLab() {
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setTechniqueTag(null); }}
             placeholder="Search techniques, titles, or descriptions..."
-            className="search-industrial w-full pl-9 pr-16"
+            className="search-industrial search-glow w-full pl-9 pr-16"
           />
           {activeSearch.trim() && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
@@ -1544,6 +2135,14 @@ export default function PerformanceLab() {
                   compareMode={compareMode}
                   onToggleCompare={() => setCompareMode(c => !c)}
                   reviewed={reviewedTasks.has(task.id)}
+                  starred={starredTasks.has(task.id)}
+                  onToggleStar={() => toggleStar(task.id)}
+                  taskCompareMode={taskCompareMode}
+                  onCompareSelect={() => toggleCompareSelect(task.id)}
+                  compareSelected={compareSelected.has(task.id)}
+                  readingTime={calcReadingTime(task)}
+                  diffMode={diffMode}
+                  onToggleDiff={() => setDiffMode(d => !d)}
                 />
                 {sectionIndex < filteredTasks.length - 1 && (
                   <SectionDivider label={String(sectionIndex + 1).padStart(2, "0")} />
@@ -1668,7 +2267,7 @@ export default function PerformanceLab() {
                         return (
                           <tr
                             key={t.id}
-                            className="border-b border-[#1c1c1c] hover:bg-[#0f0f0f] transition-colors"
+                            className="border-b border-[#1c1c1c] hover:bg-[#0f0f0f] transition-colors row-stripe"
                           >
                             <td className="py-2.5 pr-4">
                               <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] tabular-nums">
@@ -1752,6 +2351,20 @@ export default function PerformanceLab() {
             </Card>
           </FadeIn>
         </section>
+
+        {/* ─── RADAR CHART ─── */}
+        <FadeIn>
+          <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                Multi-dimensional Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RadarChart tasks={TASKS} />
+            </CardContent>
+          </Card>
+        </FadeIn>
 
         {/* ─── Separator ─── */}
         <SectionDivider label="SM" />
@@ -1887,6 +2500,148 @@ export default function PerformanceLab() {
         </button>
       </div>
 
+      {/* ─── TASK COMPARISON PANEL ─── */}
+      {taskCompareMode && compareSelected.size === 2 && (() => {
+        const ids = Array.from(compareSelected);
+        const tA = TASKS.find(t => t.id === ids[0])!;
+        const tB = TASKS.find(t => t.id === ids[1])!;
+        const spA = tA.baseline.time / tA.optimized.time;
+        const spB = tB.baseline.time / tB.optimized.time;
+        const maxSp = Math.max(spA, spB);
+        const memA = (1 - tA.optimized.memory / tA.baseline.memory) * 100;
+        const memB = (1 - tB.optimized.memory / tB.baseline.memory) * 100;
+        const maxMem = Math.max(Math.abs(memA), Math.abs(memB));
+        return (
+          <div className={`compare-panel custom-scrollbar ${compareSelected.size === 2 ? 'open' : ''}`}>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Task Comparison</span>
+                <button
+                  onClick={() => { setCompareSelected(new Set()); setTaskCompareMode(false); }}
+                  className="text-[#525252] hover:text-[#ff6b2b] transition-colors"
+                >
+                  <ChevronUp className="size-4 rotate-90" />
+                </button>
+              </div>
+
+              {/* Task names */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-[#0f0f0f] border border-[#262626]">
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}</span>
+                  <p className="text-xs text-[#d4d4d4] mt-1 line-clamp-2">{tA.title}</p>
+                </div>
+                <div className="p-3 bg-[#0f0f0f] border border-[#262626]">
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}</span>
+                  <p className="text-xs text-[#d4d4d4] mt-1 line-clamp-2">{tB.title}</p>
+                </div>
+              </div>
+
+              {/* Speedup comparison */}
+              <div className="p-3 bg-[#141414] border border-[#262626]">
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Speedup Comparison</p>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}</span>
+                      <span className="text-sm font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] metric-pulse">{spA.toFixed(1)}×</span>
+                    </div>
+                    <div className="compare-bar-track"><div className="compare-bar-fill bg-[#ff6b2b]" style={{ width: `${(spA / maxSp) * 100}%` }} /></div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}</span>
+                      <span className="text-sm font-bold font-[family-name:var(--font-ibm-mono)] text-[#4ade80] metric-pulse">{spB.toFixed(1)}×</span>
+                    </div>
+                    <div className="compare-bar-track"><div className="compare-bar-fill bg-[#4ade80]" style={{ width: `${(spB / maxSp) * 100}%` }} /></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Memory comparison */}
+              <div className="p-3 bg-[#141414] border border-[#262626]">
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Memory Delta</p>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}</span>
+                      <span className={`text-sm font-bold font-[family-name:var(--font-ibm-mono)] ${memA > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{memA > 0 ? '-' : '+'}{Math.abs(memA)}%</span>
+                    </div>
+                    <div className="compare-bar-track"><div className={`compare-bar-fill ${memA > 0 ? 'bg-[#4ade80]' : 'bg-[#f87171]'}`} style={{ width: `${(Math.abs(memA) / maxMem) * 100}%` }} /></div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}</span>
+                      <span className={`text-sm font-bold font-[family-name:var(--font-ibm-mono)] ${memB > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{memB > 0 ? '-' : '+'}{Math.abs(memB)}%</span>
+                    </div>
+                    <div className="compare-bar-track"><div className={`compare-bar-fill ${memB > 0 ? 'bg-[#4ade80]' : 'bg-[#f87171]'}`} style={{ width: `${(Math.abs(memB) / maxMem) * 100}%` }} /></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Complexity badges */}
+              <div className="p-3 bg-[#141414] border border-[#262626]">
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Complexity</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}</span>
+                    <div className="mt-1 space-y-1">
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Time: <span className="text-[#d4d4d4]">{tA.optimized.timeComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Space: <span className="text-[#d4d4d4]">{tA.optimized.spaceComplexity}</span></p>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}</span>
+                    <div className="mt-1 space-y-1">
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Time: <span className="text-[#d4d4d4]">{tB.optimized.timeComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Space: <span className="text-[#d4d4d4]">{tB.optimized.spaceComplexity}</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technique count comparison */}
+              <div className="p-3 bg-[#141414] border border-[#262626]">
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Techniques & Category</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}: {tA.techniques.length} techniques</p>
+                    <p className="text-[10px] text-[#525252] mt-0.5">{tA.category} · {tA.difficulty}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}: {tB.techniques.length} techniques</p>
+                    <p className="text-[10px] text-[#525252] mt-0.5">{tB.category} · {tB.difficulty}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CSS bar chart - visual comparison */}
+              <div className="p-3 bg-[#141414] border border-[#262626]">
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Relative Performance</p>
+                <div className="space-y-2">
+                  {[{ label: 'Speedup', valA: spA, valB: spB, max: maxSp }, { label: 'Baseline Time (s)', valA: tA.baseline.time / 1000, valB: tB.baseline.time / 1000, max: Math.max(tA.baseline.time, tB.baseline.time) / 1000, invert: true }].map((row, i) => (
+                    <div key={i}>
+                      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] mb-1">{row.label}</p>
+                      <div className="flex gap-1 items-center">
+                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] w-6 text-right">{row.label === 'Speedup' ? row.valA.toFixed(1) : row.valA.toFixed(1)}</span>
+                        <div className="flex-1 compare-bar-track">
+                          <div className="compare-bar-fill bg-[#ff6b2b]" style={{ width: `${row.invert ? Math.max(5, 100 - (row.valA / row.max) * 95) : (row.valA / row.max) * 100}%` }} />
+                        </div>
+                      </div>
+                      <div className="flex gap-1 items-center">
+                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] w-6 text-right">{row.label === 'Speedup' ? row.valB.toFixed(1) : row.valB.toFixed(1)}</span>
+                        <div className="flex-1 compare-bar-track">
+                          <div className="compare-bar-fill bg-[#4ade80]" style={{ width: `${row.invert ? Math.max(5, 100 - (row.valB / row.max) * 95) : (row.valB / row.max) * 100}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ─── BACK TO TOP BUTTON ─── */}
       <AnimatePresence>
         {showBackToTop && (
@@ -1903,6 +2658,21 @@ export default function PerformanceLab() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* ─── COMMAND PALETTE ─── */}
+      <CommandPalette
+        open={showCmdPalette}
+        onClose={() => setShowCmdPalette(false)}
+        onNavigate={(id) => scrollTo(id)}
+        onAction={handleCmdAction}
+        allTasks={TASKS}
+      />
+
+      {/* ─── HELP MODAL ─── */}
+      <HelpModal
+        open={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
 
       {/* ─── FOOTER ─── */}
       <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a]">

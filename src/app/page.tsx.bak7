@@ -52,7 +52,6 @@ import {
   Rows3,
   Monitor,
   AlertTriangle,
-  RotateCcw,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -540,20 +539,6 @@ impl<T> Drop for LockFreeQueue<T> {
   },
 ];
 
-/* ─────────────────────── TECHNIQUE TAG CLOUD DATA ─────────────────────── */
-
-const ALL_TECHNIQUES = (() => {
-  const map = new Map<string, number>();
-  for (const t of TASKS) {
-    for (const tech of t.techniques) {
-      map.set(tech.name, (map.get(tech.name) || 0) + 1);
-    }
-  }
-  return Array.from(map.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count }));
-})();
-
 /* ─────────────────────── SMALL COMPONENTS ─────────────────────── */
 
 function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -624,8 +609,6 @@ function SectionDivider({ label }: { label: string }) {
 function CodeBlock({ code, title, variant }: { code: string; title: string; variant: "baseline" | "optimized" }) {
   const [copied, setCopied] = useState(false);
   const lineCount = code.split('\n').length;
-  const charCount = code.length;
-  const tokenEstimate = Math.round(charCount / 4);
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
@@ -638,12 +621,7 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
         <div className="flex items-center gap-2 min-w-0">
           <Code2 className="size-3.5 text-[#525252] shrink-0" />
           <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] truncate">{title}</span>
-          <span className="tooltip-container">
-            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] cursor-help">{lineCount} lines</span>
-            <span className="tooltip-content">
-              {lineCount} lines · {charCount} chars · ~{tokenEstimate} tokens
-            </span>
-          </span>
+          <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">{lineCount} lines</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -663,14 +641,14 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
           </span>
         </div>
       </div>
-      <div className="max-h-[480px] overflow-auto custom-scrollbar bg-[#0d0d0d] code-glow">
+      <div className="max-h-[480px] overflow-auto custom-scrollbar bg-[#0f0f0f]">
         <SyntaxHighlighter
           language="rust"
           style={oneDark}
           customStyle={{
             margin: 0,
             padding: "1rem",
-            background: "#0d0d0d",
+            background: "#0f0f0f",
             fontSize: "0.8rem",
             lineHeight: "1.5",
             fontFamily: "var(--font-ibm-mono), monospace",
@@ -700,7 +678,7 @@ function BenchChart({ task }: { task: TaskData }) {
   ];
 
   return (
-    <Card className="h-full bg-[#141414] border border-[#262626] card-industrial card-lift">
+    <Card className="h-full bg-[#141414] border border-[#262626] card-industrial">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#525252]">
           <Gauge className="size-3.5" />
@@ -810,23 +788,7 @@ function ComplexityBadge({ label, complexity }: { label: string; complexity: str
   );
 }
 
-/* ── Animated Progress Bar Component ── */
-function AnimatedProgressBar({ value, max }: { value: number; max: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true });
-  const pct = max > 0 ? (value / max) * 100 : 0;
-
-  return (
-    <div ref={ref} className="progress-bar-track w-full">
-      <div
-        className="progress-bar-fill"
-        style={{ width: inView ? `${pct}%` : "0%" }}
-      />
-    </div>
-  );
-}
-
-function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void; reviewed: boolean }) {
+function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void }) {
   const Icon = task.icon;
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
 
@@ -834,9 +796,9 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
     <section id={`task-${task.id}`} className="scroll-mt-16">
       <FadeIn>
         <Card
-          className={`bg-[#141414] border transition-all cursor-pointer card-industrial card-lift ${
+          className={`bg-[#141414] border transition-all cursor-pointer card-industrial ${
             expanded
-              ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated pulse-ring"
+              ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated"
               : "border-[#262626] hover:border-[#3a3a3a]"
           }`}
           onClick={onToggle}
@@ -852,9 +814,6 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                     <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
                       #{task.id}
                     </span>
-                    {reviewed && (
-                      <Check className="size-3 text-[#4ade80]" />
-                    )}
                     <Badge
                       variant="outline"
                       className="text-[#525252] border-[#262626] text-[10px] badge-hover"
@@ -896,7 +855,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
         >
           {/* Problem Statement */}
           <FadeIn delay={0.05}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Problem Statement
@@ -980,7 +939,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
 
           {/* Big O Analysis */}
           <FadeIn delay={0.1}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Big O Analysis
@@ -1015,7 +974,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
 
           {/* Key Optimizations */}
           <FadeIn delay={0.15}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Key Optimizations
@@ -1066,68 +1025,12 @@ export default function PerformanceLab() {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [monitorExpanded, setMonitorExpanded] = useState(true);
-  const [reviewedTasks, setReviewedTasks] = useState<Set<number>>(() => {
-    if (typeof window === 'undefined') return new Set<number>();
-    try {
-      const saved = localStorage.getItem('perf-lab-reviewed');
-      if (saved) return new Set(JSON.parse(saved) as number[]);
-    } catch {}
-    return new Set<number>();
-  });
-  const [techniqueTag, setTechniqueTag] = useState<string | null>(null);
-  const reviewTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
-
-  // Reset progress handler
-  const resetProgress = useCallback(() => {
-    setReviewedTasks(new Set());
-    if (typeof window !== 'undefined') {
-      try { localStorage.removeItem('perf-lab-reviewed'); } catch {}
-    }
-  }, []);
-
-  // Save reviewed to localStorage
-  const saveReviewed = useCallback((ids: Set<number>) => {
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('perf-lab-reviewed', JSON.stringify(Array.from(ids))); } catch {}
-    }
-  }, []);
-
-  // Mark task as reviewed after 3 seconds of being expanded
-  useEffect(() => {
-    expandedTasks.forEach((id) => {
-      if (!reviewedTasks.has(id) && !reviewTimersRef.current.has(id)) {
-        const timer = setTimeout(() => {
-          setReviewedTasks((prev) => {
-            const next = new Set(prev);
-            next.add(id);
-            saveReviewed(next);
-            return next;
-          });
-          reviewTimersRef.current.delete(id);
-        }, 3000);
-        reviewTimersRef.current.set(id, timer);
-      }
-    });
-
-    // Cleanup timers for tasks that are no longer expanded (but keep reviewed status)
-    reviewTimersRef.current.forEach((timer, id) => {
-      if (!expandedTasks.has(id)) {
-        clearTimeout(timer);
-        reviewTimersRef.current.delete(id);
-      }
-    });
-  }, [expandedTasks, reviewedTasks, saveReviewed]);
-
-  const reviewedCount = reviewedTasks.size;
-
-  // Combine technique tag with search for filtering
-  const activeSearch = techniqueTag || searchQuery;
 
   const filteredTasks = TASKS.filter((t) => {
     const matchDiff = difficultyFilter === "all" || t.difficulty === difficultyFilter;
-    if (!activeSearch.trim()) return matchDiff;
-    const q = activeSearch.toLowerCase();
+    if (!searchQuery.trim()) return matchDiff;
+    const q = searchQuery.toLowerCase();
     const matchSearch =
       t.title.toLowerCase().includes(q) ||
       t.problem.toLowerCase().includes(q) ||
@@ -1259,28 +1162,6 @@ export default function PerformanceLab() {
     }
   };
 
-  // Breadcrumb logic
-  const getBreadcrumbLabel = () => {
-    if (activeSection === "hero") return "OVERVIEW";
-    if (activeSection === "methodology") return "METHODOLOGY";
-    if (activeSection === "results") return "RESULTS";
-    if (activeSection === "summary") return "SUMMARY";
-    if (activeSection.startsWith("task-")) {
-      const id = parseInt(activeSection.replace("task-", ""));
-      const task = TASKS.find(t => t.id === id);
-      if (task) return `#${task.id} ${task.title.substring(0, 30).toUpperCase()}`;
-    }
-    return "OVERVIEW";
-  };
-
-  const getBreadcrumbSection = () => {
-    if (activeSection.startsWith("task-")) return "TASKS";
-    if (activeSection === "methodology") return "METHODS";
-    if (activeSection === "results") return "RESULTS";
-    if (activeSection === "summary") return "SUMMARY";
-    return "OVERVIEW";
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       {/* ─── SCROLL PROGRESS BAR ─── */}
@@ -1296,9 +1177,9 @@ export default function PerformanceLab() {
                   key={item.id}
                   variant="ghost"
                   size="sm"
-                  className={`text-[10px] shrink-0 h-8 uppercase tracking-[0.2em] font-[family-name:var(--font-ibm-mono)] px-2.5 nav-btn-underline ${
+                  className={`text-[10px] shrink-0 h-8 uppercase tracking-[0.2em] font-[family-name:var(--font-ibm-mono)] px-2.5 ${
                     activeSection === item.id
-                      ? "text-[#ff6b2b] active"
+                      ? "text-[#ff6b2b]"
                       : "text-[#525252] hover:text-[#737373]"
                   }`}
                   onClick={() => scrollTo(item.id)}
@@ -1314,45 +1195,10 @@ export default function PerformanceLab() {
               >
                 {expandedTasks.size === TASKS.length ? "Collapse" : "Expand"}
               </button>
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase tracking-[0.15em] shrink-0">
-                  Reviewed {reviewedCount}/{TASKS.length}
-                </span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-[0.15em] shrink-0">
-                  5 tasks · rust
-                </span>
-              </div>
+              <span className="hidden sm:inline text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-[0.15em] shrink-0">
+                5 tasks · rust
+              </span>
             </div>
-          </div>
-        </div>
-
-        {/* ─── BREADCRUMB TRAIL ─── */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-t border-[#1c1c1c]">
-          <div className="flex items-center gap-1.5 py-1">
-            <button
-              onClick={() => scrollTo("hero")}
-              className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#737373] transition-colors uppercase tracking-[0.1em]"
-            >
-              PERF LAB
-            </button>
-            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">&gt;</span>
-            {getBreadcrumbSection() !== "OVERVIEW" && (
-              <button
-                onClick={() => scrollTo(
-                  activeSection.startsWith("task-") ? "hero" : activeSection
-                )}
-                className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#737373] hover:text-[#d4d4d4] transition-colors uppercase tracking-[0.1em]"
-              >
-                {getBreadcrumbSection()}
-              </button>
-            )}
-            {getBreadcrumbSection() !== "OVERVIEW" && (
-              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">&gt;</span>
-            )}
-            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#737373] uppercase tracking-[0.1em]">
-              {getBreadcrumbLabel()}
-            </span>
           </div>
         </div>
       </header>
@@ -1365,12 +1211,19 @@ export default function PerformanceLab() {
           <div className="terminal-bar px-4 py-1.5 flex items-center gap-3 border border-[#262626] border-b-0">
             <span className="size-1.5 rounded-full bg-[#4ade80] pulse-dot" />
             <span className="font-[family-name:var(--font-ibm-mono)]">
-              <span className="typing-text text-[#525252]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
+              <span className="text-[#525252]">&gt;</span>{" "}
+              <span className="text-[#737373]">system.init()</span>{" "}
+              <span className="text-[#333]">|</span>{" "}
+              <span className="text-[#525252]">rust v1.78.0</span>{" "}
+              <span className="text-[#333]">|</span>{" "}
+              <span className="text-[#525252]">5 tasks loaded</span>{" "}
+              <span className="text-[#333]">|</span>{" "}
+              <span className="text-[#4ade80]">status: operational</span>
             </span>
           </div>
 
           <FadeIn>
-            <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-t-0 border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline vignette">
+            <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-t-0 border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline">
               {/* Decorative data-stream lines */}
               <div className="data-stream" style={{ left: "15%", height: "120px", animationDelay: "0s" }} />
               <div className="data-stream" style={{ left: "55%", height: "80px", animationDelay: "2.5s" }} />
@@ -1436,11 +1289,6 @@ export default function PerformanceLab() {
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
                     avg {avgSpeedup.toFixed(1)}×
                   </span>
-                  {reviewedCount > 0 && (
-                    <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] bg-[#4ade80]/5 border border-[#4ade80]/20 px-2 py-0.5">
-                      reviewed {reviewedCount}/{TASKS.length}
-                    </span>
-                  )}
                 </div>
 
                 {/* Task quick links — staggered animation */}
@@ -1455,14 +1303,13 @@ export default function PerformanceLab() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: 0.1 + idx * 0.05 }}
                         onClick={() => scrollTo(`task-${t.id}`)}
-                        className="bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/30 hover:-translate-y-0.5 transition-all text-left group card-lift"
+                        className="bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/30 hover:-translate-y-0.5 transition-all text-left group"
                       >
                         <div className="flex items-center gap-2 mb-1.5">
                           <TIcon className="size-3 text-[#525252] group-hover:text-[#ff6b2b] transition-colors" />
                           <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
                             #{t.id}
                           </span>
-                          {reviewedTasks.has(t.id) && <Check className="size-2.5 text-[#4ade80] ml-auto" />}
                         </div>
                         <p className="text-xs text-[#737373] line-clamp-2 leading-relaxed group-hover:text-[#d4d4d4] transition-colors">
                           {t.title}
@@ -1474,17 +1321,6 @@ export default function PerformanceLab() {
                     );
                   })}
                 </div>
-
-                {/* Reset Progress */}
-                {reviewedCount > 0 && (
-                  <button
-                    onClick={resetProgress}
-                    className="flex items-center gap-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#f87171] uppercase tracking-[0.15em] transition-colors"
-                  >
-                    <RotateCcw className="size-3" />
-                    Reset Progress
-                  </button>
-                )}
               </div>
             </div>
           </FadeIn>
@@ -1513,11 +1349,11 @@ export default function PerformanceLab() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setTechniqueTag(null); }}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search techniques, titles, or descriptions..."
             className="search-industrial w-full pl-9 pr-16"
           />
-          {activeSearch.trim() && (
+          {searchQuery.trim() && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
               {filteredTasks.length} match{filteredTasks.length !== 1 ? "es" : ""}
             </span>
@@ -1543,7 +1379,6 @@ export default function PerformanceLab() {
                   onToggle={() => toggleTask(task.id)}
                   compareMode={compareMode}
                   onToggleCompare={() => setCompareMode(c => !c)}
-                  reviewed={reviewedTasks.has(task.id)}
                 />
                 {sectionIndex < filteredTasks.length - 1 && (
                   <SectionDivider label={String(sectionIndex + 1).padStart(2, "0")} />
@@ -1579,7 +1414,7 @@ export default function PerformanceLab() {
                   ].map((p, i) => {
                     const PIcon = p.icon;
                     return (
-                      <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/20 transition-colors card-lift">
+                      <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/20 transition-colors">
                         <PIcon className="size-4 text-[#525252] mb-2" />
                         <p className="text-xs uppercase tracking-wider text-[#d4d4d4] font-medium">
                           {p.title}
@@ -1590,31 +1425,6 @@ export default function PerformanceLab() {
                       </div>
                     );
                   })}
-                </div>
-
-                {/* ── Technique Tag Cloud ── */}
-                <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-[0.2em] mb-2">Technique Tags</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ALL_TECHNIQUES.map((tech) => (
-                      <button
-                        key={tech.name}
-                        onClick={() => {
-                          if (techniqueTag === tech.name) {
-                            setTechniqueTag(null);
-                            setSearchQuery("");
-                          } else {
-                            setTechniqueTag(tech.name);
-                            setSearchQuery(tech.name);
-                          }
-                        }}
-                        className={`chip-industrial ${techniqueTag === tech.name ? 'active' : ''}`}
-                      >
-                        {tech.name}
-                        <span className="opacity-50">{tech.count}</span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1627,7 +1437,7 @@ export default function PerformanceLab() {
         {/* ═══ RESULTS TABLE ═══ */}
         <section ref={registerSection("results")} id="results">
           <FadeIn>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Results
@@ -1759,7 +1569,7 @@ export default function PerformanceLab() {
         {/* ═══ SUMMARY ═══ */}
         <section ref={registerSection("summary")} id="summary">
           <FadeIn>
-            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial card-lift">
+            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Summary
@@ -1780,9 +1590,6 @@ export default function PerformanceLab() {
                         <p className="text-[10px] text-[#525252] font-[family-name:var(--font-ibm-mono)] uppercase tracking-widest mt-1">
                           #{t.id}
                         </p>
-                        <div className="mt-2">
-                          <AnimatedProgressBar value={parseFloat(sp)} max={maxSpeedup} />
-                        </div>
                       </div>
                     );
                   })}

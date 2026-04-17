@@ -256,3 +256,259 @@ table th {
 pre .token-line:hover {
   background: rgba(255, 107, 43, 0.04);
 }
+
+/* ═══════════════════════════════════════════════
+   ADVANCED INDUSTRIAL EFFECTS
+   ═══════════════════════════════════════════════ */
+
+/* ── Animated gradient border for expanded cards ── */
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ind-border-animated {
+  position: relative;
+}
+
+.ind-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(90deg, #ff6b2b, #fbbf24, #ff6b2b, #fbbf24, #ff6b2b);
+  background-size: 300% 100%;
+  animation: border-flow 6s ease infinite;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+.ind-border-animated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #141414;
+  z-index: -1;
+}
+
+/* ── Dot grid pattern ── */
+.ind-dot-grid {
+  background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── Terminal status bar ── */
+.terminal-bar {
+  background: #0c0c0c;
+  border-bottom: 1px solid #1c1c1c;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 11px;
+  color: #525252;
+  letter-spacing: 0.05em;
+}
+
+/* ── Badge hover micro-interaction ── */
+.badge-hover {
+  transition: all 0.15s ease;
+}
+.badge-hover:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.2);
+}
+
+/* ── Data stream animation (decorative) ── */
+@keyframes data-stream {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+.data-stream {
+  position: absolute;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 107, 43, 0.15), transparent);
+  animation: data-stream 8s linear infinite;
+  pointer-events: none;
+}
+
+/* ── Card industrial hover state ── */
+.card-industrial {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-industrial:hover {
+  border-color: #3a3a3a;
+}
+
+/* ── Sortable header indicator ── */
+.sort-header {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+.sort-header:hover {
+  color: #ff6b2b !important;
+}
+.sort-header.active {
+  color: #ff6b2b !important;
+}
+
+/* ── Search input industrial style ── */
+.search-industrial {
+  background: #0f0f0f;
+  border: 1px solid #262626;
+  color: #d4d4d4;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.02em;
+}
+.search-industrial::placeholder {
+  color: #333;
+}
+.search-industrial:focus {
+  border-color: #ff6b2b;
+  box-shadow: 0 0 0 1px rgba(255, 107, 43, 0.2);
+  outline: none;
+}
+
+/* ── Side-by-side comparison layout ── */
+.code-compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+@media (max-width: 768px) {
+  .code-compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Monospaced stat counters (bigger impact) ── */
+.stat-hero {
+  font-family: var(--font-ibm-mono), monospace;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ── Flicker effect for terminal aesthetics ── */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+.flicker {
+  animation: flicker 4s linear infinite;
+}
+
+/* ── Typing cursor for search ── */
+.search-industrial:focus {
+  caret-color: #ff6b2b;
+}
+
+/* ── Tabular numbers for alignment ── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Scroll progress gradient ── */
+.scroll-progress-industrial {
+  background: linear-gradient(90deg, #ff6b2b, #fbbf24);
+  height: 2px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  transition: width 0.1s linear;
+}
+
+/* ── Vertical accent line ── */
+.v-accent {
+  width: 2px;
+  background: #ff6b2b;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+/* ── Metric card with colored top border ── */
+.metric-card {
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--metric-color, #ff6b2b);
+}
+
+/* ── Chip/pill industrial style ── */
+.chip-industrial {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-family: var(--font-ibm-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #262626;
+  color: #525252;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background: transparent;
+}
+.chip-industrial:hover {
+  border-color: #3a3a3a;
+  color: #737373;
+}
+.chip-industrial.active {
+  border-color: #ff6b2b;
+  color: #ff6b2b;
+  background: rgba(255, 107, 43, 0.05);
+}
+
+/* ── Horizontal divider with coordinates ── */
+.divider-coords::before {
+  content: attr(data-coords);
+  position: absolute;
+  left: 0;
+  top: -8px;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 9px;
+  color: #333;
+  letter-spacing: 0.1em;
+}
+
+/* ── Smooth number transition ── */
+.num-transition {
+  transition: all 0.3s ease;
+}
+
+/* ── Blockquote industrial style ── */
+blockquote.industrial {
+  border-left: 2px solid #ff6b2b;
+  padding-left: 1rem;
+  margin-left: 0;
+  font-style: normal;
+  color: #737373;
+}
+
+/* ── Horizontal rule styled ── */
+hr.industrial {
+  border: none;
+  height: 1px;
+  background: #1c1c1c;
+  margin: 1.5rem 0;
+}

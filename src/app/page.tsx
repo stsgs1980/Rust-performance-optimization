@@ -46,6 +46,11 @@ import {
   Copy,
   Check,
   ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  Columns2,
+  Rows3,
+  Monitor,
   AlertTriangle,
 } from "lucide-react";
 
@@ -626,7 +631,7 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
             {copied ? <Check className="size-3.5 text-[#4ade80]" /> : <Copy className="size-3.5" />}
           </button>
           <span
-            className={`text-[10px] font-[family-name:var(--font-ibm-mono)] font-medium uppercase tracking-wider px-2 py-0.5 ${
+            className={`text-[10px] font-[family-name:var(--font-ibm-mono)] font-medium uppercase tracking-wider px-2 py-0.5 badge-hover ${
               variant === "baseline"
                 ? "text-[#f87171] bg-[#f87171]/10"
                 : "text-[#4ade80] bg-[#4ade80]/10"
@@ -673,7 +678,7 @@ function BenchChart({ task }: { task: TaskData }) {
   ];
 
   return (
-    <Card className="h-full bg-[#141414] border border-[#262626]">
+    <Card className="h-full bg-[#141414] border border-[#262626] card-industrial">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#525252]">
           <Gauge className="size-3.5" />
@@ -682,7 +687,7 @@ function BenchChart({ task }: { task: TaskData }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 text-center border border-[#262626]">
+          <div className="p-4 text-center border border-[#262626] metric-card" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
             <p className="text-2xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)]">
               {speedup}×
             </p>
@@ -690,7 +695,7 @@ function BenchChart({ task }: { task: TaskData }) {
               Speedup
             </p>
           </div>
-          <div className="p-4 text-center border border-[#262626]">
+          <div className="p-4 text-center border border-[#262626] metric-card" style={{ "--metric-color": parseInt(memSave) > 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
             <p className={`text-2xl font-bold font-[family-name:var(--font-ibm-mono)] ${parseInt(memSave) > 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
               {parseInt(memSave) > 0 ? `−${memSave}%` : `+${Math.abs(parseInt(memSave))}%`}
             </p>
@@ -776,14 +781,14 @@ function ComplexityBadge({ label, complexity }: { label: string; complexity: str
       : "border-[#4ade80]/30 text-[#4ade80]";
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[11px] font-[family-name:var(--font-ibm-mono)] font-medium px-2 py-0.5 border ${color}`}
+      className={`inline-flex items-center gap-1 text-[11px] font-[family-name:var(--font-ibm-mono)] font-medium px-2 py-0.5 border badge-hover ${color}`}
     >
       {label}: {complexity}
     </span>
   );
 }
 
-function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: boolean; onToggle: () => void }) {
+function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void }) {
   const Icon = task.icon;
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
 
@@ -791,9 +796,9 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
     <section id={`task-${task.id}`} className="scroll-mt-16">
       <FadeIn>
         <Card
-          className={`bg-[#141414] border transition-all cursor-pointer ${
+          className={`bg-[#141414] border transition-all cursor-pointer card-industrial ${
             expanded
-              ? "border-[#ff6b2b] border-l-[3px] ind-glow"
+              ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated"
               : "border-[#262626] hover:border-[#3a3a3a]"
           }`}
           onClick={onToggle}
@@ -811,19 +816,19 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
                     </span>
                     <Badge
                       variant="outline"
-                      className="text-[#525252] border-[#262626] text-[10px]"
+                      className="text-[#525252] border-[#262626] text-[10px] badge-hover"
                     >
                       {task.difficulty}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="text-[#525252] border-[#262626] text-[10px]"
+                      className="text-[#525252] border-[#262626] text-[10px] badge-hover"
                     >
                       {task.category}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="border-[#ff6b2b]/30 text-[#ff6b2b] text-[10px]"
+                      className="border-[#ff6b2b]/30 text-[#ff6b2b] text-[10px] badge-hover"
                     >
                       {speedup}×
                     </Badge>
@@ -850,7 +855,7 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
         >
           {/* Problem Statement */}
           <FadeIn delay={0.05}>
-            <Card className="bg-[#141414] border border-[#262626]">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Problem Statement
@@ -863,7 +868,7 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
                     <Badge
                       key={i}
                       variant="outline"
-                      className="text-[#525252] border-[#262626] text-[10px] font-normal"
+                      className="text-[#525252] border-[#262626] text-[10px] font-normal badge-hover"
                     >
                       {c}
                     </Badge>
@@ -875,34 +880,66 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
 
           {/* Code Comparison + Bench Chart */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <Tabs defaultValue="baseline" className="w-full">
-              <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
-                <TabsTrigger
-                  value="baseline"
-                  className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#525252]"
-                >
-                  <XCircle className="size-3 mr-1" /> Baseline
-                </TabsTrigger>
-                <TabsTrigger
-                  value="optimized"
-                  className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#525252]"
-                >
-                  <CheckCircle2 className="size-3 mr-1" /> Optimized
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="baseline" className="mt-3">
-                <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
-              </TabsContent>
-              <TabsContent value="optimized" className="mt-3">
-                <CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" />
-              </TabsContent>
-            </Tabs>
+            {compareMode ? (
+              /* Side-by-side comparison */
+              <div className="xl:col-span-1">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Code Comparison</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
+                    className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                    title="Switch to tabbed view"
+                  >
+                    <Rows3 className="size-3.5" />
+                  </button>
+                </div>
+                <div className="code-compare-grid">
+                  <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
+                  <CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" />
+                </div>
+              </div>
+            ) : (
+              /* Tabbed view */
+              <div className="xl:col-span-1">
+                <div className="flex items-center justify-end mb-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
+                    className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                    title="Switch to side-by-side view"
+                  >
+                    <Columns2 className="size-3.5" />
+                  </button>
+                </div>
+                <Tabs defaultValue="baseline" className="w-full">
+                  <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
+                    <TabsTrigger
+                      value="baseline"
+                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#525252]"
+                    >
+                      <XCircle className="size-3 mr-1" /> Baseline
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="optimized"
+                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#525252]"
+                    >
+                      <CheckCircle2 className="size-3 mr-1" /> Optimized
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="baseline" className="mt-3">
+                    <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
+                  </TabsContent>
+                  <TabsContent value="optimized" className="mt-3">
+                    <CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
             <BenchChart task={task} />
           </div>
 
           {/* Big O Analysis */}
           <FadeIn delay={0.1}>
-            <Card className="bg-[#141414] border border-[#262626]">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Big O Analysis
@@ -937,7 +974,7 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
 
           {/* Key Optimizations */}
           <FadeIn delay={0.15}>
-            <Card className="bg-[#141414] border border-[#262626]">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader className="pb-3">
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Key Optimizations
@@ -966,6 +1003,15 @@ function TaskSection({ task, expanded, onToggle }: { task: TaskData; expanded: b
   );
 }
 
+/* ─────────────────────── SORT ICON ─────────────────────── */
+
+function SortIcon({ col, activeCol, direction }: { col: string; activeCol: string; direction: "asc" | "desc" }) {
+  if (activeCol !== col) return <ArrowUpDown className="size-3 inline ml-1 opacity-40" />;
+  return direction === "desc"
+    ? <ArrowDown className="size-3 inline ml-1 text-[#ff6b2b]" />
+    : <ArrowUp className="size-3 inline ml-1 text-[#ff6b2b]" />;
+}
+
 /* ─────────────────────── MAIN PAGE ─────────────────────── */
 
 export default function PerformanceLab() {
@@ -974,11 +1020,23 @@ export default function PerformanceLab() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [compareMode, setCompareMode] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [monitorExpanded, setMonitorExpanded] = useState(true);
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
 
-  const filteredTasks = difficultyFilter === "all"
-    ? TASKS
-    : TASKS.filter(t => t.difficulty === difficultyFilter);
+  const filteredTasks = TASKS.filter((t) => {
+    const matchDiff = difficultyFilter === "all" || t.difficulty === difficultyFilter;
+    if (!searchQuery.trim()) return matchDiff;
+    const q = searchQuery.toLowerCase();
+    const matchSearch =
+      t.title.toLowerCase().includes(q) ||
+      t.problem.toLowerCase().includes(q) ||
+      t.techniques.some((tech) => tech.name.toLowerCase().includes(q) || tech.desc.toLowerCase().includes(q));
+    return matchDiff && matchSearch;
+  });
 
   const difficulties = ["all", "Advanced", "Expert"];
   const diffCounts = {
@@ -1066,12 +1124,48 @@ export default function PerformanceLab() {
   );
   const memImprovedTasks = TASKS.filter((t) => t.optimized.memory < t.baseline.memory).length;
 
+  const totalTimeSaved = TASKS.reduce((a, t) => a + (t.baseline.time - t.optimized.time), 0);
+  const totalMemSaved = TASKS.reduce((a, t) => a + (t.baseline.memory - t.optimized.memory), 0);
+  const speedups = TASKS.map(t => t.baseline.time / t.optimized.time);
+  const minSpeedup = Math.min(...speedups);
+  const maxSpeedup = Math.max(...speedups);
+  const avgSpeedup = speedups.reduce((a, b) => a + b, 0) / speedups.length;
+
+  const formatTimeDelta = (ms: number) => {
+    if (Math.abs(ms) >= 1000) return `${(ms / 1000).toFixed(Math.abs(ms) >= 10000 ? 0 : 1)}s`;
+    return `${ms.toFixed(0)}ms`;
+  };
+
+  // Sort logic for results table
+  const sortedTasks = [...TASKS];
+  if (sortColumn) {
+    sortedTasks.sort((a, b) => {
+      let valA: number, valB: number;
+      switch (sortColumn) {
+        case "id": valA = a.id; valB = b.id; break;
+        case "baseline": valA = a.baseline.time; valB = b.baseline.time; break;
+        case "optimized": valA = a.optimized.time; valB = b.optimized.time; break;
+        case "speedup": valA = a.baseline.time / a.optimized.time; valB = b.baseline.time / b.optimized.time; break;
+        case "memory": valA = (1 - a.optimized.memory / a.baseline.memory) * 100; valB = (1 - b.optimized.memory / b.baseline.memory) * 100; break;
+        default: return 0;
+      }
+      return sortDirection === "desc" ? valB - valA : valA - valB;
+    });
+  }
+
+  const handleSort = (col: string) => {
+    if (sortColumn === col) {
+      setSortDirection(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(col);
+      setSortDirection("desc");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       {/* ─── SCROLL PROGRESS BAR ─── */}
-      <div className="fixed top-0 left-0 right-0 z-[60] h-[2px] bg-[#1c1c1c]">
-        <div className="h-full bg-[#ff6b2b] transition-all duration-150" style={{ width: `${scrollProgress}%` }} />
-      </div>
+      <div className="scroll-progress-industrial" style={{ width: `${scrollProgress}%` }} />
 
       {/* ─── STICKY HEADER ─── */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a] border-b border-[#262626]">
@@ -1113,11 +1207,31 @@ export default function PerformanceLab() {
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 space-y-10">
         {/* ═══ HERO SECTION ═══ */}
         <section ref={registerSection("hero")} id="hero">
+          {/* Terminal status bar */}
+          <div className="terminal-bar px-4 py-1.5 flex items-center gap-3 border border-[#262626] border-b-0">
+            <span className="size-1.5 rounded-full bg-[#4ade80] pulse-dot" />
+            <span className="font-[family-name:var(--font-ibm-mono)]">
+              <span className="text-[#525252]">&gt;</span>{" "}
+              <span className="text-[#737373]">system.init()</span>{" "}
+              <span className="text-[#333]">|</span>{" "}
+              <span className="text-[#525252]">rust v1.78.0</span>{" "}
+              <span className="text-[#333]">|</span>{" "}
+              <span className="text-[#525252]">5 tasks loaded</span>{" "}
+              <span className="text-[#333]">|</span>{" "}
+              <span className="text-[#4ade80]">status: operational</span>
+            </span>
+          </div>
+
           <FadeIn>
-            <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline">
-              <div className="space-y-6">
+            <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-t-0 border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline">
+              {/* Decorative data-stream lines */}
+              <div className="data-stream" style={{ left: "15%", height: "120px", animationDelay: "0s" }} />
+              <div className="data-stream" style={{ left: "55%", height: "80px", animationDelay: "2.5s" }} />
+              <div className="data-stream" style={{ left: "85%", height: "100px", animationDelay: "5s" }} />
+
+              <div className="space-y-6 relative z-10">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink">
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker">
                     Performance Lab
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
@@ -1149,7 +1263,7 @@ export default function PerformanceLab() {
                     { val: "Rust", label: "Language", isCounter: false },
                   ].map((s, i) => (
                     <div key={i} className="px-4 py-3 text-center">
-                      <p className="text-xl font-bold font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4] [text-shadow:0_0_8px_rgba(255,107,43,0.3)]">
+                      <p className="text-4xl sm:text-5xl font-bold font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4] [text-shadow:0_0_8px_rgba(255,107,43,0.3)] stat-hero">
                         {s.isCounter ? (
                           <AnimatedCounter value={s.val} suffix={s.suffix || ""} />
                         ) : (
@@ -1161,6 +1275,20 @@ export default function PerformanceLab() {
                       </p>
                     </div>
                   ))}
+                </div>
+
+                {/* Quick Stats row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Quick Stats</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
+                    min {minSpeedup.toFixed(1)}×
+                  </span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
+                    max {maxSpeedup.toFixed(1)}×
+                  </span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
+                    avg {avgSpeedup.toFixed(1)}×
+                  </span>
                 </div>
 
                 {/* Task quick links — staggered animation */}
@@ -1215,20 +1343,49 @@ export default function PerformanceLab() {
           ))}
         </div>
 
+        {/* ═══ TECHNIQUE SEARCH BAR ═══ */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#333]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search techniques, titles, or descriptions..."
+            className="search-industrial w-full pl-9 pr-16"
+          />
+          {searchQuery.trim() && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+              {filteredTasks.length} match{filteredTasks.length !== 1 ? "es" : ""}
+            </span>
+          )}
+        </div>
+
         {/* ═══ TASK SECTIONS ═══ */}
         <div className="space-y-6">
-          {filteredTasks.map((task, sectionIndex) => (
-            <div key={task.id}>
-              <TaskSection
-                task={task}
-                expanded={expandedTasks.has(task.id)}
-                onToggle={() => toggleTask(task.id)}
-              />
-              {sectionIndex < filteredTasks.length - 1 && (
-                <SectionDivider label={String(sectionIndex + 1).padStart(2, "0")} />
-              )}
-            </div>
-          ))}
+          {filteredTasks.length === 0 ? (
+            <FadeIn>
+              <div className="text-center py-16 border border-[#262626] bg-[#141414]">
+                <Search className="size-8 text-[#333] mx-auto mb-3" />
+                <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-1">No Matches</p>
+                <p className="text-xs text-[#333]">Try a different search query</p>
+              </div>
+            </FadeIn>
+          ) : (
+            filteredTasks.map((task, sectionIndex) => (
+              <div key={task.id}>
+                <TaskSection
+                  task={task}
+                  expanded={expandedTasks.has(task.id)}
+                  onToggle={() => toggleTask(task.id)}
+                  compareMode={compareMode}
+                  onToggleCompare={() => setCompareMode(c => !c)}
+                />
+                {sectionIndex < filteredTasks.length - 1 && (
+                  <SectionDivider label={String(sectionIndex + 1).padStart(2, "0")} />
+                )}
+              </div>
+            ))
+          )}
         </div>
 
         {/* ─── Separator ─── */}
@@ -1237,7 +1394,7 @@ export default function PerformanceLab() {
         {/* ═══ METHODOLOGY ═══ */}
         <section ref={registerSection("methodology")} id="methodology">
           <FadeIn>
-            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b]">
+            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial ind-dot-grid">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Methodology
@@ -1280,7 +1437,7 @@ export default function PerformanceLab() {
         {/* ═══ RESULTS TABLE ═══ */}
         <section ref={registerSection("results")} id="results">
           <FadeIn>
-            <Card className="bg-[#141414] border border-[#262626]">
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Results
@@ -1291,16 +1448,26 @@ export default function PerformanceLab() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[#262626]">
-                        <th className="text-left py-2 pr-4 text-[#525252]">#</th>
+                        <th className="text-left py-2 pr-4 text-[#525252] sort-header" onClick={() => handleSort("id")}>
+                          # <SortIcon col="id" activeCol={sortColumn} direction={sortDirection} />
+                        </th>
                         <th className="text-left py-2 pr-4 text-[#525252]">Task</th>
-                        <th className="text-right py-2 px-3 text-[#525252]">Baseline</th>
-                        <th className="text-right py-2 px-3 text-[#525252]">Optimized</th>
-                        <th className="text-right py-2 px-3 text-[#525252]">Speedup</th>
-                        <th className="text-right py-2 text-[#525252]">Memory</th>
+                        <th className="text-right py-2 px-3 text-[#525252] sort-header" onClick={() => handleSort("baseline")}>
+                          Baseline <SortIcon col="baseline" activeCol={sortColumn} direction={sortDirection} />
+                        </th>
+                        <th className="text-right py-2 px-3 text-[#525252] sort-header" onClick={() => handleSort("optimized")}>
+                          Optimized <SortIcon col="optimized" activeCol={sortColumn} direction={sortDirection} />
+                        </th>
+                        <th className="text-right py-2 px-3 text-[#525252] sort-header" onClick={() => handleSort("speedup")}>
+                          Speedup <SortIcon col="speedup" activeCol={sortColumn} direction={sortDirection} />
+                        </th>
+                        <th className="text-right py-2 text-[#525252] sort-header" onClick={() => handleSort("memory")}>
+                          Memory <SortIcon col="memory" activeCol={sortColumn} direction={sortDirection} />
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {TASKS.map((t) => {
+                      {sortedTasks.map((t) => {
                         const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                         const ms = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
                         const memImproved = t.optimized.memory < t.baseline.memory;
@@ -1314,26 +1481,26 @@ export default function PerformanceLab() {
                             className="border-b border-[#1c1c1c] hover:bg-[#0f0f0f] transition-colors"
                           >
                             <td className="py-2.5 pr-4">
-                              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+                              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] tabular-nums">
                                 #{t.id}
                               </span>
                             </td>
                             <td className="py-2.5 pr-4 max-w-[200px]">
                               <p className="text-[#737373] text-xs truncate">{t.title}</p>
                             </td>
-                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#737373]">
+                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#737373] tabular-nums">
                               {formatT(t.baseline.time)}
                             </td>
-                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
+                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#4ade80] tabular-nums">
                               {formatT(t.optimized.time)}
                             </td>
                             <td className="py-2.5 px-3 text-right">
-                              <span className="font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">
+                              <span className="font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] tabular-nums">
                                 {sp}×
                               </span>
                             </td>
                             <td className="py-2.5 text-right">
-                              <span className={`font-medium font-[family-name:var(--font-ibm-mono)] ${memImproved ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+                              <span className={`font-medium font-[family-name:var(--font-ibm-mono)] tabular-nums ${memImproved ? "text-[#4ade80]" : "text-[#f87171]"}`}>
                                 {memImproved ? `-` : `+`}{Math.abs(parseInt(ms))}%
                               </span>
                             </td>
@@ -1402,7 +1569,7 @@ export default function PerformanceLab() {
         {/* ═══ SUMMARY ═══ */}
         <section ref={registerSection("summary")} id="summary">
           <FadeIn>
-            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b]">
+            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
                   Summary
@@ -1417,7 +1584,7 @@ export default function PerformanceLab() {
                         key={t.id}
                         className="text-center p-3 bg-[#0f0f0f] border border-[#262626]"
                       >
-                        <p className="text-xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)]">
+                        <p className="text-xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
                           {sp}×
                         </p>
                         <p className="text-[10px] text-[#525252] font-[family-name:var(--font-ibm-mono)] uppercase tracking-widest mt-1">
@@ -1461,6 +1628,71 @@ export default function PerformanceLab() {
           </FadeIn>
         </section>
       </main>
+
+      {/* ─── PERFORMANCE SUMMARY WIDGET (System Monitor) ─── */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <AnimatePresence>
+          {monitorExpanded && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-[#141414] border border-[#262626] p-4 w-64 mb-2"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Monitor className="size-3.5 text-[#ff6b2b]" />
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">System Monitor</span>
+              </div>
+
+              {/* Time saved */}
+              <div className="metric-card p-3 border border-[#262626] mb-2" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-1">Total Time Saved</p>
+                <p className="text-lg font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
+                  {formatTimeDelta(totalTimeSaved)}
+                </p>
+              </div>
+
+              {/* Memory saved */}
+              <div className="metric-card p-3 border border-[#262626] mb-3" style={{ "--metric-color": totalMemSaved >= 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-1">Total Memory Delta</p>
+                <p className={`text-lg font-bold font-[family-name:var(--font-ibm-mono)] tabular-nums ${totalMemSaved >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+                  {totalMemSaved >= 0 ? "−" : "+"}{Math.abs(totalMemSaved)} MB
+                </p>
+              </div>
+
+              {/* Speedup distribution bar chart */}
+              <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-2">Speedup Distribution</p>
+              <div className="flex items-end gap-1 h-16">
+                {TASKS.map((t, i) => {
+                  const sp = t.baseline.time / t.optimized.time;
+                  const maxSp = maxSpeedup;
+                  const h = (sp / maxSp) * 100;
+                  return (
+                    <div key={t.id} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#525252] tabular-nums">{sp.toFixed(0)}×</span>
+                      <div
+                        className="w-full bg-[#ff6b2b] min-h-[2px] transition-all duration-300"
+                        style={{ height: `${h}%` }}
+                      />
+                      <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#333]">#{t.id}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Collapsed indicator dot */}
+        <button
+          onClick={() => setMonitorExpanded(c => !c)}
+          className="size-8 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#525252] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
+          aria-label="Toggle system monitor"
+        >
+          <Monitor className="size-3.5" />
+        </button>
+      </div>
 
       {/* ─── BACK TO TOP BUTTON ─── */}
       <AnimatePresence>

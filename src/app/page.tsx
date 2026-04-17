@@ -58,6 +58,8 @@ import {
   Target,
   Award,
   Code2,
+  Brain,
+  BarChart3,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -877,7 +879,12 @@ export default function PerformanceLab() {
   const navItems = [
     { id: "hero", label: "Обзор" },
     ...TASKS.map(t => ({ id: `task-${t.id}`, label: `#${t.id}` })),
+    { id: "methodology", label: "Методология" },
+    { id: "results", label: "Результаты" },
   ];
+
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const totalSpeedup = TASKS.reduce((a, t) => a + t.baseline.time / t.optimized.time, 0);
 
@@ -975,6 +982,115 @@ export default function PerformanceLab() {
             <TaskSection key={task.id} task={task} />
           ))}
         </div>
+
+        {/* ═══ METHODOLOGY ═══ */}
+        <section ref={registerSection("methodology")} id="methodology">
+          <FadeIn>
+            <Card className="border-2 border-amber-200 dark:border-amber-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="size-5 text-amber-500" />
+                  8 принципов high-performance кода
+                </CardTitle>
+                <CardDescription>Методология performance-code-generator</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { icon: TrendingUp, title: "Big O оптимизация", desc: "Всегда выбирай минимальную сложность. O(1) > O(log n) > O(n) > O(n²)" },
+                    { icon: Database, title: "Кэш-локальность", desc: "Data-Oriented Design: compact arrays, sequential access, AoS vs SoA" },
+                    { icon: Layers, title: "Минимизация аллокаций", desc: "Object pooling, arena allocators, pre-allocation, buffer reuse" },
+                    { icon: Network, title: "Эффективный I/O", desc: "Async non-blocking I/O, buffering, batching системных вызовов" },
+                    { icon: ArrowRightLeft, title: "Lock-free конкурентность", desc: "Atomic operations, ring buffers, CAS вместо mutex" },
+                    { icon: Cpu, title: "Zero-cost абстракции", desc: "Inline, generics, monomorphization — абстракции без runtime overhead" },
+                    { icon: Grid3x3, title: "SIMD векторизация", desc: "AVX2/AVX-512: 8-16 элементов параллельно в одной инструкции" },
+                    { icon: Gauge, title: "Профилирование", desc: "Измеряй, а не гадай. criterion, perf, flamegraph" },
+                  ].map((p, i) => {
+                    const PIcon = p.icon;
+                    return (
+                      <div key={i} className="bg-muted/50 rounded-lg p-3 border border-border hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors">
+                        <PIcon className="size-5 text-emerald-600 dark:text-emerald-400 mb-2" />
+                        <p className="text-sm font-semibold">{p.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{p.desc}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </section>
+
+        {/* ═══ RESULTS TABLE ═══ */}
+        <section ref={registerSection("results")} id="results">
+          <FadeIn>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="size-5 text-emerald-600 dark:text-emerald-400" />
+                  Сводная таблица результатов
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Results Table */}
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 pr-4 font-semibold">#</th>
+                        <th className="text-left py-2 pr-4 font-semibold">Задача</th>
+                        <th className="text-right py-2 px-3 font-semibold">Baseline</th>
+                        <th className="text-right py-2 px-3 font-semibold">Optimized</th>
+                        <th className="text-right py-2 px-3 font-semibold">Speedup</th>
+                        <th className="text-right py-2 font-semibold">Memory save</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {TASKS.map((t) => {
+                        const sp = (t.baseline.time / t.optimized.time).toFixed(1);
+                        const ms = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
+                        const formatT = (v: number) => v >= 1000 ? `${(v/1000).toFixed(v >= 10000 ? 0 : 1)}s` : `${v}ms`;
+                        return (
+                          <tr key={t.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                            <td className="py-2.5 pr-4">
+                              <Badge variant="outline" className="text-[10px]">#{t.id}</Badge>
+                            </td>
+                            <td className="py-2.5 pr-4 max-w-[200px]">
+                              <p className="font-medium truncate">{t.title}</p>
+                              <Badge variant="secondary" className="text-[9px] mt-0.5">{t.difficulty}</Badge>
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono text-red-600 dark:text-red-400">{formatT(t.baseline.time)}</td>
+                            <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatT(t.optimized.time)}</td>
+                            <td className="py-2.5 px-3 text-right">
+                              <span className="font-bold text-emerald-700 dark:text-emerald-400">{sp}×</span>
+                            </td>
+                            <td className="py-2.5 text-right">
+                              <span className="font-medium text-amber-600 dark:text-amber-400">-{ms}%</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Speedup Chart - Horizontal bars */}
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={TASKS.map(t => ({ name: `#${t.id}`, speedup: parseFloat((t.baseline.time / t.optimized.time).toFixed(1)), memory: parseFloat(((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0)) }))} layout="vertical" barCategoryGap="15%">
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#333" : "#e5e5e5"} horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: isDark ? "#999" : "#666" }} />
+                      <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 12, fill: isDark ? "#ccc" : "#333" }} />
+                      <Bar dataKey="speedup" name="Speedup (x)" fill="#10b981" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="memory" name="Memory save (%)" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                      <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </section>
 
         {/* ═══ SUMMARY ═══ */}
         <section ref={registerSection("summary")} id="summary">

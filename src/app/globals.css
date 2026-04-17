@@ -1401,3 +1401,99 @@ hr.industrial {
 .hover-border-sweep:hover {
   background-position: 200% 50%;
 }
+
+/* ═══════════════════════════════════════════════ ROUND 11 — NEW CSS RULES ═══ */
+
+/* ── Neon border glow — subtle orange pulse ── */
+@keyframes neon-border-pulse {
+  0%, 100% { box-shadow: 0 0 6px -2px rgba(255, 107, 43, 0.10), inset 0 0 6px -2px rgba(255, 107, 43, 0.05); }
+  50% { box-shadow: 0 0 12px 0px rgba(255, 107, 43, 0.15), inset 0 0 10px -2px rgba(255, 107, 43, 0.08); }
+}
+.neon-border {
+  animation: neon-border-pulse 3s ease-in-out infinite;
+  border-color: rgba(255, 107, 43, 0.15);
+}
+
+/* ── Industrial text shadow — orange emphasis for numbers/values ── */
+.text-shadow-industrial {
+  text-shadow: 0 0 8px rgba(255, 107, 43, 0.25), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Subtle mechanical rotation on hover ── */
+.hover-rotate-subtle {
+  transition: transform 0.2s ease;
+}
+.hover-rotate-subtle:hover {
+  transform: rotate(0.5deg);
+}
+
+/* ── Right-side gradient border (orange → transparent, 2px) ── */
+.gradient-border-right {
+  position: relative;
+}
+.gradient-border-right::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #ff6b2b 0%, rgba(255, 107, 43, 0.3) 60%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ── Diagonal shimmer sweep on hover ── */
+.shimmer-hover {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 107, 43, 0.04) 37%,
+    rgba(255, 107, 43, 0.08) 50%,
+    rgba(255, 107, 43, 0.04) 63%,
+    transparent 75%
+  );
+  transform: translateX(-100%) translateY(-100%);
+  transition: none;
+  pointer-events: none;
+}
+.shimmer-hover:hover::after {
+  animation: shimmer-hover-sweep 0.8s ease forwards;
+}
+@keyframes shimmer-hover-sweep {
+  0% { transform: translateX(-100%) translateY(-100%); }
+  100% { transform: translateX(100%) translateY(100%); }
+}
+
+/* ── Depth shadow levels for card hierarchy ── */
+.depth-shadow-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.depth-shadow-2 {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.depth-shadow-3 {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 107, 43, 0.04);
+}
+
+/* ── Bold monospace utility ── */
+.font-mono-bold {
+  font-family: var(--font-ibm-mono), monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ── Subtle breathing animation (scale 1.0 → 1.005) ── */
+@keyframes subtle-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.005); }
+}
+.breathe {
+  animation: subtle-breathe 4s ease-in-out infinite;
+}

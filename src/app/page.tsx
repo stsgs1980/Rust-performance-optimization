@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useSyncExternalStore } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -570,6 +570,44 @@ const ALL_TECHNIQUES = (() => {
 
 /* ─────────────────────── HELPERS ─────────────────────── */
 
+/* Hydration-safe persisted Set backed by localStorage + useSyncExternalStore */
+function usePersistedSet(key: string): [Set<number>, (next: Set<number>) => void] {
+  const listenersRef = useRef(new Set<() => void>());
+  const snapshotRef = useRef<Set<number> | null>(null);
+
+  const subscribe = useCallback((listener: () => void) => {
+    listenersRef.current.add(listener);
+    return () => { listenersRef.current.delete(listener); };
+  }, []);
+
+  const getSnapshot = useCallback((): Set<number> => {
+    if (snapshotRef.current !== null) return snapshotRef.current;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        snapshotRef.current = new Set(JSON.parse(saved) as number[]);
+        return snapshotRef.current;
+      }
+    } catch { /* ignore */ }
+    snapshotRef.current = new Set<number>();
+    return snapshotRef.current;
+  }, [key]);
+
+  const getServerSnapshot = useCallback((): Set<number> => {
+    return new Set<number>();
+  }, []);
+
+  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const setValue = useCallback((next: Set<number>) => {
+    snapshotRef.current = next;
+    try { localStorage.setItem(key, JSON.stringify(Array.from(next))); } catch { /* ignore */ }
+    listenersRef.current.forEach(l => l());
+  }, [key]);
+
+  return [value, setValue];
+}
+
 function calcReadingTime(task: TaskData): number {
   const codeLines = task.baseline.code.split('\n').length + task.optimized.code.split('\n').length;
   const textChars = task.problem.length + task.techniques.reduce((a, t) => a + t.desc.length + t.name.length, 0);
@@ -848,16 +886,16 @@ function BenchChart({ task }: { task: TaskData }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 text-center border border-[#262626] metric-card" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
-            <p className="text-2xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)]">
+          <div className="p-4 text-center border border-[#262626] metric-card depth-shadow-1" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
+            <p className="text-2xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] text-shadow-industrial">
               {speedup}×
             </p>
             <p className="text-[10px] text-[#525252] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
               Speedup
             </p>
           </div>
-          <div className="p-4 text-center border border-[#262626] metric-card" style={{ "--metric-color": parseInt(memSave) > 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
-            <p className={`text-2xl font-bold font-[family-name:var(--font-ibm-mono)] ${parseInt(memSave) > 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+          <div className="p-4 text-center border border-[#262626] metric-card depth-shadow-1" style={{ "--metric-color": parseInt(memSave) > 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
+            <p className={`text-2xl font-bold font-[family-name:var(--font-ibm-mono)] text-shadow-industrial ${parseInt(memSave) > 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
               {parseInt(memSave) > 0 ? `−${memSave}%` : `+${Math.abs(parseInt(memSave))}%`}
             </p>
             <p className="text-[10px] text-[#525252] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
@@ -932,17 +970,25 @@ function BenchChart({ task }: { task: TaskData }) {
   );
 }
 
-/* ── Ambient Particles Component ── */
+/* ── Ambient Particles Component (deterministic to avoid hydration mismatch) ── */
 function AmbientParticles() {
-  const particles = Array.from({ length: 15 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    bottom: `${Math.random() * 30}%`,
-    delay: `${Math.random() * 6}s`,
-    duration: `${3 + Math.random() * 4}s`,
-    size: Math.random() > 0.5 ? 1 : 2,
-    opacity: 0.1 + Math.random() * 0.3,
-  }));
+  const particles = [
+    { id: 0, left: '12%', bottom: '5%', delay: '0.2s', duration: '5s', size: 1, opacity: 0.15 },
+    { id: 1, left: '28%', bottom: '12%', delay: '1.1s', duration: '6s', size: 2, opacity: 0.25 },
+    { id: 2, left: '45%', bottom: '3%', delay: '0.8s', duration: '4s', size: 1, opacity: 0.18 },
+    { id: 3, left: '67%', bottom: '18%', delay: '2.3s', duration: '7s', size: 2, opacity: 0.2 },
+    { id: 4, left: '82%', bottom: '8%', delay: '3.5s', duration: '5s', size: 1, opacity: 0.3 },
+    { id: 5, left: '5%', bottom: '22%', delay: '1.7s', duration: '6s', size: 2, opacity: 0.12 },
+    { id: 6, left: '35%', bottom: '15%', delay: '0.5s', duration: '4s', size: 1, opacity: 0.22 },
+    { id: 7, left: '55%', bottom: '10%', delay: '4.1s', duration: '7s', size: 2, opacity: 0.28 },
+    { id: 8, left: '90%', bottom: '25%', delay: '2.8s', duration: '5s', size: 1, opacity: 0.16 },
+    { id: 9, left: '18%', bottom: '20%', delay: '3.2s', duration: '6s', size: 2, opacity: 0.24 },
+    { id: 10, left: '72%', bottom: '6%', delay: '0.9s', duration: '4s', size: 1, opacity: 0.19 },
+    { id: 11, left: '40%', bottom: '28%', delay: '5.0s', duration: '7s', size: 2, opacity: 0.14 },
+    { id: 12, left: '60%', bottom: '14%', delay: '1.5s', duration: '5s', size: 1, opacity: 0.26 },
+    { id: 13, left: '95%', bottom: '2%', delay: '3.8s', duration: '6s', size: 2, opacity: 0.17 },
+    { id: 14, left: '50%', bottom: '22%', delay: '2.0s', duration: '4s', size: 1, opacity: 0.21 },
+  ];
   return (
     <div className="ambient-particles">
       {particles.map((p) => (
@@ -1316,7 +1362,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
         <Card
           className={`bg-[#141414] border transition-all cursor-pointer card-industrial card-lift ${
             expanded
-              ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated pulse-ring"
+              ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated pulse-ring neon-border"
               : "border-[#262626] hover:border-[#3a3a3a]"
           }`}
           onClick={onToggle}
@@ -1600,25 +1646,11 @@ export default function PerformanceLab() {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [monitorExpanded, setMonitorExpanded] = useState(true);
-  const [reviewedTasks, setReviewedTasks] = useState<Set<number>>(() => {
-    if (typeof window === 'undefined') return new Set<number>();
-    try {
-      const saved = localStorage.getItem('perf-lab-reviewed');
-      if (saved) return new Set(JSON.parse(saved) as number[]);
-    } catch {}
-    return new Set<number>();
-  });
+  const [reviewedTasks, setReviewedTasks] = usePersistedSet('perf-lab-reviewed');
   const [techniqueTag, setTechniqueTag] = useState<string | null>(null);
   const [taskCompareMode, setTaskCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<Set<number>>(new Set());
-  const [starredTasks, setStarredTasks] = useState<Set<number>>(() => {
-    if (typeof window === 'undefined') return new Set<number>();
-    try {
-      const saved = localStorage.getItem('perf-lab-starred');
-      if (saved) return new Set(JSON.parse(saved) as number[]);
-    } catch {}
-    return new Set<number>();
-  });
+  const [starredTasks, setStarredTasks] = usePersistedSet('perf-lab-starred');
   const [starredFilter, setStarredFilter] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -1633,30 +1665,20 @@ export default function PerformanceLab() {
   // Reset progress handler
   const resetProgress = useCallback(() => {
     setReviewedTasks(new Set());
-    if (typeof window !== 'undefined') {
-      try { localStorage.removeItem('perf-lab-reviewed'); } catch {}
-    }
-  }, []);
+  }, [setReviewedTasks]);
 
   // Save reviewed to localStorage
   const saveReviewed = useCallback((ids: Set<number>) => {
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('perf-lab-reviewed', JSON.stringify(Array.from(ids))); } catch {}
-    }
-  }, []);
+    setReviewedTasks(ids);
+  }, [setReviewedTasks]);
 
   // Star/unstar task handler
   const toggleStar = useCallback((id: number) => {
-    setStarredTasks(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      if (typeof window !== 'undefined') {
-        try { localStorage.setItem('perf-lab-starred', JSON.stringify(Array.from(next))); } catch {}
-      }
-      return next;
-    });
-  }, []);
+    const current = new Set(starredTasks);
+    if (current.has(id)) current.delete(id);
+    else current.add(id);
+    setStarredTasks(current);
+  }, [starredTasks, setStarredTasks]);
 
   // Compare select handler
   const toggleCompareSelect = useCallback((id: number) => {
@@ -2182,7 +2204,7 @@ export default function PerformanceLab() {
                             setTooltipRect(e.currentTarget.getBoundingClientRect());
                           }}
                           onPointerLeave={() => { setHoveredTask(null); setTooltipRect(null); }}
-                          className="w-full bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/30 hover:-translate-y-0.5 transition-all text-left group card-lift hover-bounce ripple-container"
+                          className="w-full bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/30 hover:-translate-y-0.5 transition-all text-left group card-lift hover-bounce ripple-container shimmer-hover"
                         >
                           <div className="flex items-center gap-2 mb-1.5">
                             <div className="tech-category-icon">

@@ -223,3 +223,36 @@ table th {
 .pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
+
+/* ── Scanline animation for hero ── */
+@keyframes scanline {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+.scanline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, transparent, rgba(255, 107, 43, 0.15), transparent);
+  animation: scanline 4s linear infinite;
+  pointer-events: none;
+}
+
+/* ── Blinking cursor for hero title ── */
+@keyframes blink-cursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '_';
+  animation: blink-cursor 1s step-end infinite;
+  color: #ff6b2b;
+  margin-left: 2px;
+}
+
+/* ── Code block line highlight on hover ── */
+pre .token-line:hover {
+  background: rgba(255, 107, 43, 0.04);
+}

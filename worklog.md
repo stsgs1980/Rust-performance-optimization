@@ -218,3 +218,88 @@ Performance Lab is a stable, feature-complete single-page application showcasing
 2. Consider adding an export/share feature (PDF or link)
 3. Consider adding a difficulty filter or sort control to the results table
 4. Consider splitting page.tsx into multiple component files for maintainability
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Enhance Performance Lab with QA-driven new features and styling improvements
+
+Work Log:
+- Read worklog.md for full project context (5 prior sessions, QA pass completed)
+- Read current page.tsx (1393 lines) and globals.css (226 lines)
+- All 5 TASKS data objects preserved identically — zero changes to task code, benchmarks, techniques
+
+New Features:
+- Feature 1 (Difficulty Filter Pills): Added state `difficultyFilter` with "all"/"Advanced"/"Expert" options. Filter pills row between hero and task sections with count badges (e.g. "ALL (5)", "ADVANCED (2)", "EXPERT (3)"). Active pill: orange text + orange border. Inactive: gray text + dark border. Tasks are filtered when a pill is selected.
+- Feature 2 (Tradeoff Notes): Added AlertTriangle callout in BenchChart for tasks #3 and #4 where optimized.memory > baseline.memory. Shows amber warning with "+X MB in exchange for Y× speed improvement" message.
+- Feature 3 (Back to Top Button): Added floating button (bottom-right) that appears when scrolled > 400px. Uses framer-motion AnimatePresence with fade+slide animation. Fixed z-50, dark bg, orange hover. Smooth scroll to top on click.
+- Feature 4 (Line Count in Code Blocks): Added `code.split('\n').length` calculation in CodeBlock component. Displays "{N} lines" in the header after the title, in monospace #333 text.
+- Feature 5 (Keyboard Shortcuts): Added useEffect for keydown handler — "E" or "к" (Russian) toggles expand/collapse all, "1"-"5" jumps to respective task section. Added keyboard shortcut hints in hero with <kbd> styled elements.
+
+Styling Improvements:
+- Style 1 (Scanline Animation): Added @keyframes scanline + .scanline::after CSS class. Applied to hero container div with `relative overflow-hidden scanline`. Subtle 2px orange gradient line sweeps across hero every 4s.
+- Style 2 (Staggered Entry for Quick-Link Cards): Replaced plain <button> with motion.button for task quick-link cards. Each card has 0.05s stagger delay (0.1 + idx * 0.05) for cascading entry animation.
+- Style 3 (Blinking Cursor): Added @keyframes blink-cursor + .cursor-blink::after CSS class. Applied to hero <h1> element. Orange underscore cursor blinks at 1s interval.
+- Style 4 (Section Divider): Created SectionDivider component — horizontal line with centered label in uppercase tracking-widest monospace. Replaced plain <div className="h-px bg-[#1c1c1c]"> separators between task→methodology, methodology→results, results→summary, and between filtered task sections.
+- Style 5 (Stat Value Glow): Added `[text-shadow:0_0_8px_rgba(255,107,43,0.3)]` to hero stat values for subtle orange glow effect.
+- Style 6 (Code Block Line Highlight): Added `pre .token-line:hover { background: rgba(255, 107, 43, 0.04); }` CSS rule for subtle line highlight on hover in code blocks.
+
+Imports Added: ArrowUp, AlertTriangle from lucide-react; AnimatePresence from framer-motion
+
+Stage Summary:
+- 5 new features, 6 styling improvements applied
+- Lint passes cleanly with zero errors
+- Dev server compiles and serves 200 OK
+- TASKS data completely untouched (lines 68-533 identical)
+- Industrial Minimalism design system preserved throughout
+- Resolved QA recommendation #1 (tradeoff notes) and #3 (difficulty filter)
+
+---
+Task ID: 5b
+Agent: QA Agent (cron-review round 2)
+Task: QA verification of new features and styling improvements
+
+Work Log:
+- Ran `bun run lint` — zero errors
+- Confirmed dev server returns 200 OK
+- Opened page in agent-browser, took screenshots of hero and filtered state
+- Verified difficulty filter: "Advanced" → 2 tasks shown, "all" → 5 tasks shown, "Expert" → 3 tasks shown ✓
+- Verified hero title blinking cursor ("PERFORMANCE LAB_") ✓
+- Verified scanline animation on hero section ✓
+- Verified staggered entry animation on task quick-link cards ✓
+- Verified keyboard shortcut hints (E, 1-5) displayed in hero ✓
+- Verified back-to-top button appears on scroll > 400px ✓
+- Verified code block line counts displayed in headers ✓
+- Verified tradeoff notes for tasks #3 and #4 (AlertTriangle amber callout) ✓
+- Verified SectionDivider components between major sections ✓
+- Checked console errors: zero ✓
+- VLM analysis rated page 7/10 with suggestions for hierarchy and contrast
+
+Stage Summary:
+- All 5 new features verified working correctly
+- All 6 styling improvements visually confirmed
+- Zero console errors, zero lint errors
+- Page now ~1500+ lines with comprehensive feature set
+
+## Current Project Status
+
+### Assessment
+Performance Lab is a polished, feature-rich single-page application. Industrial Minimalism design is consistent with noise texture, scanline animation, blinking cursor, orange glow effects, and monospace-dominant typography. All interactive features verified: difficulty filter, accordion, tabs, copy code, expand/collapse, scroll progress, animated counters, keyboard shortcuts, back-to-top, tradeoff notes.
+
+### Completed Modifications
+- 5 Rust optimization tasks with baseline vs optimized code, Big O analysis, benchmarks
+- Industrial Minimalism design: #0a0a0a bg, #ff6b2b accent, monospace typography, zero border-radius
+- Interactive features: accordion, tabs, copy code, expand/collapse all, scroll progress bar, animated counters, difficulty filter, keyboard shortcuts (E, 1-5), back-to-top, tradeoff notes, line count display
+- Sections: Hero (stats + quick links), 5 task cards with code comparison + charts, Methodology (8 principles), Results table + chart, Summary
+- Visual effects: noise texture, scanline sweep, blinking cursor, orange glow, pulsing dot, hover lift, staggered animations, section dividers
+
+### Unresolved Issues / Risks
+1. The page is large (~1500+ lines in a single component). Consider splitting into separate component files.
+2. No dark/light theme toggle (by design — Industrial Minimalism is dark-only).
+3. No mobile touch-specific optimizations (works but could be improved for touch targets).
+
+### Priority Recommendations for Next Phase
+1. Split page.tsx into separate component files (TaskData, CodeBlock, BenchChart, etc.) for maintainability
+2. Add search/filter by technique type (SIMD, async, memory-mapped, etc.)
+3. Add responsive touch improvements (swipe to expand/collapse, larger touch targets)
+4. Consider adding a dark mode toggle variant (light industrial minimalism)

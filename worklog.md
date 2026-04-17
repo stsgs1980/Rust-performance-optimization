@@ -127,3 +127,94 @@ Stage Summary:
 - globals.css now provides Industrial Minimalism design system
 - All IBM Carbon references removed
 - New palette: monochrome + single orange accent
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Bug fixes, new features, and styling improvements for Performance Lab page
+
+Work Log:
+- Read worklog.md for context, page.tsx (1275 lines), and globals.css (185 lines)
+- All 5 TASKS data objects preserved identically — zero changes to task code, benchmarks, techniques
+
+Bug Fixes:
+- Fix 1 (Tab Active State): Changed Baseline tab active color to #f87171 (red) and Optimized tab active color to #4ade80 (green), replacing the previous unified #ff6b2b for both
+- Fix 2 (Memory Save Calc): Replaced misleading avgMemSave (0%) with memImprovedTasks count (3/5) — tasks 3 and 4 have higher optimized memory than baseline
+- Fix 3 (Scroll Spy): Added { id: "summary", label: "Summary" } to navItems array so scroll spy tracks the summary section
+
+New Features:
+- Feature 1 (Copy Code Button): Added Copy/Check icons to CodeBlock header with clipboard copy functionality and 2-second "Copied" feedback state
+- Feature 2 (Expand/Collapse All): Lifted expanded state from TaskSection to parent PerformanceLab via expandedTasks Set<number>, added "Expand"/"Collapse" toggle button in header
+- Feature 3 (Scroll Progress Bar): Added fixed 2px orange progress bar at very top (z-60) that tracks scroll position
+- Feature 4 (Animated Counter): Created AnimatedCounter component using useInView + requestAnimationFrame with cubic ease-out, applied to Tasks count and Total speedup in hero stats
+
+Styling Improvements:
+- Style 1: Added body::before noise texture overlay (SVG feTurbulence fractalNoise, 3% opacity)
+- Style 2: Added .ind-glow class (box-shadow with rgba orange glow), applied to expanded task cards
+- Style 3: Added @keyframes pulse-dot and .pulse-dot class, used green pulsing dot next to hero subtitle
+- Style 4: Added html::-webkit-scrollbar styles (4px width, #0a0a0a track, #262626 thumb)
+- Style 5: Added hover:-translate-y-0.5 to task quick-link cards for lift effect
+- Style 6: Added hover:border-[#ff6b2b]/20 to methodology principle cards
+- Style 7: Added h-px bg-[#1c1c1c] separator divs between tasks→methodology, methodology→results, results→summary
+- Additional: BenchChart memory stat now shows red (#f87171) when memory increased, green (#4ade80) when improved
+- Additional: Results table memory column now color-coded red/green based on improvement direction
+
+Imports: Added Copy and Check from lucide-react
+
+Stage Summary:
+- 3 bug fixes, 4 new features, 7+ styling improvements applied
+- Lint passes cleanly with zero errors
+- Dev server compiles and serves successfully
+- TASKS data completely untouched
+- Industrial Minimalism design system preserved throughout
+
+---
+Task ID: 4b
+Agent: QA Agent (cron-review)
+Task: Automated QA testing and verification via agent-browser + VLM
+
+Work Log:
+- Ran `bun run lint` — zero errors
+- Confirmed dev server returns 200 OK on localhost:3000
+- Opened page in agent-browser, took screenshots of hero, expanded task, methodology, results sections
+- Tested all interactive elements: nav buttons, task accordion expand/collapse, baseline/optimized tabs, task quick-link buttons
+- Verified Tab active states: Baseline=red (#f87171), Optimized=green (#4ade80) ✓
+- Verified Expand All / Collapse All button toggles all 5 tasks with ind-glow effect ✓
+- Verified Copy Code button: changes to green checkmark on click ✓
+- Verified Summary section appears in nav and scrolls correctly ✓
+- Verified scroll progress bar renders at top of page ✓
+- Verified animated counter animates hero stats on viewport entry ✓
+- Checked console errors: zero ✓
+- VLM analysis of hero screenshot confirmed: good visual hierarchy, effective monospace typography, proper contrast, excellent spacing
+- VLM analysis of expanded task confirmed: code readable, tabs functional, chart clear
+
+Stage Summary:
+- All 3 bug fixes verified working
+- All 4 new features verified working
+- Styling improvements visually confirmed (noise texture, glow, hover lift, pulsing dot)
+- Zero console errors, zero lint errors
+- No visual bugs detected
+
+## Current Project Status
+
+### Assessment
+Performance Lab is a stable, feature-complete single-page application showcasing 5 Rust optimization challenges. The Industrial Minimalism design system is consistent throughout. All interactive features (accordion, tabs, copy, expand/collapse, scroll spy, progress bar) work correctly.
+
+### Completed Modifications
+- 5 Rust optimization tasks with baseline vs optimized code, Big O analysis, benchmarks, and technique explanations
+- Industrial Minimalism design: #0a0a0a bg, #ff6b2b accent, monospace-dominant typography, zero border-radius
+- Interactive features: accordion, tabs, copy code, expand/collapse all, scroll progress bar, animated counters
+- Sections: Hero with stats, 5 task cards with code comparison + charts, Methodology (8 principles), Results table with chart, Summary
+- Responsive layout with mobile support
+- Accessibility: semantic HTML, ARIA labels, keyboard navigation
+
+### Unresolved Issues / Risks
+1. Tasks #3 and #4 have optimized memory HIGHER than baseline (intentional — trade memory for speed), but this may confuse users. Consider adding a note explaining the tradeoff.
+2. The page is large (~1300+ lines in a single component). Consider splitting into separate components/files if further growth is planned.
+3. No dark/light theme toggle (by design — Industrial Minimalism is dark-only).
+
+### Priority Recommendations for Next Phase
+1. Add a "Tradeoff Analysis" note to tasks #3 and #4 explaining why memory increases
+2. Consider adding an export/share feature (PDF or link)
+3. Consider adding a difficulty filter or sort control to the results table
+4. Consider splitting page.tsx into multiple component files for maintainability

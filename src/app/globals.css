@@ -41,58 +41,59 @@
   --radius-md: 0;
   --radius-lg: 0;
   --radius-xl: 0;
-  --color-ibm-blue: #4589ff;
-  --color-ibm-blue-hover: #78a9ff;
-  --color-ibm-gray-80: #161616;
-  --color-ibm-gray-70: #262626;
-  --color-ibm-gray-60: #393939;
-  --color-ibm-gray-50: #4d4d4d;
-  --color-ibm-gray-40: #6f6f6f;
-  --color-ibm-gray-30: #8d8d8d;
-  --color-ibm-gray-20: #a8a8a8;
-  --color-ibm-gray-10: #c6c6c6;
-  --color-ibm-gray-05: #f4f4f4;
-  --color-ibm-green: #42be65;
-  --color-ibm-red: #fa4d56;
-  --color-ibm-amber: #f1c21b;
-  --color-ibm-purple: #a56eff;
-  --color-ibm-teal: #08bdba;
-  --color-ibm-cyan: #00b4d8;
 }
+
+/* ═══════════════════════════════════════════════
+   INDUSTRIAL MINIMALISM — Design Tokens
+   ═══════════════════════════════════════════════ */
 
 :root {
   --radius: 0;
-  --background: #161616;
-  --foreground: #f4f4f4;
-  --card: #262626;
-  --card-foreground: #f4f4f4;
-  --popover: #262626;
-  --popover-foreground: #f4f4f4;
-  --primary: #4589ff;
+  --background: #0a0a0a;
+  --foreground: #d4d4d4;
+  --card: #141414;
+  --card-foreground: #d4d4d4;
+  --popover: #141414;
+  --popover-foreground: #d4d4d4;
+  --primary: #ff6b2b;
   --primary-foreground: #ffffff;
-  --secondary: #393939;
-  --secondary-foreground: #f4f4f4;
-  --muted: #393939;
-  --muted-foreground: #a8a8a8;
-  --accent: #393939;
-  --accent-foreground: #f4f4f4;
-  --destructive: #da1e28;
-  --border: #393939;
-  --input: #393939;
-  --ring: #4589ff;
-  --chart-1: #4589ff;
-  --chart-2: #42be65;
-  --chart-3: #f1c21b;
-  --chart-4: #a56eff;
-  --chart-5: #08bdba;
-  --sidebar: #1e1e1e;
-  --sidebar-foreground: #f4f4f4;
-  --sidebar-primary: #4589ff;
+  --secondary: #262626;
+  --secondary-foreground: #d4d4d4;
+  --muted: #1c1c1c;
+  --muted-foreground: #737373;
+  --accent: #262626;
+  --accent-foreground: #d4d4d4;
+  --destructive: #f87171;
+  --border: #262626;
+  --input: #262626;
+  --ring: #ff6b2b;
+  --chart-1: #ff6b2b;
+  --chart-2: #4ade80;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #22d3ee;
+  --sidebar: #111111;
+  --sidebar-foreground: #d4d4d4;
+  --sidebar-primary: #ff6b2b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #393939;
-  --sidebar-accent-foreground: #f4f4f4;
-  --sidebar-border: #393939;
-  --sidebar-ring: #4589ff;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #d4d4d4;
+  --sidebar-border: #262626;
+  --sidebar-ring: #ff6b2b;
+
+  /* Industrial tokens */
+  --ind-bg: #0a0a0a;
+  --ind-surface: #141414;
+  --ind-surface-2: #1c1c1c;
+  --ind-border: #262626;
+  --ind-border-hover: #3a3a3a;
+  --ind-text: #d4d4d4;
+  --ind-text-dim: #737373;
+  --ind-text-muted: #525252;
+  --ind-accent: #ff6b2b;
+  --ind-green: #4ade80;
+  --ind-red: #f87171;
+  --ind-code-bg: #0f0f0f;
 }
 
 @layer base {
@@ -109,7 +110,7 @@
   }
 }
 
-/* IBM Carbon overrides */
+/* Brutalist — no border-radius anywhere */
 .card, [role="dialog"], .rounded-lg, .rounded-xl, .rounded-2xl,
 .rounded-md, .rounded-full, .rounded-sm {
   border-radius: 0 !important;
@@ -118,54 +119,30 @@
 .btn, button, [type="button"] {
   border-radius: 0 !important;
   text-transform: uppercase;
-  letter-spacing: 0.32px;
+  letter-spacing: 0.5px;
   font-weight: 500;
 }
 
 .badge {
   border-radius: 0 !important;
-  text-transform: uppercase;
   letter-spacing: 0.16px;
-  font-size: 0.7rem !important;
+  font-size: 0.65rem !important;
 }
 
-/* Custom scrollbar — IBM style */
+/* Scrollbar — raw industrial */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #262626;
+  background: #0f0f0f;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4d4d4d;
+  background: #333;
   border-radius: 0;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6f6f6f;
-}
-
-/* IBM motion: subtle fade-in */
-@keyframes ibm-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.ibm-fade-in {
-  animation: ibm-fade-in 0.3s ease-out forwards;
-}
-
-/* IBM Carbon progress bar */
-@keyframes ibm-progress {
-  from { width: 0; }
-}
-.ibm-progress {
-  animation: ibm-progress 0.8s cubic-bezier(0.2, 0, 0.13, 1) forwards;
+  background: #555;
 }
 
 /* Code block styling */
@@ -173,11 +150,35 @@ pre, code {
   font-family: var(--font-ibm-mono), monospace !important;
 }
 
-/* Table styling */
+/* Table — raw */
 table th {
   text-transform: uppercase;
-  letter-spacing: 0.32px;
-  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #a8a8a8;
+  color: #525252;
+}
+
+/* Industrial fade-in — sharp, no bounce */
+@keyframes ind-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ind-fade {
+  animation: ind-fade 0.2s ease-out forwards;
+}
+
+/* Accent line — used as decoration */
+.accent-line {
+  height: 2px;
+  background: #ff6b2b;
+  width: 32px;
+}
+
+/* Industrial grid lines */
+.ind-grid {
+  background-image:
+    linear-gradient(to right, #1a1a1a 1px, transparent 1px),
+    linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
+  background-size: 64px 64px;
 }

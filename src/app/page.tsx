@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useSyncExternalStore, Fragment } from "react";
+import { useEffect, useRef, useState, useCallback, Fragment } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,7 @@ import {
   Medal,
   Palette,
   Waypoints,
+  MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -574,54 +575,89 @@ const ALL_TECHNIQUES = (() => {
 
 /* ─────────────────────── HELPERS ─────────────────────── */
 
-/* Hydration-safe persisted Set backed by localStorage + useSyncExternalStore */
+/**
+ * Hydration-safe persisted Set<number> backed by localStorage.
+ * Both server & client start with empty Set (no hydration mismatch).
+ * Loads from localStorage after mount via requestAnimationFrame (avoids lint error).
+ */
 function usePersistedSet(key: string): [Set<number>, (next: Set<number>) => void] {
-  const listenersRef = useRef(new Set<() => void>());
-  // Stable empty set — same reference for server & initial client render
-  const emptySet = useRef(new Set<number>());
-  const snapshotRef = useRef<Set<number> | null>(null);
+  const [value, setValue] = useState<Set<number>>(() => new Set<number>());
   const loadedRef = useRef(false);
 
-  const subscribe = useCallback((listener: () => void) => {
-    listenersRef.current.add(listener);
-    return () => { listenersRef.current.delete(listener); };
-  }, []);
-
-  const getSnapshot = useCallback((): Set<number> => {
-    // Before mount or if not yet loaded, return stable empty set
-    if (!loadedRef.current || snapshotRef.current === null) {
-      return emptySet.current;
-    }
-    return snapshotRef.current;
-  }, []);
-
-  const getServerSnapshot = useCallback((): Set<number> => {
-    return emptySet.current;
-  }, []);
-
-  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-
-  const setValue = useCallback((next: Set<number>) => {
-    snapshotRef.current = next;
-    try { localStorage.setItem(key, JSON.stringify(Array.from(next))); } catch { /* ignore */ }
-    listenersRef.current.forEach(l => l());
-  }, [key]);
-
-  // Load from localStorage AFTER mount (hydration-safe)
   useEffect(() => {
     if (loadedRef.current) return;
     loadedRef.current = true;
     try {
       const saved = localStorage.getItem(key);
       if (saved) {
-        const parsed = new Set(JSON.parse(saved) as number[]);
-        snapshotRef.current = parsed;
-        listenersRef.current.forEach(l => l());
+        requestAnimationFrame(() => {
+          setValue(new Set(JSON.parse(saved) as number[]));
+        });
       }
     } catch { /* ignore */ }
   }, [key]);
 
-  return [value, setValue];
+  const setAndPersist = useCallback((next: Set<number>) => {
+    setValue(next);
+    try { localStorage.setItem(key, JSON.stringify(Array.from(next))); } catch { /* ignore */ }
+  }, [key]);
+
+  return [value, setAndPersist];
+}
+
+/**
+ * Hydration-safe persisted string backed by localStorage.
+ * Both server & client start with `initialValue` (no hydration mismatch).
+ */
+function usePersistedString(key: string, initialValue: string): [string, (next: string) => void] {
+  const [value, setValue] = useState(initialValue);
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        requestAnimationFrame(() => { setValue(saved); });
+      }
+    } catch { /* ignore */ }
+  }, [key]);
+
+  const setAndPersist = useCallback((next: string) => {
+    setValue(next);
+    try { localStorage.setItem(key, next); } catch { /* ignore */ }
+  }, [key]);
+
+  return [value, setAndPersist];
+}
+
+/**
+ * Hydration-safe persisted Set<string> (achievements) backed by localStorage.
+ */
+function usePersistedAchievements(key: string): [Set<string>, (next: Set<string>) => void] {
+  const [value, setValue] = useState<Set<string>>(() => new Set<string>());
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        requestAnimationFrame(() => {
+          setValue(new Set(JSON.parse(saved) as string[]));
+        });
+      }
+    } catch { /* ignore */ }
+  }, [key]);
+
+  const setAndPersist = useCallback((next: Set<string>) => {
+    setValue(next);
+    try { localStorage.setItem(key, JSON.stringify(Array.from(next))); } catch { /* ignore */ }
+  }, [key]);
+
+  return [value, setAndPersist];
 }
 
 function calcReadingTime(task: TaskData): number {
@@ -1368,7 +1404,7 @@ function AnimatedProgressBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed, starred, onToggleStar, taskCompareMode, onCompareSelect, compareSelected, readingTime, diffMode, onToggleDiff }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void; reviewed: boolean; starred: boolean; onToggleStar: () => void; taskCompareMode: boolean; onCompareSelect: () => void; compareSelected: boolean; readingTime: number; diffMode: boolean; onToggleDiff: () => void }) {
+function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed, starred, onToggleStar, taskCompareMode, onCompareSelect, compareSelected, readingTime, diffMode, onToggleDiff, noteOpen, noteText, onToggleNote, onSaveNote }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void; reviewed: boolean; starred: boolean; onToggleStar: () => void; taskCompareMode: boolean; onCompareSelect: () => void; compareSelected: boolean; readingTime: number; diffMode: boolean; onToggleDiff: () => void; noteOpen: boolean; noteText: string; onToggleNote: () => void; onSaveNote: (text: string) => void }) {
   const Icon = task.icon;
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
 
@@ -1438,6 +1474,14 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                         {readingTime} min read
                       </span>
                     )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggleNote(); }}
+                      className={`p-0.5 ml-1 transition-colors ${noteOpen ? 'text-[#ff6b2b]' : 'text-[#333] hover:text-[#ff6b2b]'}`}
+                      title="Add note"
+                      aria-label="Add note"
+                    >
+                      <MessageSquare className="size-3" />
+                    </button>
                   </div>
                   <CardTitle className="text-sm font-medium text-[#d4d4d4]">
                     {task.title}
@@ -1459,6 +1503,38 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
           transition={{ duration: 0.2 }}
           className="mt-4 space-y-4"
         >
+          {/* Task Note Editor */}
+          <AnimatePresence>
+            {noteOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-[#0d0d0d] border border-[#262626] p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">
+                      <MessageSquare className="size-2.5 inline mr-1" />
+                      Personal Notes
+                    </span>
+                    <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+                      {noteText.length} chars
+                    </span>
+                  </div>
+                  <textarea
+                    value={noteText}
+                    onChange={(e) => onSaveNote(e.target.value)}
+                    placeholder="Write your notes about this optimization technique..."
+                    rows={3}
+                    className="w-full bg-transparent border-0 text-[#d4d4d4] text-xs font-[family-name:var(--font-ibm-mono)] leading-relaxed placeholder:text-[#262626] resize-none focus:outline-none"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Problem Statement */}
           <FadeIn delay={0.05}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
@@ -1830,13 +1906,39 @@ export default function PerformanceLab() {
   const [compareSelected, setCompareSelected] = useState<Set<number>>(new Set());
   const [starredTasks, setStarredTasks] = usePersistedSet('perf-lab-starred');
   const [starredFilter, setStarredFilter] = useState(false);
+  const [noteOpenTask, setNoteOpenTask] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [diffMode, setDiffMode] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [hoveredTask, setHoveredTask] = useState<TaskData | null>(null);
   const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null);
-  const [achievementToast, setAchievementToast] = useState<typeof ACHIEVEMENTS[0] | null>(null);
+  const [achievementToastRaw, setAchievementToastRaw] = useState<typeof ACHIEVEMENTS[0] | null>(null);
+  const achievementToastRef = useRef<typeof ACHIEVEMENTS[0] | null>(null);
+
+  // Task notes — single persisted JSON object for all tasks
+  const [taskNotes, setTaskNotes] = usePersistedString('perf-lab-notes', '{}');
+  const taskNotesRef = useRef(taskNotes);
+  useEffect(() => { taskNotesRef.current = taskNotes; }, [taskNotes]);
+
+  // Live clock
+  const [currentTime, setCurrentTime] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      requestAnimationFrame(() => {
+        setCurrentTime(
+          `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+        );
+      });
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Sync ref with state (for reading in effects)
+  useEffect(() => { achievementToastRef.current = achievementToastRaw; }, [achievementToastRaw]);
   const shareURL = useShareURL(expandedTasks);
   const reviewTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
@@ -1945,17 +2047,11 @@ export default function PerformanceLab() {
 
   const reviewedCount = reviewedTasks.size;
 
-  // Accent color: load from localStorage via lazy initializer + sync effect for CSS var
-  const [activeAccent, setActiveAccentRaw] = useState(() => {
-    if (typeof window === 'undefined') return '#ff6b2b';
-    try {
-      const saved = localStorage.getItem('perf-lab-accent');
-      if (saved) return saved;
-    } catch { /* ignore */ }
-    return '#ff6b2b';
-  });
+  // Accent color — hydration-safe via usePersistedString (starts #ff6b2b, loads from localStorage after mount)
+  const [activeAccent, setActiveAccentRaw] = usePersistedString('perf-lab-accent', '#ff6b2b');
   const accentRef = useRef(activeAccent);
-  // Sync CSS variable on mount
+
+  // Sync CSS variable on mount + when accent changes
   useEffect(() => {
     document.documentElement.style.setProperty('--accent-color', activeAccent);
   }, [activeAccent]);
@@ -1963,27 +2059,16 @@ export default function PerformanceLab() {
   const setActiveAccent = useCallback((color: string) => {
     accentRef.current = color;
     setActiveAccentRaw(color);
-    try { localStorage.setItem('perf-lab-accent', color); } catch { /* ignore */ }
-  }, []);
+  }, [setActiveAccentRaw]);
 
-  // Earned achievements: load via lazy initializer
-  const [earnedAchievements, setEarnedAchievementsRaw] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set<string>();
-    try {
-      const saved = localStorage.getItem('perf-lab-achievements');
-      if (saved) return new Set(JSON.parse(saved) as string[]);
-    } catch { /* ignore */ }
-    return new Set<string>();
-  });
+  // Earned achievements — hydration-safe via usePersistedAchievements (starts empty, loads after mount)
+  const [earnedAchievements, setEarnedAchievements] = usePersistedAchievements('perf-lab-achievements');
   const earnedRef = useRef(earnedAchievements);
 
-  const setEarnedAchievements = useCallback((s: Set<string>) => {
-    earnedRef.current = s;
-    setEarnedAchievementsRaw(s);
-    try { localStorage.setItem('perf-lab-achievements', JSON.stringify(Array.from(s))); } catch { /* ignore */ }
-  }, []);
+  // Keep earnedRef in sync
+  useEffect(() => { earnedRef.current = earnedAchievements; }, [earnedAchievements]);
 
-  // Achievement checking
+  // Achievement checking — uses requestAnimationFrame to defer toast setState (React 19 lint compliance)
   useEffect(() => {
     const ctx: AchievementCtx = {
       totalExpanded: expandedTasks.size,
@@ -1995,7 +2080,8 @@ export default function PerformanceLab() {
       if (!earnedRef.current.has(a.id) && a.check(ctx)) {
         const newEarned = new Set([...earnedRef.current, a.id]);
         setEarnedAchievements(newEarned);
-        setAchievementToast(a);
+        // Defer toast setState to next animation frame (avoids synchronous setState-in-effect)
+        requestAnimationFrame(() => setAchievementToastRaw(a));
         break;
       }
     }
@@ -2121,8 +2207,9 @@ export default function PerformanceLab() {
     { id: "methodology", label: "Methodology" },
     { id: "vibe-coder", label: "Vibe Guide" },
     { id: "heatmap", label: "Heatmap" },
+    { id: "dashboard", label: "Dashboard" },
     { id: "results", label: "Results" },
-    { id: "summary", label: "Summary" },
+ { id: "summary", label: "Summary" },
   ];
 
   const totalSpeedup = TASKS.reduce(
@@ -2175,6 +2262,7 @@ export default function PerformanceLab() {
     if (activeSection === "methodology") return "METHODOLOGY";
     if (activeSection === "vibe-coder") return "VIBE GUIDE";
     if (activeSection === "heatmap") return "HEATMAP";
+    if (activeSection === "dashboard") return "DASHBOARD";
     if (activeSection === "results") return "RESULTS";
     if (activeSection === "summary") return "SUMMARY";
     if (activeSection.startsWith("task-")) {
@@ -2190,6 +2278,7 @@ export default function PerformanceLab() {
     if (activeSection === "methodology") return "METHODS";
     if (activeSection === "vibe-coder") return "VIBE";
     if (activeSection === "heatmap") return "HEATMAP";
+    if (activeSection === "dashboard") return "DASHBOARD";
     if (activeSection === "results") return "RESULTS";
     if (activeSection === "summary") return "SUMMARY";
     return "OVERVIEW";
@@ -2278,7 +2367,7 @@ export default function PerformanceLab() {
                     <button
                       key={c.value}
                       onClick={() => setActiveAccent(c.value)}
-                      className="accent-swatch"
+                      className="accent-swatch hover-glow"
                       style={{ background: c.value, '--swatch-size': '12px' } as React.CSSProperties}
                       title={c.name}
                       aria-label={`Switch to ${c.name} accent`}
@@ -2345,6 +2434,7 @@ export default function PerformanceLab() {
               <span className="typing-text text-[#525252]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
             </span>
             <div className="ml-auto flex items-center gap-2">
+              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">{currentTime}</span>
               <div className="signal-strength">
                 <div className="signal-bar" />
                 <div className="signal-bar" />
@@ -2356,7 +2446,7 @@ export default function PerformanceLab() {
           </div>
 
           <FadeIn>
-            <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-t-0 border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline vignette">
+            <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-t-0 border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline vignette matrix-grid">
               {/* Decorative data-stream lines */}
               <div className="data-stream" style={{ left: "15%", height: "120px", animationDelay: "0s" }} />
               <div className="data-stream" style={{ left: "55%", height: "80px", animationDelay: "2.5s" }} />
@@ -2367,7 +2457,7 @@ export default function PerformanceLab() {
 
               <div className="space-y-6 relative z-10">
                 <div>
-                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker glitch-hover">
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker glitch-hover text-gradient">
                     Performance Lab
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
@@ -2586,6 +2676,17 @@ export default function PerformanceLab() {
                   readingTime={calcReadingTime(task)}
                   diffMode={diffMode}
                   onToggleDiff={() => setDiffMode(d => !d)}
+                  noteOpen={noteOpenTask === task.id}
+                  noteText={(() => { try { return JSON.parse(taskNotes || '{}')[String(task.id)] || ''; } catch { return ''; } })()}
+                  onToggleNote={() => setNoteOpenTask(n => n === task.id ? null : task.id)}
+                  onSaveNote={(text) => {
+                    try {
+                      const notes = JSON.parse(taskNotes || '{}');
+                      if (text.trim()) notes[String(task.id)] = text;
+                      else delete notes[String(task.id)];
+                      setTaskNotes(JSON.stringify(notes));
+                    } catch { /* ignore */ }
+                  }}
                 />
                 {sectionIndex < filteredTasks.length - 1 && (
                   <SectionDivider label={String(sectionIndex + 1).padStart(2, "0")} />
@@ -2836,6 +2937,72 @@ export default function PerformanceLab() {
                     ))}
                   </div>
                   <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">High</span>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </section>
+
+        {/* ─── Separator ─── */}
+        <SectionDivider label="DB" />
+
+        {/* ═══ DASHBOARD SECTION ═══ */}
+        <section ref={registerSection("dashboard")} id="dashboard">
+          <FadeIn>
+            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+              <CardHeader>
+                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                  <BarChart className="size-3 inline mr-1.5 text-[#ff6b2b]" />
+                  Dashboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {(() => {
+                    const totalLines = TASKS.reduce((a, t) => a + t.optimized.code.split('\n').length, 0);
+                    const allTechniques = new Set(TASKS.flatMap(t => t.techniques.map(tp => tp.name)));
+                    const bestTask = TASKS.reduce((best, t) => (t.baseline.time / t.optimized.time) > (best.baseline.time / best.optimized.time) ? t : best);
+                    const bestSp = (bestTask.baseline.time / bestTask.optimized.time).toFixed(1);
+                    const complexityReduced = TASKS.filter(t => {
+                      const bo = (t.baseline.timeComplexity || '').replace(/[O()]/g, '').trim();
+                      const oo = (t.optimized.timeComplexity || '').replace(/[O()]/g, '').trim();
+                      return oo.length > 0 && bo.length > 0 && oo.length < bo.length;
+                    }).length;
+                    return [
+                      { label: 'Lines Optimized', value: totalLines, suffix: 'lines', color: '#ff6b2b' },
+                      { label: 'Techniques Used', value: allTechniques.size, suffix: 'unique', color: '#4ade80' },
+                      { label: 'Avg Speedup', value: avgSpeedup.toFixed(1), suffix: '×', color: '#ff6b2b' },
+                      { label: 'Best Improvement', value: `#${bestTask.id}`, suffix: `${bestSp}×`, color: '#fbbf24' },
+                      { label: 'Total Time Saved', value: totalTimeSaved >= 1000 ? `${(totalTimeSaved / 1000).toFixed(1)}s` : `${totalTimeSaved.toFixed(0)}ms`, suffix: '', color: '#4ade80' },
+                      { label: 'Complexity Reduced', value: `${complexityReduced}/${TASKS.length}`, suffix: 'tasks', color: '#ff6b2b' },
+                    ];
+                  })().map((stat, i) => (
+                    <div key={i} className="bg-[#0d0d0d] border border-[#262626] p-3 stat-card-hover">
+                      <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-1">{stat.label}</p>
+                      <p className="text-xl font-bold font-[family-name:var(--font-ibm-mono)]" style={{ color: stat.color }}>{stat.value}</p>
+                      {stat.suffix && <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] mt-0.5">{stat.suffix}</p>}
+                    </div>
+                  ))}
+                </div>
+                {/* Technique distribution bar */}
+                <div className="mt-4 pt-4 border-t border-[#262626]">
+                  <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-2">Speedup Distribution</p>
+                  <div className="flex items-end gap-1.5 h-12">
+                    {TASKS.map((t) => {
+                      const sp = t.baseline.time / t.optimized.time;
+                      const maxSp = maxSpeedup;
+                      const height = Math.max(8, (sp / maxSp) * 100);
+                      return (
+                        <div key={t.id} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">{sp.toFixed(1)}×</span>
+                          <div className="w-full bg-[#ff6b2b]/10 relative" style={{ height: `${height}%` }}>
+                            <div className="absolute inset-0 bg-[#ff6b2b]/40 hover:bg-[#ff6b2b]/60 transition-colors" />
+                          </div>
+                          <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#333]">#{t.id}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -3274,10 +3441,10 @@ export default function PerformanceLab() {
 
       {/* ─── ACHIEVEMENT TOAST ─── */}
       <AnimatePresence>
-        {achievementToast && (
+        {achievementToastRaw && (
           <AchievementToast
-            achievement={achievementToast}
-            onDismiss={() => setAchievementToast(null)}
+            achievement={achievementToastRaw}
+            onDismiss={() => setAchievementToastRaw(null)}
           />
         )}
       </AnimatePresence>

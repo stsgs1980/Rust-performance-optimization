@@ -1704,3 +1704,83 @@ hr.industrial {
 :root {
   --accent-color: #ff6b2b;
 }
+
+/* ═══════════════════════════════════════════════ ROUND 12 — NEW CSS RULES ═══ */
+
+/* ── Hover Glow — subtle accent glow on hover ── */
+.hover-glow {
+  transition: box-shadow 0.2s ease;
+}
+.hover-glow:hover {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent-color, #ff6b2b) 20%, transparent);
+}
+
+/* ── Text Gradient — accent color gradient text ── */
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent-color, #ff6b2b), #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Shimmer loading animation ── */
+.shimmer-loading {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 107, 43, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-loading-anim 2s ease infinite;
+}
+@keyframes shimmer-loading-anim {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Stat Card Hover ── */
+.stat-card-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.stat-card-hover:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-color, #ff6b2b) !important;
+}
+
+/* ── Industrial Divider with dot endpoints ── */
+.industrial-divider {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  position: relative;
+}
+.industrial-divider::before,
+.industrial-divider::after {
+  content: '';
+  width: 3px;
+  height: 3px;
+  background: #333;
+  flex-shrink: 0;
+}
+
+/* ── Matrix Grid Background ── */
+.matrix-grid {
+  background-image:
+    linear-gradient(to right, #1a1a1a 1px, transparent 1px),
+    linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: matrix-grid-fade 8s ease-in-out infinite alternate;
+}
+@keyframes matrix-grid-fade {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}

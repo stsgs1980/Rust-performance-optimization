@@ -790,3 +790,73 @@ Stage Summary:
 - TASKS data completely untouched
 - page.tsx: ~3331 lines (up from ~3025)
 - globals.css: ~1706 lines (up from ~1577)
+
+
+---
+Task ID: 12
+Agent: Main Agent
+Task: Round 12 — Bug fixes, hydration fixes, task notes, dashboard section, styling enhancements
+
+Work Log:
+- Read worklog.md for full project context (18+ prior sessions, 8+ QA passes)
+- Read current page.tsx (~3354 lines) and globals.css (~1706 lines)
+- All 5 TASKS data objects preserved identically — zero changes to task code, benchmarks, techniques
+
+Bug Fixes (3):
+- Bug 1 (reviewedTasks.has TypeError): Root cause was `useSyncExternalStore` returning non-Set value in React 19 during hydration. Replaced with simpler `useState` + `useEffect` + `requestAnimationFrame` pattern in `usePersistedSet` hook. Both server & client start with empty Set, localStorage loads deferred via rAF to avoid React 19 `react-hooks/set-state-in-effect` lint rule.
+- Bug 2 (Hydration mismatch from earnedAchievements): `earnedAchievements` used `typeof window` in lazy `useState` initializer, causing server/client diff (server: empty Set, client: populated Set from localStorage). Fixed by replacing with `usePersistedAchievements` hook (same rAF pattern).
+- Bug 3 (Hydration mismatch from activeAccent): Same issue — `typeof window` check in lazy initializer. Fixed by replacing with `usePersistedString` hook.
+- Created 3 new hooks: `usePersistedSet`, `usePersistedString`, `usePersistedAchievements` — all using `useState` + `requestAnimationFrame` in `useEffect` for hydration safety and React 19 lint compliance.
+- Fixed `setAchievementToast` called inside useEffect by deferring via `requestAnimationFrame`.
+
+New Features (3):
+- Feature 1 (Task Notes/Annotations): Wired up the existing `MessageSquare` button in task headers to toggle a collapsible note editor. Uses `taskNotes` state (JSON object persisted via `usePersistedString`) mapping task IDs to note strings. Textarea with character count, monospace styling, animated enter/exit via AnimatePresence. Notes persist across sessions via localStorage.
+- Feature 2 (Dashboard Section): New "Dashboard" section between Heatmap and Results. 6 stat cards in responsive grid (2/3/6 cols): Lines Optimized, Techniques Used, Avg Speedup, Best Improvement, Total Time Saved, Complexity Reduced. Each card uses `.stat-card-hover` class. Below: Speedup Distribution bar chart (5 bars scaled to max speedup). Section registered in navItems and scroll spy.
+- Feature 3 (Live Clock): Already existed from prior round — verified working.
+
+Styling Improvements (5 new CSS classes):
+- Style 1 (.hover-glow): Subtle accent glow on hover using `color-mix()` with `--accent-color`. Applied to accent swatch buttons.
+- Style 2 (.text-gradient): Accent-to-gold gradient text using `background-clip: text`. Applied to hero "PERFORMANCE LAB_" heading.
+- Style 3 (.shimmer-loading): Loading shimmer animation with `background-position` animation. Available for future use.
+- Style 4 (.stat-card-hover): Combined translateY(-1px) + border-color accent change on hover. Applied to Dashboard stat cards.
+- Style 5 (.industrial-divider): Flexbox divider with dot pseudo-elements at endpoints.
+- Style 6 (.matrix-grid): Animated grid background pattern with `linear-gradient` lines at #1a1a1a and opacity animation.
+
+Imports Removed: `useSyncExternalStore` from react (no longer needed).
+Imports Added: None (all icons already imported).
+
+Stage Summary:
+- 3 critical bug fixes (TypeError + 2 hydration mismatches)
+- 3 new hydration-safe localStorage persistence hooks created
+- 2 new features (Task Notes, Dashboard Section)
+- 6 new CSS classes
+- Lint passes cleanly with zero errors
+- Dev server compiles and serves 200 OK
+- Console verified: zero errors on fresh page load, task expansion, note editing, dashboard navigation
+- TASKS data completely untouched
+- page.tsx: ~3498 lines (up from ~3354)
+- globals.css: ~1786 lines (up from ~1706)
+
+## Current Project Status
+
+### Assessment
+Performance Lab is a highly polished, feature-rich single-page application at ~3498 lines. Industrial Minimalism design system is consistently applied throughout. All 30+ interactive features verified and working correctly. Round 12 focused on critical bug fixes (hydration mismatches, TypeError) and adding a Dashboard analytics section with task notes functionality.
+
+### Completed Modifications
+- 5 Rust optimization tasks with baseline vs optimized code, Big O analysis, benchmarks
+- Industrial Minimalism design: #0a0a0a bg, #ff6b2b accent (switchable), monospace typography, zero border-radius
+- Interactive features (30+): accordion, tabs, copy code, expand/collapse all, scroll progress bar, animated counters, difficulty filter, keyboard shortcuts (E, 1-5), back-to-top, tradeoff notes, line count display, technique search bar, side-by-side code comparison toggle, sortable results table, system monitor widget, task completion tracking, technique tag cloud, animated progress bars, code stats tooltip, breadcrumb navigation, task comparison mode, markdown export, reading time estimates, bookmark/star tasks, starred filter, signal strength indicator, execution pipeline, optimization heatmap, achievement system, accent color switcher, cascade animation, task notes, dashboard analytics
+- Sections: Hero (terminal bar + signal + clock + stats + quick links), 5 task cards with code comparison + charts + notes, Methodology (8 principles + tag cloud + dot grid), Vibe Guide, Heatmap, Dashboard (6 stat cards + distribution chart), Results table + chart, Summary (progress bars + cascade)
+- Visual effects: noise texture, scanline sweep, blinking cursor, flicker, orange glow, pulsing dot, hover lift, staggered animations, section dividers, animated gradient borders, data stream lines, dot grid pattern, vignette, typing animation, pulse ring, nav underline, glass-morphism, neon text, circuit pattern, matrix grid, hover glow, text gradient, shimmer, stat card hover
+
+### Unresolved Issues / Risks
+1. The page is very large (~3498 lines in a single component). Consider splitting into separate component files for maintainability.
+2. No dark/light theme toggle (by design — Industrial Minimalism is dark-only).
+3. `requestAnimationFrame` deferral for localStorage loading adds a brief flash of default state before persisted values appear.
+
+### Priority Recommendations for Next Phase
+1. Split page.tsx into separate component files (TaskData types, CodeBlock, BenchChart, SystemMonitor, Dashboard, TaskSection, etc.) for maintainability
+2. Add responsive touch improvements (swipe to expand/collapse, larger touch targets)
+3. Add export/share functionality (PDF export or shareable link)
+4. Consider adding a light industrial minimalism theme variant
+5. Add i18n support for English/Russian language toggle

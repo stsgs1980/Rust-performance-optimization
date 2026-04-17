@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useCallback, useSyncExternalStore, Fragment } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +67,10 @@ import {
   Activity,
   Timer,
   Trophy,
+  Flame,
+  Medal,
+  Palette,
+  Waypoints,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -1630,9 +1634,171 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
               </CardContent>
             </Card>
           </FadeIn>
+
+          {/* Execution Pipeline */}
+          <FadeIn delay={0.25}>
+            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
+              <CardContent className="pt-4">
+                <ExecutionPipeline taskId={task.id} />
+              </CardContent>
+            </Card>
+          </FadeIn>
         </motion.div>
       )}
     </section>
+  );
+}
+
+/* ─────────────────────── PIPELINE DATA ─────────────────────── */
+
+const PIPELINE_STAGES: Record<number, string[]> = {
+  1: ["Input 10M strings", "String Interning", "Sort (cache-local)", "Binary Search Groups", "Output duplicates"],
+  2: ["500MB CSV file", "mmap (zero-copy)", "SIMD \\n scan", "Selective parse", "Output columns"],
+  3: ["100K URLs", "Semaphore (500)", "Connection Pool", "buffer_unordered", "Collect results"],
+  4: ["1000×1000 input", "Pack matrix B", "Tile 64×64", "4×4 micro-kernel", "AVX2 vectorize"],
+  5: ["8 producers", "CAS atomic push", "Ring buffer", "Cache-padded H/T", "Consumer pop"],
+};
+
+const HEATMAP_DATA = [
+  // [task, speed, memory, cache, parallelism, complexity]
+  { task: 1, speed: 0.7, memory: 0.6, cache: 0.8, parallelism: 0.1, complexity: 0.5 },
+  { task: 2, speed: 0.95, memory: 0.85, cache: 0.6, parallelism: 0.1, complexity: 0.7 },
+  { task: 3, speed: 0.9, memory: 0.3, cache: 0.2, parallelism: 0.95, complexity: 0.6 },
+  { task: 4, speed: 0.8, memory: 0.2, cache: 0.95, parallelism: 0.3, complexity: 0.9 },
+  { task: 5, speed: 0.85, memory: 0.5, cache: 0.7, parallelism: 0.9, complexity: 0.95 },
+];
+
+const ACHIEVEMENTS = [
+  { id: "first-look", name: "First Look", desc: "Expand your first task", icon: "👁", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 1 },
+  { id: "code-reviewer", name: "Code Reviewer", desc: "Review 3 tasks", icon: "🔍", check: (ctx: AchievementCtx) => ctx.reviewed >= 3 },
+  { id: "speed-demon", name: "Speed Demon", desc: "View the fastest task (#3)", icon: "⚡", check: (ctx: AchievementCtx) => ctx.viewedTask3 },
+  { id: "completionist", name: "Completionist", desc: "Review all 5 tasks", icon: "🏆", check: (ctx: AchievementCtx) => ctx.reviewed >= 5 },
+  { id: "bookworm", name: "Bookworm", desc: "Expand all tasks at once", icon: "📖", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 5 },
+];
+
+interface AchievementCtx {
+  totalExpanded: number;
+  reviewed: number;
+  viewedTask3: boolean;
+  earned: Set<string>;
+}
+
+/* ─────────────────────── ACCENT COLORS ─────────────────────── */
+
+const ACCENT_COLORS = [
+  { name: "Orange", value: "#ff6b2b" },
+  { name: "Cyan", value: "#22d3ee" },
+  { name: "Rose", value: "#f43f5e" },
+  { name: "Lime", value: "#84cc16" },
+  { name: "Violet", value: "#a78bfa" },
+];
+
+/* ─────────────────────── EXECUTION PIPELINE COMPONENT ─────────────────────── */
+
+function ExecutionPipeline({ taskId }: { taskId: number }) {
+  const stages = PIPELINE_STAGES[taskId];
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-20px" });
+  if (!stages) return null;
+
+  return (
+    <div ref={ref} className="space-y-2">
+      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Execution Pipeline</p>
+      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar py-1">
+        {stages.map((stage, i) => (
+          <div key={i} className="flex items-center shrink-0">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={inView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.3, delay: i * 0.1 }}
+              className="pipeline-node px-2.5 py-1.5 bg-[#0f0f0f] border border-[#262626] text-center min-w-[100px]"
+            >
+              <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#333] block mb-0.5">STEP {i + 1}</span>
+              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#737373] leading-tight block">{stage}</span>
+            </motion.div>
+            {i < stages.length - 1 && (
+              <motion.div
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={inView ? { opacity: 1, scaleX: 1 } : {}}
+                transition={{ duration: 0.2, delay: i * 0.1 + 0.15 }}
+                className="pipeline-connector w-6 h-px bg-[#333] shrink-0 origin-left"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────── OPTIMIZATION HEATMAP ─────────────────────── */
+
+function OptimizationHeatmap() {
+  const metrics = ["Speed", "Memory", "Cache Locality", "Parallelism", "Code Complexity"] as const;
+
+  return (
+    <div className="overflow-x-auto custom-scrollbar">
+      <div className="min-w-[400px]">
+        <div className="grid grid-cols-[100px_repeat(5,1fr)] gap-px">
+          {/* Header row */}
+          <div className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest" />
+          {metrics.map((m) => (
+            <div key={m} className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest text-center">
+              {m}
+            </div>
+          ))}
+          {/* Data rows */}
+          {HEATMAP_DATA.map((row) => (
+            <Fragment key={row.task}>
+              <div className="p-2 text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] flex items-center">
+                #{row.task}
+              </div>
+              {[row.speed, row.memory, row.cache, row.parallelism, row.complexity].map((val, mi) => (
+                <div
+                  key={mi}
+                  className="heatmap-cell p-2 text-center"
+                  style={{ '--heat': val } as React.CSSProperties}
+                >
+                  <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
+                    {(val * 100).toFixed(0)}
+                  </span>
+                </div>
+              ))}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────── ACHIEVEMENT TOAST ─────────────────────── */
+
+function AchievementToast({ achievement, onDismiss }: { achievement: typeof ACHIEVEMENTS[0]; onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.9 }}
+      className="fixed top-20 right-6 z-[70] glass-accent p-4 w-72"
+    >
+      <div className="flex items-start gap-3">
+        <span className="text-2xl">{achievement.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-widest mb-0.5">Achievement Unlocked</p>
+          <p className="text-sm font-bold text-[#d4d4d4]">{achievement.name}</p>
+          <p className="text-[10px] text-[#525252]">{achievement.desc}</p>
+        </div>
+        <button onClick={onDismiss} className="text-[#333] hover:text-[#525252] transition-colors">
+          <XCircle className="size-3" />
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -1670,6 +1836,7 @@ export default function PerformanceLab() {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [hoveredTask, setHoveredTask] = useState<TaskData | null>(null);
   const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null);
+  const [achievementToast, setAchievementToast] = useState<typeof ACHIEVEMENTS[0] | null>(null);
   const shareURL = useShareURL(expandedTasks);
   const reviewTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
@@ -1777,6 +1944,62 @@ export default function PerformanceLab() {
   }, [expandedTasks, reviewedTasks, saveReviewed]);
 
   const reviewedCount = reviewedTasks.size;
+
+  // Accent color: load from localStorage via lazy initializer + sync effect for CSS var
+  const [activeAccent, setActiveAccentRaw] = useState(() => {
+    if (typeof window === 'undefined') return '#ff6b2b';
+    try {
+      const saved = localStorage.getItem('perf-lab-accent');
+      if (saved) return saved;
+    } catch { /* ignore */ }
+    return '#ff6b2b';
+  });
+  const accentRef = useRef(activeAccent);
+  // Sync CSS variable on mount
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent-color', activeAccent);
+  }, [activeAccent]);
+
+  const setActiveAccent = useCallback((color: string) => {
+    accentRef.current = color;
+    setActiveAccentRaw(color);
+    try { localStorage.setItem('perf-lab-accent', color); } catch { /* ignore */ }
+  }, []);
+
+  // Earned achievements: load via lazy initializer
+  const [earnedAchievements, setEarnedAchievementsRaw] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set<string>();
+    try {
+      const saved = localStorage.getItem('perf-lab-achievements');
+      if (saved) return new Set(JSON.parse(saved) as string[]);
+    } catch { /* ignore */ }
+    return new Set<string>();
+  });
+  const earnedRef = useRef(earnedAchievements);
+
+  const setEarnedAchievements = useCallback((s: Set<string>) => {
+    earnedRef.current = s;
+    setEarnedAchievementsRaw(s);
+    try { localStorage.setItem('perf-lab-achievements', JSON.stringify(Array.from(s))); } catch { /* ignore */ }
+  }, []);
+
+  // Achievement checking
+  useEffect(() => {
+    const ctx: AchievementCtx = {
+      totalExpanded: expandedTasks.size,
+      reviewed: reviewedCount,
+      viewedTask3: expandedTasks.has(3),
+      earned: earnedRef.current,
+    };
+    for (const a of ACHIEVEMENTS) {
+      if (!earnedRef.current.has(a.id) && a.check(ctx)) {
+        const newEarned = new Set([...earnedRef.current, a.id]);
+        setEarnedAchievements(newEarned);
+        setAchievementToast(a);
+        break;
+      }
+    }
+  }, [expandedTasks.size, reviewedCount, expandedTasks.has(3), setEarnedAchievements]);
 
   // Combine technique tag with search for filtering
   const activeSearch = techniqueTag || searchQuery;
@@ -1897,6 +2120,7 @@ export default function PerformanceLab() {
     ...TASKS.map((t) => ({ id: `task-${t.id}`, label: `#${t.id}` })),
     { id: "methodology", label: "Methodology" },
     { id: "vibe-coder", label: "Vibe Guide" },
+    { id: "heatmap", label: "Heatmap" },
     { id: "results", label: "Results" },
     { id: "summary", label: "Summary" },
   ];
@@ -1949,6 +2173,8 @@ export default function PerformanceLab() {
   const getBreadcrumbLabel = () => {
     if (activeSection === "hero") return "OVERVIEW";
     if (activeSection === "methodology") return "METHODOLOGY";
+    if (activeSection === "vibe-coder") return "VIBE GUIDE";
+    if (activeSection === "heatmap") return "HEATMAP";
     if (activeSection === "results") return "RESULTS";
     if (activeSection === "summary") return "SUMMARY";
     if (activeSection.startsWith("task-")) {
@@ -1962,6 +2188,8 @@ export default function PerformanceLab() {
   const getBreadcrumbSection = () => {
     if (activeSection.startsWith("task-")) return "TASKS";
     if (activeSection === "methodology") return "METHODS";
+    if (activeSection === "vibe-coder") return "VIBE";
+    if (activeSection === "heatmap") return "HEATMAP";
     if (activeSection === "results") return "RESULTS";
     if (activeSection === "summary") return "SUMMARY";
     return "OVERVIEW";
@@ -2043,6 +2271,30 @@ export default function PerformanceLab() {
                 <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase tracking-[0.15em] shrink-0">
                   Reviewed {reviewedCount}/{TASKS.length}
                 </span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
+                {/* Accent color switcher */}
+                <div className="flex items-center gap-1">
+                  {ACCENT_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setActiveAccent(c.value)}
+                      className="accent-swatch"
+                      style={{ background: c.value, '--swatch-size': '12px' } as React.CSSProperties}
+                      title={c.name}
+                      aria-label={`Switch to ${c.name} accent`}
+                    >
+                      {activeAccent === c.value && <span className="accent-swatch-active" />}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
+                {/* Achievement count */}
+                {earnedAchievements.size > 0 && (
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-[0.15em] shrink-0">
+                    <Medal className="size-2.5 inline mr-0.5" />
+                    {earnedAchievements.size}/{ACHIEVEMENTS.length}
+                  </span>
+                )}
                 <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
                 <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-[0.15em] shrink-0">
                   5 tasks · rust
@@ -2558,6 +2810,41 @@ export default function PerformanceLab() {
         {/* ─── Separator ─── */}
         <SectionDivider label="RS" />
 
+        {/* ═══ OPTIMIZATION HEATMAP ═══ */}
+        <section ref={registerSection("heatmap")} id="heatmap">
+          <FadeIn>
+            <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#a78bfa] card-industrial card-lift">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Waypoints className="size-3.5 text-[#a78bfa]" />
+                  <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                    Optimization Impact Heatmap
+                  </CardTitle>
+                </div>
+                <p className="text-[10px] text-[#333] font-[family-name:var(--font-ibm-mono)] mt-1">
+                  Multi-dimensional task analysis — intensity shows relative optimization impact (0–100)
+                </p>
+              </CardHeader>
+              <CardContent>
+                <OptimizationHeatmap />
+                {/* Legend */}
+                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#262626]">
+                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Low</span>
+                  <div className="flex gap-px">
+                    {[0.1, 0.3, 0.5, 0.7, 0.9].map((v) => (
+                      <div key={v} className="w-5 h-3 heatmap-cell" style={{ '--heat': v } as React.CSSProperties} />
+                    ))}
+                  </div>
+                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">High</span>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </section>
+
+        {/* ─── Separator ─── */}
+        <SectionDivider label="RT" />
+
         {/* ═══ RESULTS TABLE ═══ */}
         <section ref={registerSection("results")} id="results">
           <FadeIn>
@@ -2715,9 +3002,16 @@ export default function PerformanceLab() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                  {TASKS.map((t) => {
+                  {TASKS.map((t, idx) => {
                     const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                     return (
+                      <motion.div
+                        key={t.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.3, delay: idx * 0.1 }}
+                      >
                       <div
                         key={t.id}
                         className="text-center p-3 bg-[#0f0f0f] border border-[#262626]"
@@ -2732,6 +3026,7 @@ export default function PerformanceLab() {
                           <AnimatedProgressBar value={parseFloat(sp)} max={maxSpeedup} />
                         </div>
                       </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -2748,7 +3043,7 @@ export default function PerformanceLab() {
                       <Zap className="size-3.5 text-[#ff6b2b]" />
                       <span className="text-xs text-[#525252] font-[family-name:var(--font-ibm-mono)]">
                         Total speedup:{" "}
-                        <span className="text-[#ff6b2b] font-bold text-gradient-orange">
+                        <span className="text-[var(--accent-color,#ff6b2b)] font-bold neon-text">
                           {totalSpeedup.toFixed(0)}×
                         </span>
                       </span>
@@ -2779,7 +3074,7 @@ export default function PerformanceLab() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="bg-[#141414] border border-[#262626] p-4 w-64 mb-2"
+              className="bg-[#141414] border border-[#262626] p-4 w-64 mb-2 glass-dark"
             >
               <div className="flex items-center gap-2 mb-3">
                 <Monitor className="size-3.5 text-[#ff6b2b]" />
@@ -2977,6 +3272,16 @@ export default function PerformanceLab() {
         );
       })()}
 
+      {/* ─── ACHIEVEMENT TOAST ─── */}
+      <AnimatePresence>
+        {achievementToast && (
+          <AchievementToast
+            achievement={achievementToast}
+            onDismiss={() => setAchievementToast(null)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ─── BACK TO TOP BUTTON ─── */}
       <AnimatePresence>
         {showBackToTop && (
@@ -3010,8 +3315,9 @@ export default function PerformanceLab() {
       />
 
       {/* ─── FOOTER ─── */}
-      <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden">
+        <div className="circuit-pattern absolute inset-0 pointer-events-none" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 relative z-10">
           <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">
             Performance Lab
           </p>

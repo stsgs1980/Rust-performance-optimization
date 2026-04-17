@@ -748,3 +748,45 @@ Stage Summary:
 - Vibe Coder's Guide section fully functional
 - Zero console errors, zero lint errors
 - All 30+ pre-existing features confirmed working
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Round 11 — Execution Pipeline, Optimization Heatmap, Achievement System, Accent Color Switcher, Glass-morphism
+
+Work Log:
+- Read worklog.md for full project context (16+ prior sessions, 7 QA passes)
+- Read current page.tsx (~3025 lines) and globals.css (~1577 lines)
+- All 5 TASKS data objects preserved identically — zero changes to task code, benchmarks, techniques
+
+New Features (5):
+- Feature 1 (Execution Pipeline): New ExecutionPipeline component rendering per-task optimization stages as a horizontal timeline with step nodes and connectors. 5 stages per task showing the optimization pipeline from input to output. Animated entry via useInView + framer-motion. Shown inside each expanded task after Key Optimizations section.
+- Feature 2 (Optimization Impact Heatmap): New OptimizationHeatmap component in a dedicated "Heatmap" section (between Vibe Guide and Results). 5×5 CSS grid showing task×metric intensity (Speed, Memory, Cache Locality, Parallelism, Code Complexity). Cells use `--heat` CSS variable for dynamic background opacity. Includes a gradient legend bar.
+- Feature 3 (Achievement System): 5 achievements tracked via localStorage (First Look, Code Reviewer, Speed Demon, Completionist, Bookworm). Achievement toast notification with glass-morphism styling slides in from top-right when unlocked. Medal icon with count shown in header bar. Checking runs via useEffect on expandedTasks/reviewedTasks changes.
+- Feature 4 (Accent Color Switcher): 5 accent color options (Orange, Cyan, Rose, Lime, Violet) in header bar as small clickable swatches. Selection persisted to localStorage and applied via CSS custom property --accent-color. All accent-dependent elements (neon glow, heatmap cells, pipeline hover, etc.) respond to the active accent.
+- Feature 5 (Cascade Animation for Summary): Summary section speedup cards now use framer-motion whileInView with staggered delays (0.1s apart) for cascading entry animation.
+
+Styling Improvements (8 new CSS classes):
+- Style 1 (Glass-morphism): .glass-dark (blur 12px, transparent bg, subtle border) applied to System Monitor. .glass-accent (blur 16px, accent-colored border, inner glow) applied to Achievement Toast.
+- Style 2 (Accent Swatch): .accent-swatch with hover scale effect and .accent-swatch-active white border for active state.
+- Style 3 (Heatmap Cell): .heatmap-cell with --heat CSS variable controlling ::before pseudo-element opacity for intensity visualization. Hover increases intensity.
+- Style 4 (Pipeline Node): .pipeline-node with accent-colored border on hover and translateY lift.
+- Style 5 (Neon Text Glow): .neon-text with multi-layer text-shadow using --accent-color. Applied to Total Speedup value in Summary.
+- Style 6 (Circuit Board Pattern): .circuit-pattern using layered linear-gradient to create PCB trace-like orthogonal grid lines. Applied to footer.
+- Style 7 (Cascade Animation): .cascade-enter keyframe animation for staggered element entry.
+- Style 8 (Animated Gradient Border): .gradient-border-animated with @property --border-angle and conic-gradient rotation animation.
+
+CSS additions: --accent-color CSS custom property on :root for dynamic accent theming.
+
+Imports Added: Flame, Medal, Palette, Waypoints from lucide-react; Fragment from react.
+State Variables Added: activeAccent, earnedAchievements, achievementToast.
+Refs Added: accentRef, earnedRef for SSR-safe localStorage reads.
+
+Stage Summary:
+- 5 new features, 8 CSS enhancements applied
+- Lint passes cleanly with zero errors
+- Dev server compiles and serves 200 OK
+- Console verified: zero errors on fresh page load
+- TASKS data completely untouched
+- page.tsx: ~3331 lines (up from ~3025)
+- globals.css: ~1706 lines (up from ~1577)

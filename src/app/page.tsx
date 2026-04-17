@@ -1076,7 +1076,7 @@ function CodeDiff({ baseline, optimized, title }: { baseline: string; optimized:
   const oLines = optimized.split('\n');
   const maxLines = Math.max(bLines.length, oLines.length);
 
-  const diffLines = [];
+  const diffLines: { type: 'context' | 'added' | 'removed'; line: string; num: number }[] = [];
   for (let i = 0; i < maxLines; i++) {
     if (i < bLines.length && i < oLines.length) {
       if (bLines[i] === oLines[i]) {
@@ -2024,12 +2024,9 @@ export default function PerformanceLab() {
     expandedTasks.forEach((id) => {
       if (!reviewedTasks.has(id) && !reviewTimersRef.current.has(id)) {
         const timer = setTimeout(() => {
-          setReviewedTasks((prev) => {
-            const next = new Set(prev);
-            next.add(id);
-            saveReviewed(next);
-            return next;
-          });
+          const next = new Set<number>(reviewedTasks);
+          next.add(id);
+          saveReviewed(next);
           reviewTimersRef.current.delete(id);
         }, 3000);
         reviewTimersRef.current.set(id, timer);

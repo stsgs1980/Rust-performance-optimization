@@ -62,6 +62,11 @@ import {
   Plus,
   Minus,
   Sparkles,
+  Share2,
+  Link2,
+  Activity,
+  Timer,
+  Trophy,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -592,6 +597,114 @@ function FadeIn({ children, delay = 0, className = "" }: { children: React.React
       {children}
     </motion.div>
   );
+}
+
+/* ── Click Ripple Hook ── */
+function useRipple() {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const size = Math.max(rect.width, rect.height) * 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-effect';
+    ripple.style.width = `${size}px`;
+    ripple.style.height = `${size}px`;
+    ripple.style.left = `${x - size / 2}px`;
+    ripple.style.top = `${y - size / 2}px`;
+    el.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  }, []);
+  return handleClick;
+}
+
+/* ── Task Quick-Preview Tooltip ── */
+function TaskPreviewTooltip({ task, visible, anchorRect }: { task: TaskData; visible: boolean; anchorRect: DOMRect | null }) {
+  if (!visible || !anchorRect) return null;
+  const sp = (task.baseline.time / task.optimized.time).toFixed(1);
+  const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
+  const grade = getGrade(parseFloat(sp));
+  return (
+    <div
+      className="task-preview-tooltip glass-dark p-4"
+      style={{
+        top: anchorRect.bottom + 8,
+        left: Math.min(anchorRect.left, window.innerWidth - 360),
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{task.id}</span>
+        <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${grade.className}`}>{grade.letter}</span>
+        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">{task.difficulty}</span>
+      </div>
+      <p className="text-xs text-[#d4d4d4] font-medium line-clamp-2 mb-2">{task.title}</p>
+      <div className="space-y-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)]">
+        <div className="flex justify-between"><span className="text-[#525252]">Speedup</span><span className="text-[#ff6b2b] font-bold">{sp}×</span></div>
+        <div className="flex justify-between"><span className="text-[#525252]">Memory</span><span className={parseInt(memSave) > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}>{parseInt(memSave) > 0 ? '-' : '+'}{Math.abs(parseInt(memSave))}%</span></div>
+        <div className="flex justify-between"><span className="text-[#525252]">Time Complex</span><span className="text-[#d4d4d4]">{task.optimized.timeComplexity}</span></div>
+      </div>
+      <div className="mt-2 pt-2 border-t border-[#1c1c1c]">
+        <p className="text-[9px] text-[#333] uppercase tracking-widest mb-1">Key Techniques</p>
+        <div className="flex flex-wrap gap-1">
+          {task.techniques.slice(0, 3).map((t, i) => (
+            <span key={i} className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#1c1c1c] px-1.5 py-0.5">{t.name}</span>
+          ))}
+          {task.techniques.length > 3 && <span className="text-[8px] text-[#333]">+{task.techniques.length - 3}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Activity Timeline Component ── */
+function ActivityTimeline({ tasks, reviewedTasks }: { tasks: TaskData[]; reviewedTasks: Set<number> }) {
+  const activities = tasks.map(t => {
+    const sp = (t.baseline.time / t.optimized.time).toFixed(1);
+    const grade = getGrade(parseFloat(sp));
+    return {
+      id: t.id,
+      title: t.title,
+      speedup: sp,
+      grade,
+      reviewed: reviewedTasks.has(t.id),
+      difficulty: t.difficulty,
+    };
+  });
+
+  return (
+    <div className="space-y-3">
+      {activities.map((a) => (
+        <div key={a.id} className={`timeline-item ${a.reviewed ? 'active' : ''}`}>
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#737373]">
+              #{a.id} {a.title.substring(0, 35)}...
+            </span>
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${a.grade.className}`}>{a.grade.letter}</span>
+              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] font-bold">{a.speedup}×</span>
+            </div>
+          </div>
+          <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+            {a.reviewed ? 'Reviewed' : 'Not reviewed'} · {a.difficulty}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Share URL Handler ── */
+function useShareURL(expandedTasks: Set<number>) {
+  return useCallback(() => {
+    const params = new URLSearchParams();
+    if (expandedTasks.size > 0 && expandedTasks.size < 5) {
+      params.set('expanded', Array.from(expandedTasks).join(','));
+    }
+    const url = `${window.location.origin}${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    navigator.clipboard.writeText(url);
+    return url;
+  }, [expandedTasks]);
 }
 
 function AnimatedCounter({ value, suffix = "" }: { value: string; suffix?: string }) {
@@ -1445,7 +1558,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {task.techniques.map((t, i) => (
-                    <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626]">
+                    <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626] hover-sweep">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">
                           {String(i + 1).padStart(2, "0")}
@@ -1510,6 +1623,10 @@ export default function PerformanceLab() {
   const [showCmdPalette, setShowCmdPalette] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [diffMode, setDiffMode] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [hoveredTask, setHoveredTask] = useState<TaskData | null>(null);
+  const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null);
+  const shareURL = useShareURL(expandedTasks);
   const reviewTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
 
@@ -1824,7 +1941,7 @@ export default function PerformanceLab() {
       <div className="gradient-mesh" />
 
       {/* ─── STICKY HEADER ─── */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0a] border-b border-[#262626]">
+      <header className="sticky top-0 z-50 bg-[#0a0a0a] border-b border-[#262626] glass-dark">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar max-w-[75vw]">
@@ -1868,6 +1985,18 @@ export default function PerformanceLab() {
               >
                 <Command className="size-3" />
                 <span className="hidden sm:inline">Cmd</span>
+              </button>
+              <button
+                onClick={() => {
+                  shareURL();
+                  setCopiedUrl(true);
+                  setTimeout(() => setCopiedUrl(false), 2000);
+                }}
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                title="Share URL with current state"
+              >
+                {copiedUrl ? <Link2 className="size-3 text-[#4ade80]" /> : <Share2 className="size-3" />}
+                <span className="hidden sm:inline">{copiedUrl ? 'Copied' : 'Share'}</span>
               </button>
               <button
                 onClick={toggleAll}
@@ -1987,7 +2116,7 @@ export default function PerformanceLab() {
                     { val: "Rust", label: "Language", isCounter: false },
                   ].map((s, i) => (
                     <div key={i} className="px-4 py-3 text-center">
-                      <p className="text-4xl sm:text-5xl font-bold font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4] [text-shadow:0_0_8px_rgba(255,107,43,0.3)] stat-hero">
+                      <p className="text-4xl sm:text-5xl font-bold font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4] [text-shadow:0_0_8px_rgba(255,107,43,0.3)] stat-hero stat-counter-glow">
                         {s.isCounter ? (
                           <AnimatedCounter value={s.val} suffix={s.suffix || ""} />
                         ) : (
@@ -2020,37 +2149,64 @@ export default function PerformanceLab() {
                   )}
                 </div>
 
+                {/* Progress Timeline */}
+                {reviewedCount > 0 && (
+                  <div className="p-4 border border-[#262626] bg-[#0f0f0f]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Trophy className="size-3.5 text-[#ff6b2b]" />
+                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">
+                        Progress Timeline
+                      </span>
+                      <span className="ml-auto text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase">
+                        {reviewedCount}/{TASKS.length}
+                      </span>
+                    </div>
+                    <ActivityTimeline tasks={TASKS} reviewedTasks={reviewedTasks} />
+                  </div>
+                )}
+
                 {/* Task quick links — staggered animation */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                   {TASKS.map((t, idx) => {
                     const TIcon = t.icon;
                     const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                     return (
-                      <motion.button
-                        key={t.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: 0.1 + idx * 0.05 }}
-                        onClick={() => scrollTo(`task-${t.id}`)}
-                        className="bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/30 hover:-translate-y-0.5 transition-all text-left group card-lift"
-                      >
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <TIcon className="size-3 text-[#525252] group-hover:text-[#ff6b2b] transition-colors" />
-                          <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
-                            #{t.id}
-                          </span>
-                          {reviewedTasks.has(t.id) && <Check className="size-2.5 text-[#4ade80] ml-auto" />}
-                        </div>
-                        <p className="text-xs text-[#737373] line-clamp-2 leading-relaxed group-hover:text-[#d4d4d4] transition-colors">
-                          {t.title}
-                        </p>
-                        <p className="text-sm font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] mt-2">
-                          {sp}×
-                        </p>
-                        <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0.5 ${getGrade(parseFloat(sp)).className}`}>
-                          {getGrade(parseFloat(sp)).letter}
-                        </span>
-                      </motion.button>
+                      <div key={t.id} className="relative">
+                        <motion.button
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: 0.1 + idx * 0.05 }}
+                          onClick={() => scrollTo(`task-${t.id}`)}
+                          onPointerEnter={(e) => {
+                            setHoveredTask(t);
+                            setTooltipRect(e.currentTarget.getBoundingClientRect());
+                          }}
+                          onPointerLeave={() => { setHoveredTask(null); setTooltipRect(null); }}
+                          className="w-full bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/30 hover:-translate-y-0.5 transition-all text-left group card-lift hover-bounce ripple-container"
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div className="tech-category-icon">
+                              <TIcon className="size-3 text-[#525252] group-hover:text-[#ff6b2b] transition-colors" />
+                            </div>
+                            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+                              #{t.id}
+                            </span>
+                            {reviewedTasks.has(t.id) && <Check className="size-2.5 text-[#4ade80] ml-auto" />}
+                          </div>
+                          <p className="text-xs text-[#737373] line-clamp-2 leading-relaxed group-hover:text-[#d4d4d4] transition-colors">
+                            {t.title}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-sm font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)]">
+                              {sp}×
+                            </p>
+                            <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${getGrade(parseFloat(sp)).className}`}>
+                              {getGrade(parseFloat(sp)).letter}
+                            </span>
+                          </div>
+                        </motion.button>
+                        <TaskPreviewTooltip task={t} visible={hoveredTask?.id === t.id} anchorRect={tooltipRect} />
+                      </div>
                     );
                   })}
                 </div>
@@ -2413,7 +2569,7 @@ export default function PerformanceLab() {
                       <Zap className="size-3.5 text-[#ff6b2b]" />
                       <span className="text-xs text-[#525252] font-[family-name:var(--font-ibm-mono)]">
                         Total speedup:{" "}
-                        <span className="text-[#ff6b2b] font-bold">
+                        <span className="text-[#ff6b2b] font-bold text-gradient-orange">
                           {totalSpeedup.toFixed(0)}×
                         </span>
                       </span>

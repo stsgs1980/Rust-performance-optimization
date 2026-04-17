@@ -1161,3 +1161,243 @@ hr.industrial {
 .grade-a { color: #22d3ee; background: rgba(34, 211, 238, 0.08); border-color: rgba(34, 211, 238, 0.2); }
 .grade-b { color: #fbbf24; background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.2); }
 .grade-c { color: #ff6b2b; background: rgba(255, 107, 43, 0.08); border-color: rgba(255, 107, 43, 0.2); }
+
+/* ═══════════════════════════════════════════════ ROUND 10 — NEW CSS RULES ═══ */
+
+/* ── Click Ripple Effect ── */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-container .ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 107, 43, 0.15);
+  transform: scale(0);
+  animation: ripple-expand 0.6s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes ripple-expand {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ── Glass Morphism Overlays ── */
+.glass-dark {
+  background: rgba(15, 15, 15, 0.85);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid rgba(38, 38, 38, 0.6);
+}
+.glass-light {
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 1px solid rgba(38, 38, 38, 0.4);
+}
+
+/* ── Task Quick-Preview Tooltip ── */
+.task-preview-tooltip {
+  position: absolute;
+  z-index: 30;
+  width: 340px;
+  max-width: 90vw;
+  background: #0f0f0f;
+  border: 1px solid #262626;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+}
+.task-preview-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ── Activity Timeline ── */
+.timeline-item {
+  position: relative;
+  padding-left: 24px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  background: #262626;
+  border: 1px solid #333;
+}
+.timeline-item.active::before {
+  background: #ff6b2b;
+  border-color: #ff6b2b;
+}
+.timeline-item::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 18px;
+  width: 1px;
+  height: calc(100% + 8px);
+  background: #1c1c1c;
+}
+.timeline-item:last-child::after {
+  display: none;
+}
+
+/* ── Technique Category Icons ── */
+.tech-category-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1c1c1c;
+  border: 1px solid #262626;
+  flex-shrink: 0;
+}
+
+/* ── Stat Counter Glow Animation ── */
+@keyframes counter-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(255, 107, 43, 0.2); }
+  50% { text-shadow: 0 0 16px rgba(255, 107, 43, 0.4); }
+}
+.stat-counter-glow {
+  animation: counter-glow 3s ease-in-out infinite;
+}
+
+/* ── Nav Micro-interaction ── */
+.nav-btn-active-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #ff6b2b;
+  box-shadow: 0 0 8px rgba(255, 107, 43, 0.4);
+}
+
+/* ── Code Block Header Redesign ── */
+.code-header-industrial {
+  background: linear-gradient(90deg, #0c0c0c 0%, #111 100%);
+  border-bottom: 1px solid #262626;
+}
+.code-header-industrial::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: #ff6b2b;
+  opacity: 0.4;
+}
+
+/* ── Hover Underline Sweep ── */
+.hover-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.hover-sweep::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #ff6b2b;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+.hover-sweep:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ── Pulse Dot Variant (orange) ── */
+@keyframes pulse-dot-orange {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 107, 43, 0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(255, 107, 43, 0); }
+}
+.pulse-dot-orange {
+  animation: pulse-dot-orange 2s ease-in-out infinite;
+}
+
+/* ── Floating Tag ── */
+.floating-tag {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 8px;
+  font-family: var(--font-ibm-mono), monospace;
+  padding: 1px 5px;
+  background: #ff6b2b;
+  color: #0a0a0a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  z-index: 2;
+}
+
+/* ── Stat Bar Micro-animation ── */
+@keyframes stat-bar-fill {
+  from { width: 0; }
+}
+.stat-bar-animated {
+  animation: stat-bar-fill 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ── Hover Scale Bounce ── */
+.hover-bounce {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hover-bounce:hover {
+  transform: scale(1.02);
+}
+.hover-bounce:active {
+  transform: scale(0.98);
+}
+
+/* ── Border Fade In ── */
+@keyframes border-fade-in {
+  from { border-color: transparent; }
+  to { border-color: #262626; }
+}
+.border-fade-in {
+  animation: border-fade-in 0.5s ease forwards;
+}
+
+/* ── Text Gradient ── */
+.text-gradient-orange {
+  background: linear-gradient(135deg, #ff6b2b, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-green {
+  background: linear-gradient(135deg, #4ade80, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Hover Border Sweep ── */
+@keyframes border-sweep {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.hover-border-sweep {
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255,107,43,0.3) 50%, transparent 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  transition: background-position 0.4s ease;
+}
+.hover-border-sweep:hover {
+  background-position: 200% 50%;
+}

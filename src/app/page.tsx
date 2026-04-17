@@ -14,7 +14,7 @@ import {
   MemoryStick, Check, Filter, Keyboard, Palette,
   TrendingUp, Database, Layers, Network, ArrowRightLeft, Cpu, Grid3x3, Gauge,
 } from "lucide-react";
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
+
 import {
   TaskData, TASKS, ALL_TECHNIQUES, ACHIEVEMENTS, HEATMAP_DATA, ACCENT_COLORS,
   TOTAL_SPEEDUP, MEM_IMPROVED_COUNT, TOTAL_TIME_SAVED, TOTAL_MEM_SAVED,
@@ -1368,52 +1368,58 @@ export default function PerformanceLab() {
                   </table>
                 </div>
 
-                {/* Speedup Chart */}
-                <div className="h-[260px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart
-                      data={TASKS.map((t) => ({
+                {/* Speedup Chart — pure SVG (no recharts) */}
+                <div className="h-[220px] flex items-center justify-center">
+                  <svg viewBox="0 0 400 200" className="w-full max-w-[500px]" preserveAspectRatio="xMidYMid meet">
+                    {(() => {
+                      const items = TASKS.map((t) => ({
                         name: `#${t.id}`,
-                        speedup: parseFloat(
-                          (t.baseline.time / t.optimized.time).toFixed(1)
-                        ),
-                        memory: parseFloat(
-                          (
-                            (1 - t.optimized.memory / t.baseline.memory) *
-                            100
-                          ).toFixed(0)
-                        ),
-                      }))}
-                      layout="vertical"
-                      barCategoryGap="15%"
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#1c1c1c"
-                        horizontal={false}
-                      />
-                      <XAxis
-                        type="number"
-                        tick={{ fontSize: 10, fill: "#525252", fontFamily: "var(--font-ibm-mono), monospace" }}
-                      />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        width={35}
-                        tick={{ fontSize: 11, fill: "#525252", fontFamily: "var(--font-ibm-mono), monospace" }}
-                      />
-                      <Bar dataKey="speedup" name="Speedup (×)" fill="#ff6b2b" />
-                      <Bar dataKey="memory" name="Memory save (%)" fill="#4ade80" />
-                      <Legend
-                        iconSize={8}
-                        wrapperStyle={{
-                          fontSize: "10px",
-                          color: "#525252",
-                          fontFamily: "var(--font-ibm-mono), monospace",
-                        }}
-                      />
-                    </RechartsBarChart>
-                  </ResponsiveContainer>
+                        speedup: parseFloat((t.baseline.time / t.optimized.time).toFixed(1)),
+                        memory: parseFloat(((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0)),
+                      }));
+                      const maxSpeedup = Math.max(...items.map(i => i.speedup), 1);
+                      const maxMem = Math.max(...items.map(i => Math.abs(i.memory)), 1);
+                      const leftPad = 40;
+                      const barGroupH = 34;
+                      const gap = 6;
+                      const barH = 14;
+                      const chartW = 300;
+                      const chartH = items.length * barGroupH;
+                      // Vertical grid lines
+                      const gridLines = [0.25, 0.5, 0.75, 1];
+                      return (
+                        <>
+                          {gridLines.map(p => (
+                            <line key={p} x1={leftPad + chartW * p} y1={5} x2={leftPad + chartW * p} y2={chartH + 5} stroke="#1c1c1c" strokeWidth={1} />
+                          ))}
+                          {/* X axis label for max speedup */}
+                          <text x={leftPad + chartW} y={chartH + 20} textAnchor="end" fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">{maxSpeedup.toFixed(0)}×</text>
+                          <text x={leftPad} y={chartH + 20} textAnchor="start" fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">0</text>
+                          {items.map((item, i) => {
+                            const y = i * barGroupH;
+                            const speedupW = (item.speedup / maxSpeedup) * chartW;
+                            const memW = (Math.abs(item.memory) / maxMem) * chartW;
+                            return (
+                              <g key={i}>
+                                <text x={leftPad - 6} y={y + barGroupH / 2} textAnchor="end" dominantBaseline="middle" fill="#525252" fontSize={10} fontFamily="var(--font-ibm-mono), monospace">{item.name}</text>
+                                {/* Speedup bar */}
+                                <rect x={leftPad} y={y} width={Math.max(speedupW, 1)} height={barH} fill="#ff6b2b" rx={0} />
+                                <text x={leftPad + speedupW + 4} y={y + barH / 2} dominantBaseline="middle" fill="#d4d4d4" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">{item.speedup}×</text>
+                                {/* Memory bar */}
+                                <rect x={leftPad} y={y + barH + 3} width={Math.max(memW, 1)} height={barH} fill={item.memory >= 0 ? "#4ade80" : "#f87171"} rx={0} />
+                                <text x={leftPad + memW + 4} y={y + barH + 3 + barH / 2} dominantBaseline="middle" fill={item.memory >= 0 ? "#4ade80" : "#f87171"} fontSize={9} fontFamily="var(--font-ibm-mono), monospace">{item.memory > 0 ? `−${item.memory}%` : `${item.memory}%`}</text>
+                              </g>
+                            );
+                          })}
+                          {/* Legend */}
+                          <rect x={leftPad} y={chartH + 30} width={8} height={8} fill="#ff6b2b" />
+                          <text x={leftPad + 12} y={chartH + 37} fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Speedup (×)</text>
+                          <rect x={leftPad + 100} y={chartH + 30} width={8} height={8} fill="#4ade80" />
+                          <text x={leftPad + 112} y={chartH + 37} fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Memory save (%)</text>
+                        </>
+                      );
+                    })()}
+                  </svg>
                 </div>
               </CardContent>
             </Card>

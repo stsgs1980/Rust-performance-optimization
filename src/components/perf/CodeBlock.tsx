@@ -1,9 +1,86 @@
 "use client";
 
 import { useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import dynamic from "next/dynamic";
 import { Copy, Check, Code2 } from "lucide-react";
+
+const SyntaxHighlighter = dynamic(
+  () => import("react-syntax-highlighter").then((mod) => mod.Prism),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-center text-[#666] font-[family-name:var(--font-ibm-mono)] text-xs animate-pulse">
+        Loading syntax highlighter...
+      </div>
+    ),
+  }
+);
+
+let oneDarkStyle: Record<string, React.CSSProperties> | null = null;
+
+async function getOneDarkStyle() {
+  if (!oneDarkStyle) {
+    const mod = await import("react-syntax-highlighter/dist/esm/styles/prism");
+    oneDarkStyle = mod.oneDark;
+  }
+  return oneDarkStyle;
+}
+
+function HighlightedCode({ code, style }: { code: string; style: Record<string, React.CSSProperties> }) {
+  return (
+    <SyntaxHighlighter
+      language="rust"
+      style={style}
+      customStyle={{
+        margin: 0,
+        padding: "1rem",
+        background: "#0d0d0d",
+        fontSize: "0.8rem",
+        lineHeight: "1.5",
+        fontFamily: "var(--font-ibm-mono), monospace",
+      }}
+      showLineNumbers
+      lineNumberStyle={{ color: "#666666", minWidth: "2.5em" }}
+    >
+      {code}
+    </SyntaxHighlighter>
+  );
+}
+
+const HighlightedCodeDynamic = dynamic(
+  () =>
+    import("react-syntax-highlighter/dist/esm/styles/prism").then((mod) => {
+      const oneDark = mod.oneDark;
+      return function CodeInner({ code }: { code: string }) {
+        return (
+          <SyntaxHighlighter
+            language="rust"
+            style={oneDark}
+            customStyle={{
+              margin: 0,
+              padding: "1rem",
+              background: "#0d0d0d",
+              fontSize: "0.8rem",
+              lineHeight: "1.5",
+              fontFamily: "var(--font-ibm-mono), monospace",
+            }}
+            showLineNumbers
+            lineNumberStyle={{ color: "#666666", minWidth: "2.5em" }}
+          >
+            {code}
+          </SyntaxHighlighter>
+        );
+      };
+    }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-center text-[#666] font-[family-name:var(--font-ibm-mono)] text-xs animate-pulse">
+        Loading syntax highlighter...
+      </div>
+    ),
+  }
+);
 
 export function CodeBlock({ code, title, variant }: { code: string; title: string; variant: "baseline" | "optimized" }) {
   const [copied, setCopied] = useState(false);
@@ -48,22 +125,7 @@ export function CodeBlock({ code, title, variant }: { code: string; title: strin
         </div>
       </div>
       <div className="max-h-[480px] overflow-auto custom-scrollbar bg-[#0d0d0d] code-glow">
-        <SyntaxHighlighter
-          language="rust"
-          style={oneDark}
-          customStyle={{
-            margin: 0,
-            padding: "1rem",
-            background: "#0d0d0d",
-            fontSize: "0.8rem",
-            lineHeight: "1.5",
-            fontFamily: "var(--font-ibm-mono), monospace",
-          }}
-          showLineNumbers
-          lineNumberStyle={{ color: "#666666", minWidth: "2.5em" }}
-        >
-          {code}
-        </SyntaxHighlighter>
+        <HighlightedCodeDynamic code={code} />
       </div>
     </div>
   );

@@ -4,18 +4,59 @@ import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Gauge, Clock, MemoryStick, AlertTriangle } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import { TaskData, formatMs } from "@/lib/perf-data";
+
+/* ─── Lightweight SVG Bar Chart (replaces recharts ~200KB) ─── */
+
+function MiniBarChart({ data }: {
+  data: { label: string; baseline: number; optimized: number; baselineColor?: string; optimizedColor?: string }[];
+}) {
+  const maxVal = Math.max(...data.flatMap(d => [d.baseline, d.optimized]), 1);
+  const barH = 20;
+  const gap = 12;
+  const groupH = barH * 2 + 6;
+  const chartH = data.length * (groupH + gap) - gap;
+  const leftPad = 70;
+  const rightPad = 20;
+  const chartW = 280 - leftPad - rightPad;
+
+  return (
+    <svg viewBox={`0 0 280 ${chartH + 10}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+      {/* Grid lines */}
+      {[0.25, 0.5, 0.75, 1].map(p => (
+        <line key={p} x1={leftPad} y1={chartH * (1 - p) + 5} x2={280 - rightPad} y2={chartH * (1 - p) + 5} stroke="#1c1c1c" strokeWidth={1} />
+      ))}
+      {data.map((d, i) => {
+        const y = i * (groupH + gap);
+        const bw = chartW;
+        return (
+          <g key={i}>
+            <text x={leftPad - 6} y={y + groupH / 2} textAnchor="end" dominantBaseline="middle" fill="#8a8a8a" fontSize={10} fontFamily="var(--font-ibm-mono), monospace">{d.label}</text>
+            {/* Baseline bar */}
+            <rect x={leftPad} y={y} width={(d.baseline / maxVal) * bw} height={barH} fill={d.baselineColor || "#3a3a3a"} rx={0} />
+            <text x={leftPad + (d.baseline / maxVal) * bw + 4} y={y + barH / 2} dominantBaseline="middle" fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">{d.baseline}</text>
+            {/* Optimized bar */}
+            <rect x={leftPad} y={y + barH + 6} width={(d.optimized / maxVal) * bw} height={barH} fill={d.optimizedColor || "#ff6b2b"} rx={0} />
+            <text x={leftPad + (d.optimized / maxVal) * bw + 4} y={y + barH + 6 + barH / 2} dominantBaseline="middle" fill="#d4d4d4" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">{d.optimized}</text>
+          </g>
+        );
+      })}
+      {/* Legend */}
+      <rect x={leftPad} y={chartH + 4} width={8} height={8} fill="#3a3a3a" />
+      <text x={leftPad + 12} y={chartH + 11} fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Baseline</text>
+      <rect x={leftPad + 70} y={chartH + 4} width={8} height={8} fill="#ff6b2b" />
+      <text x={leftPad + 82} y={chartH + 11} fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Optimized</text>
+    </svg>
+  );
+}
 
 const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
   const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
 
-
-
   const chartData = [
-    { name: "Time", Baseline: task.baseline.time, Optimized: task.optimized.time },
-    { name: "Memory", Baseline: task.baseline.memory, Optimized: task.optimized.memory },
+    { label: "Time (ms)", baseline: task.baseline.time, optimized: task.optimized.time },
+    { label: "Memory (MB)", baseline: task.baseline.memory, optimized: task.optimized.memory },
   ];
 
   return (
@@ -92,20 +133,9 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
           </div>
         )}
 
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} barCategoryGap="20%" barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1c1c1c" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#525252" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#525252" }} />
-              <Bar dataKey="Baseline" fill="#3a3a3a" />
-              <Bar dataKey="Optimized" fill="#ff6b2b" />
-              <Legend
-                iconSize={8}
-                wrapperStyle={{ fontSize: "10px", color: "#525252", fontFamily: "var(--font-ibm-mono), monospace" }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* SVG Bar Chart — replaces recharts */}
+        <div className="h-[120px] flex items-center">
+          <MiniBarChart data={chartData} />
         </div>
       </CardContent>
     </Card>

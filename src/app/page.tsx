@@ -1,1485 +1,93 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo, Fragment, memo } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { useEffect, useRef, useState, useCallback, useMemo, Fragment } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+  Search, Zap, ArrowUp, Star, Share2, Link2,
+  GitCompareArrows, Download, Command, Monitor, Sparkles,
+  Waypoints, Trophy, Medal, RotateCcw, AlertTriangle, BarChart,
+  MemoryStick, Check, Filter, Keyboard, Palette,
+  TrendingUp, Database, Layers, Network, ArrowRightLeft, Cpu, Grid3x3, Gauge,
+} from "lucide-react";
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import {
-  Search,
-  FileText,
-  Network,
-  Grid3x3,
-  ArrowRightLeft,
-  Zap,
-  Clock,
-  MemoryStick,
-  ChevronDown,
-  ChevronUp,
-  Cpu,
-  Layers,
-  Database,
-  Gauge,
-  Shield,
-  CheckCircle2,
-  XCircle,
-  GitCompareArrows,
-  BookOpen,
-  Target,
-  Award,
-  Code2,
-  TrendingUp,
-  Brain,
-  Copy,
-  Check,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
-  Columns2,
-  Rows3,
-  Monitor,
-  AlertTriangle,
-  RotateCcw,
-  Download,
-  Star,
-  Command,
-  Hash,
-  Filter,
-  Keyboard,
-  Plus,
-  Minus,
-  Sparkles,
-  Share2,
-  Link2,
-  Activity,
-  Timer,
-  Trophy,
-  Flame,
-  Medal,
-  Palette,
-  Waypoints,
-  MessageSquare,
+  TaskData, TASKS, ALL_TECHNIQUES, ACHIEVEMENTS, HEATMAP_DATA, ACCENT_COLORS,
+  TOTAL_SPEEDUP, MEM_IMPROVED_COUNT, TOTAL_TIME_SAVED, TOTAL_MEM_SAVED,
+  SPEEDUPS, MIN_SPEEDUP, MAX_SPEEDUP, AVG_SPEEDUP, DIFF_COUNTS,
+  formatMs, calcReadingTime, getGrade, AchievementCtx,
+} from "@/lib/perf-data";
+import { usePersisted, parseNumberSet, serializeNumberSet, parseStringSet, serializeStringSet, parseString } from "@/hooks/use-persisted";
+import {
+  FadeIn, SectionDivider, AnimatedCounter, AnimatedProgressBar,
+  SortIcon, CodeDiff, CommandPalette, HelpModal,
+  ExecutionPipeline, OptimizationHeatmap, AchievementToast,
+  TaskPreviewTooltip, ActivityTimeline, AmbientParticles, useRipple, useShareURL, ComplexityBadge,
+} from "@/components/perf/SmallComponents";
+import { CodeBlock } from "@/components/perf/CodeBlock";
+import { BenchChart } from "@/components/perf/BenchChart";
+import { RadarChart } from "@/components/perf/RadarChart";
+import {
+  ChevronDown, ChevronUp, CheckCircle2, XCircle, Columns2, Rows3,
 } from "lucide-react";
 
-/* ───────────────────────── TASK DATA ───────────────────────── */
-
-interface TaskData {
-  id: number;
-  title: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  category: string;
-  categoryColor: string;
-  difficulty: string;
-  difficultyColor: string;
-  problem: string;
-  constraints: string[];
-  baseline: { code: string; time: number; memory: number; timeComplexity: string; spaceComplexity: string; explanation: string };
-  optimized: { code: string; time: number; memory: number; timeComplexity: string; spaceComplexity: string; explanation: string };
-  techniques: { name: string; desc: string }[];
-}
-
-const TASKS: TaskData[] = [
-  {
-    id: 1,
-    title: "Поиск дубликатов в массиве 10M строк",
-    subtitle: "Algorithm + Memory",
-    icon: Search,
-    category: "Алгоритмы",
-    categoryColor: "bg-[#4589ff]/10 text-[#4589ff]",
-    difficulty: "Advanced",
-    difficultyColor: "bg-[#f1c21b]/10 text-[#f1c21b]",
-    problem: "Найти все дублирующиеся строки в массиве из 10 миллионов строк (средняя длина 32 символа). Задача требует оптимального баланса между скоростью и потреблением памяти.",
-    constraints: ["10M строк, avg 32 chars", "Возвратить уникальные дубликаты", "Минимизировать аллокации", "Строки содержат UTF-8"],
-    baseline: {
-      code: `use std::collections::HashSet;
-
-fn find_duplicates_naive(data: &[String]) -> Vec<&str> {
-    let mut seen = HashSet::new();
-    let mut duplicates = Vec::new();
-    for s in data {
-        if !seen.insert(s.as_str()) {
-            duplicates.push(s.as_str());
-        }
-    }
-    duplicates
-}`,
-      time: 4200, memory: 1800, timeComplexity: "O(n) avg", spaceComplexity: "O(n)",
-      explanation: "Стандартный HashSet. Частые реаллокации хэш-таблицы при росте, высокая фрагментация памяти из-за хранения ссылок на строки разбросанных по куче.",
-    },
-    optimized: {
-      code: `use std::collections::{HashSet, HashMap};
-
-fn find_duplicates_optimized(data: &mut [String]) -> Vec<String> {
-    // Phase 1: String interning для коротких строк
-    let mut intern = HashMap::with_capacity(1_000_000);
-    for s in data.iter_mut() {
-        if let Some(cached) = intern.get(s.as_str()) {
-            *s = cached.clone();
-        } else if s.len() <= 64 {
-            let cloned = s.clone();
-            intern.insert(s.as_str(), cloned);
-        }
-    }
-    drop(intern);
-
-    // Phase 2: Sort-based dedup — cache-friendly, O(1) extra
-    data.sort_unstable_by(|a, b| a.as_str().cmp(b.as_str()));
-
-    let mut duplicates = Vec::new();
-    let mut i = 0;
-    while i < data.len() {
-        let j = data[i..].partition_point(|x| x == &data[i]);
-        if j > 1 { duplicates.push(data[i].clone()); }
-        i += j;
-    }
-    duplicates
-}`,
-      time: 1800, memory: 640, timeComplexity: "O(n log n)", spaceComplexity: "O(1) extra",
-      explanation: "String interning дедуплицирует повторяющиеся строки, снижая давление на аллокатор. sort_unstable_by работает на месте с хорошей кэш-локальностью. partition_point — бинарный поиск, O(log n) на группу.",
-    },
-    techniques: [
-      { name: "Pre-allocation", desc: "HashMap::with_capacity(1M) — одна аллокация вместо 20+ реаллокаций" },
-      { name: "String Interning", desc: "Короткие строки (≤64) дедуплицируются через HashMap — общие строки ссылаются на один объект" },
-      { name: "Cache-local sort", desc: "sort_unstable_by — unstable sort в 2x быстрее stable, работает на месте без extra аллокаций" },
-      { name: "Binary search groups", desc: "partition_point использует бинарный поиск для нахождения групп одинаковых элементов" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Парсинг CSV 500MB без загрузки в память",
-    subtitle: "I/O + Allocations",
-    icon: FileText,
-    category: "I/O",
-    categoryColor: "bg-[#a56eff]/10 text-[#a56eff]",
-    difficulty: "Expert",
-    difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
-    problem: "Парсинг CSV файла 500MB с 5M строками и 10 колонками. Необходимо извлечь только 3 конкретные колонки, минимизируя использование памяти и I/O операции.",
-    constraints: ["500MB файл, 5M строк, 10 колонок", "Извлечь колонки 2, 5, 8", "Zero-copy где возможно", "Не загружать весь файл в память"],
-    baseline: {
-      code: `use std::fs::File;
-use std::io::{BufRead, BufReader};
-
-fn parse_csv_naive(path: &str) -> Vec<Vec<String>> {
-    let file = File::open(path).unwrap();
-    let reader = BufReader::new(file);
-    let mut rows = Vec::new();
-
-    for line in reader.lines() {
-        let line = line.unwrap();
-        let row: Vec<String> = line
-            .split(',')
-            .map(|s| s.to_string())
-            .collect();
-        rows.push(row);
-    }
-    rows
-}`,
-      time: 8500, memory: 3200, timeComplexity: "O(n×m)", spaceComplexity: "O(n×m)",
-      explanation: "BufReader читает построчно — каждую строку аллоцируем как String, затем split создаёт Vec из 10 String. Итого: 5M строк × 11 аллокаций = 55M аллокаций на куче.",
-    },
-    optimized: {
-      code: `use memmap2::Mmap;
-use std::fs::File;
-
-fn parse_csv_optimized(path: &str) -> Vec<Vec<&'static str>> {
-    let file = File::open(path).unwrap();
-    let mmap = unsafe { Mmap::map(&file).unwrap() };
-    let data: &'static [u8] =
-        &*Box::leak(mmap.into_boxed_slice());
-
-    // SIMD-ускоренный поиск \\n (memchr внутри)
-    let mut row_starts = Vec::with_capacity(5_000_001);
-    row_starts.push(0);
-    for (i, &byte) in data.iter().enumerate() {
-        if byte == b'\\n' { row_starts.push(i + 1); }
-    }
-
-    // Парсим только нужные колонки — zero-copy
-    let targets = [2usize, 5, 8];
-    let mut result = Vec::with_capacity(row_starts.len()-1);
-
-    for win in row_starts.windows(2) {
-        let row = &data[win[0]..win[1].saturating_sub(1)];
-        let mut cols = Vec::with_capacity(targets.len());
-        let mut col_idx = 0;
-        let mut start = 0;
-        for (i, &byte) in row.iter().enumerate() {
-            if byte == b',' {
-                if targets.contains(&col_idx) {
-                    cols.push(
-                        std::str::from_utf8(
-                            &row[start..i]
-                        ).unwrap()
-                    );
-                }
-                col_idx += 1;
-                start = i + 1;
-            }
-        }
-        if targets.contains(&col_idx) {
-            cols.push(
-                std::str::from_utf8(&row[start..]).unwrap()
-            );
-        }
-        result.push(cols);
-    }
-    result
-}`,
-      time: 1200, memory: 512, timeComplexity: "O(n)", spaceComplexity: "O(k) output only",
-      explanation: "mmap — zero-copy чтение файла, ОС сама управляет page cache. Парсинг прямо по байтам mmap без создания промежуточных String. SIMD memchr для поиска разделителей. Результат — &str ссылающиеся на mmap, а не владеющие копии.",
-    },
-    techniques: [
-      { name: "Memory-mapped I/O", desc: "mmap отображает файл в виртуальную память — ОС подгружает страницы по запросу, zero-copy" },
-      { name: "SIMD memchr", desc: "Крейт memchr использует SIMD инструкции (AVX2/SSE) для поиска байтов — до 64 байт за такт" },
-      { name: "Zero-copy parsing", desc: "Парсинг по байтам без создания String — результат содержит &str на mmap данные" },
-      { name: "Selective column extraction", desc: "Парсим только 3 из 10 колонок — пропускаем ненужные данные" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Обработка 100K HTTP-запросов concurrently",
-    subtitle: "Concurrency",
-    icon: Network,
-    category: "Конкурентность",
-    categoryColor: "bg-[#a56eff]/10 text-[#a56eff]",
-    difficulty: "Advanced",
-    difficultyColor: "bg-[#f1c21b]/10 text-[#f1c21b]",
-    problem: "Выполнить 100K HTTP GET запросов к REST API, собрав все ответы. Необходимо максимизировать throughput при ограниченных ресурсах клиента.",
-    constraints: ["100K запросов", "Максимальный throughput", "Ограничение: 500 concurrent", "Обработка ошибок и таймаутов"],
-    baseline: {
-      code: `use reqwest::blocking::Client;
-
-fn fetch_all_sequential(urls: &[String]) -> Vec<String> {
-    let client = Client::new();
-    let mut results = Vec::with_capacity(urls.len());
-
-    for url in urls {
-        let resp = client.get(url).send().unwrap();
-        let body = resp.text().unwrap();
-        results.push(body);
-    }
-    results
-}`,
-      time: 500000, memory: 256, timeComplexity: "O(n) sequential", spaceComplexity: "O(k) results",
-      explanation: "Последовательные запросы — один за другим. Каждый запрос ждёт TCP handshake + TLS + response. При avg latency 5ms × 100K = 500 секунд. CPU простаивает 95% времени ожидания I/O.",
-    },
-    optimized: {
-      code: `use reqwest::Client;
-use tokio::sync::Semaphore;
-use futures::stream::{self, StreamExt};
-
-async fn fetch_all_concurrent(
-    urls: &[String],
-) -> Vec<String> {
-    let client = Client::builder()
-        .pool_max_idle_per_host(100)
-        .pool_idle_timeout(
-            std::time::Duration::from_secs(90)
-        )
-        .tcp_keepalive(
-            std::time::Duration::from_secs(60)
-        )
-        .timeout(std::time::Duration::from_secs(10))
-        .build()
-        .unwrap();
-
-    let semaphore = Semaphore::new(500);
-    let results: Vec<String> =
-        stream::iter(urls)
-            .map(|url| async {
-                let _permit =
-                    semaphore.acquire().await.unwrap();
-                client
-                    .get(url)
-                    .send()
-                    .await
-                    .unwrap()
-                    .text()
-                    .await
-                    .unwrap()
-            })
-            .buffer_unordered(500)
-            .collect()
-            .await;
-
-    results
-}`,
-      time: 8500, memory: 512, timeComplexity: "O(n/c) c=concurrency", spaceComplexity: "O(k) results",
-      explanation: "Async tokio runtime с 500 concurrent соединениями. Connection pooling переиспользует TCP/TLS соединения. Semaphore предотвращает overload. buffer_unordered обрабатывает результаты по мере поступления.",
-    },
-    techniques: [
-      { name: "Async I/O (tokio)", desc: "Многопоточный async runtime — один поток управляет тысячами соединений без блокировок" },
-      { name: "Connection Pooling", desc: "pool_max_idle_per_host(100) — переиспользование TCP/TLS соединений, экономия ~150ms на handshake" },
-      { name: "Semaphore Backpressure", desc: "Ограничиваем concurrent requests до 500 — защита от socket exhaustion и timeout cascade" },
-      { name: "buffer_unordered", desc: "Обрабатывает фьючерсы по мере готовности, не дожидаясь порядка — минимальный latency" },
-    ],
-  },
-  {
-    id: 4,
-    title: "Умножение матриц 1000×1000 (SIMD + кэш)",
-    subtitle: "SIMD + Cache",
-    icon: Grid3x3,
-    category: "Вычисления",
-    categoryColor: "bg-[#08bdba]/10 text-[#08bdba]",
-    difficulty: "Expert",
-    difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
-    problem: "Умножить две матрицы 1000×1000 (f32). Наивная реализация страдает от cache misses — необходимо оптимизировать доступ к памяти.",
-    constraints: ["1000×1000 f32 матрицы", "12MB на матрицу", "Оптимизировать для L3 cache", "No external dependencies"],
-    baseline: {
-      code: `fn matmul_naive(a: &[Vec<f32>], b: &[Vec<f32>])
-    -> Vec<Vec<f32>>
-{
-    let n = a.len();
-    let mut c = vec![vec![0.0f32; n]; n];
-
-    for i in 0..n {
-        for j in 0..n {
-            for k in 0..n {
-                c[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-    c
-}`,
-      time: 3200, memory: 12, timeComplexity: "O(n³)", spaceComplexity: "O(n²)",
-      explanation: "Тройной вложенный цикл. Доступ к b[k][j] — скачки по памяти на n*sizeof(f32)=4KB каждый шаг k. Это вызывет cache miss на каждой итерации внутреннего цикла. L1 cache miss = ~4 cycles penalty.",
-    },
-    optimized: {
-      code: `fn matmul_tiled(a: &[f32], b: &[f32], n: usize)
-    -> Vec<f32>
-{
-    const TILE: usize = 64;
-    let mut c = vec![0.0f32; n * n];
-    let b_packed = pack_matrix(b, n, TILE);
-
-    for i in (0..n).step_by(TILE) {
-        for j in (0..n).step_by(TILE) {
-            for k in (0..n).step_by(TILE) {
-                micro_kernel(
-                    &a[i*n..], &b_packed, &mut c[i*n..],
-                    n, j, k, TILE,
-                );
-            }
-        }
-    }
-    c
-}
-
-#[inline(always)]
-fn micro_kernel(
-    a_tile: &[f32], b_packed: &[f32], c_tile: &mut [f32],
-    n: usize, j: usize, k: usize, tile: usize,
-) {
-    let mut ii = 0;
-    while ii + 4 <= tile {
-        let mut jj = 0;
-        while jj + 4 <= tile && j + jj + 4 <= n {
-            // 4x4 unrolled micro-kernel
-            let mut c00 = c_tile[ii*n + j + jj];
-            let mut c01 = c_tile[ii*n + j + jj + 1];
-            let mut c02 = c_tile[ii*n + j + jj + 2];
-            let mut c03 = c_tile[ii*n + j + jj + 3];
-
-            for kk in 0..tile.min(n - k) {
-                let a0 = a_tile[ii * n + k + kk];
-                let a1 = a_tile[(ii+1)*n + k + kk];
-                let a2 = a_tile[(ii+2)*n + k + kk];
-                let a3 = a_tile[(ii+3)*n + k + kk];
-                let bi = &b_packed[(k+kk)*n + j+jj..];
-                c00 += a0 * bi[0];
-                c01 += a0 * bi[1];
-                c02 += a0 * bi[2];
-                c03 += a0 * bi[3];
-                // ... c10-c33 similarly
-            }
-            c_tile[ii*n + j+jj]     = c00;
-            c_tile[ii*n + j+jj + 1] = c01;
-            c_tile[ii*n + j+jj + 2] = c02;
-            c_tile[ii*n + j+jj + 3] = c03;
-            jj += 4;
-        }
-        ii += 4;
-    }
-}
-
-fn pack_matrix(b: &[f32], n: usize, _t: usize)
-    -> Vec<f32>
-{
-    b.to_vec()
-}`,
-      time: 380, memory: 24, timeComplexity: "O(n³)", spaceComplexity: "O(n²)",
-      explanation: "Tiling 64×64 помещает рабочие блоки в L1 cache (32KB). Unrolled 4x4 micro-kernel — компилятор auto-vectorizes через AVX2 (8 f32 параллельно). Packed B matrix — column-major порядок для sequential access.",
-    },
-    techniques: [
-      { name: "Cache Tiling", desc: "64×64 блоки (16KB) полностью помещаются в L1 cache (32KB) — нулевые cache misses внутри блока" },
-      { name: "Loop Unrolling 4×4", desc: "Развёрнутый micro-kernel даёт компилятору возможность auto-vectorize через AVX2" },
-      { name: "Packed Matrix Format", desc: "Матрица B перепакована в column-major порядок для sequential доступа в цикле по k" },
-      { name: "Flat array layout", desc: "Vec<f32> вместо Vec<Vec<f32>> — один контiguous allocation, данные в кэше рядом" },
-    ],
-  },
-  {
-    id: 5,
-    title: "Lock-free очередь для Producer-Consumer",
-    subtitle: "Parallelism",
-    icon: ArrowRightLeft,
-    category: "Параллелизм",
-    categoryColor: "bg-[#08bdba]/10 text-[#08bdba]",
-    difficulty: "Expert",
-    difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
-    problem: "Реализовать bounded MPSC очередь: 8 producer threads, 1 consumer thread, 10M сообщений. Mutex-блокировки создают contention bottleneck.",
-    constraints: ["8 producers, 1 consumer", "10M сообщений", "Bounded ring buffer", "Wait-free для producers"],
-    baseline: {
-      code: `use std::sync::{Arc, Mutex};
-
-struct MutexQueue<T> {
-    data: Mutex<Vec<T>>,
-}
-
-impl<T> MutexQueue<T> {
-    fn new() -> Self {
-        Self { data: Mutex::new(Vec::new()) }
-    }
-
-    fn push(&self, value: T) {
-        self.data.lock().unwrap().push(value);
-    }
-
-    fn pop(&self) -> Option<T> {
-        self.data.lock().unwrap().pop()
-    }
-}`,
-      time: 12000, memory: 256, timeComplexity: "O(n) + contention", spaceComplexity: "O(n)",
-      explanation: "Каждый push/pop захватывает mutex — 8 producers + 1 consumer = постоянные cache line invalidations. При contention: kernel-level thread scheduling, context switches (~10μs каждый), store buffer flush.",
-    },
-    optimized: {
-      code: `use std::sync::atomic::{AtomicUsize, Ordering};
-use std::cell::UnsafeCell;
-use std::mem::MaybeUninit;
-
-// Cache-line padding — prevents false sharing
-#[repr(align(64))]
-struct CachePadded<T>(T);
-
-struct LockFreeQueue<T> {
-    buffer: UnsafeCell<Vec<MaybeUninit<T>>>,
-    capacity: usize,
-    mask: usize,
-    head: CachePadded<AtomicUsize>,
-    tail: CachePadded<AtomicUsize>,
-}
-
-unsafe impl<T: Send> Send for LockFreeQueue<T> {}
-unsafe impl<T: Send> Sync for LockFreeQueue<T> {}
-
-impl<T> LockFreeQueue<T> {
-    fn new(power_of_two: usize) -> Self {
-        let cap = power_of_two.next_power_of_two();
-        let mut buf = Vec::with_capacity(cap);
-        unsafe { buf.set_len(cap); }
-        Self {
-            buffer: UnsafeCell::new(buf),
-            capacity: cap,
-            mask: cap - 1,
-            head: CachePadded(AtomicUsize::new(0)),
-            tail: CachePadded(AtomicUsize::new(0)),
-        }
-    }
-
-    fn push(&self, value: T) -> bool {
-        let tail = self.tail.0.load(Ordering::Relaxed);
-        let head = self.head.0.load(Ordering::Acquire);
-        if tail.wrapping_sub(head) >= self.capacity {
-            return false; // Full
-        }
-        unsafe {
-            let slot = &mut (*self.buffer.get())
-                [tail & self.mask];
-            slot.write(value);
-        }
-        self.tail.0.store(
-            tail.wrapping_add(1),
-            Ordering::Release,
-        );
-        true
-    }
-
-    fn pop(&self) -> Option<T> {
-        let head = self.head.0.load(Ordering::Relaxed);
-        let tail = self.tail.0.load(Ordering::Acquire);
-        if head == tail { return None; }
-        let value = unsafe {
-            (*self.buffer.get())
-                [head & self.mask]
-                .assume_init_read()
-        };
-        self.head.0.store(
-            head.wrapping_add(1),
-            Ordering::Release,
-        );
-        Some(value)
-    }
-}
-
-impl<T> Drop for LockFreeQueue<T> {
-    fn drop(&mut self) {
-        let h = *self.head.0.get_mut();
-        let t = *self.tail.0.get_mut();
-        for i in h..t {
-            unsafe {
-                (*self.buffer.get())
-                    [i & self.mask]
-                    .assume_init_drop();
-            }
-        }
-    }
-}`,
-      time: 450, memory: 128, timeComplexity: "O(n) amortized", spaceComplexity: "O(capacity)",
-      explanation: "CAS (Compare-And-Swap) операции вместо mutex — нет kernel scheduling, нет context switches. CachePadded (64-byte align) — head и tail на разных cache lines, нулевое false sharing. Release/Acquire ordering — слабее SeqCst, даёт компилятору больше свободы.",
-    },
-    techniques: [
-      { name: "Lock-free CAS", desc: "Atomic operations вместо mutex — нет блокировок, нет context switches, нет kernel involvement" },
-      { name: "Cache-line Padding", desc: "#[repr(align(64))] — head и tail на разных cache lines, предотвращает false sharing между CPU ядрами" },
-      { name: "Relaxed + Acquire/Release", desc: "Relaxed для локальных нагрузок, Release/Acquire для синхронизации — слабее SeqCst, аналогичная корректность" },
-      { name: "Ring Buffer", desc: "Фиксированный буфер с power-of-two capacity — mask вместо modulo, одна аллокация на весь срок жизни" },
-    ],
-  },
-];
-
-/* ─────────────────────── PRECOMPUTED CONSTANTS ─────────────────────── */
-
-const TOTAL_SPEEDUP = TASKS.reduce((a, t) => a + t.baseline.time / t.optimized.time, 0);
-const MEM_IMPROVED_COUNT = TASKS.filter((t) => t.optimized.memory < t.baseline.memory).length;
-const TOTAL_TIME_SAVED = TASKS.reduce((a, t) => a + (t.baseline.time - t.optimized.time), 0);
-const TOTAL_MEM_SAVED = TASKS.reduce((a, t) => a + (t.baseline.memory - t.optimized.memory), 0);
-const SPEEDUPS = TASKS.map(t => t.baseline.time / t.optimized.time);
-const MIN_SPEEDUP = Math.min(...SPEEDUPS);
-const MAX_SPEEDUP = Math.max(...SPEEDUPS);
-const AVG_SPEEDUP = SPEEDUPS.reduce((a, b) => a + b, 0) / SPEEDUPS.length;
-const DIFF_COUNTS = {
-  all: TASKS.length,
-  Advanced: TASKS.filter(t => t.difficulty === "Advanced").length,
-  Expert: TASKS.filter(t => t.difficulty === "Expert").length,
-};
-
-/* ─────────────────────── TECHNIQUE TAG CLOUD DATA ─────────────────────── */
-
-const ALL_TECHNIQUES = (() => {
-  const map = new Map<string, number>();
-  for (const t of TASKS) {
-    for (const tech of t.techniques) {
-      map.set(tech.name, (map.get(tech.name) || 0) + 1);
-    }
-  }
-  return Array.from(map.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count }));
-})();
-
-/* ─────────────────────── HELPERS ─────────────────────── */
-
-/**
- * Generic hydration-safe persisted state backed by localStorage.
- * Both server & client start with `initialValue` (no hydration mismatch).
- * Includes runtime validation of parsed localStorage data.
- */
-function usePersisted<T>(
-  key: string,
-  initialValue: T,
-  parse: (raw: string) => T,
-  serialize: (val: T) => string
-): [T, (next: T) => void] {
-  const [value, setValue] = useState(initialValue);
-  const loadedRef = useRef(false);
-
-  useEffect(() => {
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        requestAnimationFrame(() => { setValue(parse(saved)); });
-      }
-    } catch { /* ignore */ }
-  }, [key, parse]);
-
-  const setAndPersist = useCallback((next: T) => {
-    setValue(next);
-    try { localStorage.setItem(key, serialize(next)); } catch { /* ignore */ }
-  }, [key, serialize]);
-
-  return [value, setAndPersist];
-}
-
-/* Safe parsers with runtime validation for localStorage data */
-const parseNumberSet = (raw: string): Set<number> => {
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'number' && isFinite(v))) {
-      return new Set(parsed as number[]);
-    }
-  } catch { /* ignore */ }
-  return new Set<number>();
-};
-const serializeNumberSet = (val: Set<number>) => JSON.stringify(Array.from(val));
-
-const parseStringSet = (raw: string): Set<string> => {
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'string')) {
-      return new Set(parsed as string[]);
-    }
-  } catch { /* ignore */ }
-  return new Set<string>();
-};
-const serializeStringSet = (val: Set<string>) => JSON.stringify(Array.from(val));
-
-const parseString = (raw: string): string => (typeof raw === 'string' ? raw : '');
-
-function calcReadingTime(task: TaskData): number {
-  const codeLines = task.baseline.code.split('\n').length + task.optimized.code.split('\n').length;
-  const textChars = task.problem.length + task.techniques.reduce((a, t) => a + t.desc.length + t.name.length, 0);
-  return Math.max(1, Math.ceil(codeLines / 30 + textChars / 250));
-}
-
-function formatMs(ms: number): string {
-  if (ms >= 1000) return `${(ms / 1000).toFixed(ms >= 10000 ? 0 : 1)}s`;
-  return `${ms.toFixed(0)}ms`;
-}
-
-/* ─────────────────────── SMALL COMPONENTS ─────────────────────── */
-
-function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 4 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.2, delay }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-/* ── Click Ripple Hook ── */
-function useRipple() {
-  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const size = Math.max(rect.width, rect.height) * 2;
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple-effect';
-    ripple.style.width = `${size}px`;
-    ripple.style.height = `${size}px`;
-    ripple.style.left = `${x - size / 2}px`;
-    ripple.style.top = `${y - size / 2}px`;
-    el.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
-  }, []);
-  return handleClick;
-}
-
-/* ── Task Quick-Preview Tooltip ── */
-function TaskPreviewTooltip({ task, visible, anchorRect }: { task: TaskData; visible: boolean; anchorRect: DOMRect | null }) {
-  if (!visible || !anchorRect) return null;
-  const sp = (task.baseline.time / task.optimized.time).toFixed(1);
-  const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
-  const grade = getGrade(parseFloat(sp));
-  return (
-    <div
-      className="task-preview-tooltip glass-dark p-4"
-      style={{
-        top: anchorRect.bottom + 8,
-        left: Math.min(anchorRect.left, window.innerWidth - 360),
-      }}
-    >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{task.id}</span>
-        <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${grade.className}`}>{grade.letter}</span>
-        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">{task.difficulty}</span>
-      </div>
-      <p className="text-xs text-[#d4d4d4] font-medium line-clamp-2 mb-2">{task.title}</p>
-      <div className="space-y-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)]">
-        <div className="flex justify-between"><span className="text-[#8a8a8a]">Speedup</span><span className="text-[#ff6b2b] font-bold">{sp}×</span></div>
-        <div className="flex justify-between"><span className="text-[#8a8a8a]">Memory</span><span className={parseInt(memSave) > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}>{parseInt(memSave) > 0 ? '-' : '+'}{Math.abs(parseInt(memSave))}%</span></div>
-        <div className="flex justify-between"><span className="text-[#8a8a8a]">Time Complex</span><span className="text-[#d4d4d4]">{task.optimized.timeComplexity}</span></div>
-      </div>
-      <div className="mt-2 pt-2 border-t border-[#1c1c1c]">
-        <p className="text-[9px] text-[#666666] uppercase tracking-widest mb-1">Key Techniques</p>
-        <div className="flex flex-wrap gap-1">
-          {task.techniques.slice(0, 3).map((t, i) => (
-            <span key={i} className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#1c1c1c] px-1.5 py-0.5">{t.name}</span>
-          ))}
-          {task.techniques.length > 3 && <span className="text-[8px] text-[#666666]">+{task.techniques.length - 3}</span>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Activity Timeline Component ── */
-function ActivityTimeline({ tasks, reviewedTasks }: { tasks: TaskData[]; reviewedTasks: Set<number> }) {
-  const activities = tasks.map(t => {
-    const sp = (t.baseline.time / t.optimized.time).toFixed(1);
-    const grade = getGrade(parseFloat(sp));
-    return {
-      id: t.id,
-      title: t.title,
-      speedup: sp,
-      grade,
-      reviewed: reviewedTasks.has(t.id),
-      difficulty: t.difficulty,
-    };
-  });
-
-  return (
-    <div className="space-y-3">
-      {activities.map((a) => (
-        <div key={a.id} className={`timeline-item ${a.reviewed ? 'active' : ''}`}>
-          <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
-              #{a.id} {a.title.substring(0, 35)}...
-            </span>
-            <div className="flex items-center gap-2">
-              <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${a.grade.className}`}>{a.grade.letter}</span>
-              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] font-bold">{a.speedup}×</span>
-            </div>
-          </div>
-          <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
-            {a.reviewed ? 'Reviewed' : 'Not reviewed'} · {a.difficulty}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Share URL Handler ── */
-function useShareURL(expandedTasks: Set<number>) {
-  return useCallback(() => {
-    const params = new URLSearchParams();
-    if (expandedTasks.size > 0 && expandedTasks.size < 5) {
-      params.set('expanded', Array.from(expandedTasks).join(','));
-    }
-    const url = `${window.location.origin}${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
-    navigator.clipboard.writeText(url);
-    return url;
-  }, [expandedTasks]);
-}
-
-function AnimatedCounter({ value, suffix = "" }: { value: string; suffix?: string }) {
-  const num = parseFloat(value);
-  const isNumeric = !isNaN(num);
-  const [display, setDisplay] = useState(isNumeric ? "0" : value);
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
-  const animatedRef = useRef(false);
-
-  useEffect(() => {
-    if (!inView || !isNumeric || animatedRef.current) return;
-    animatedRef.current = true;
-    const duration = 800;
-    const start = performance.now();
-    const animate = (now: number) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = num * eased;
-      if (Number.isInteger(num)) {
-        setDisplay(Math.round(current).toString());
-      } else {
-        setDisplay(current.toFixed(1));
-      }
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        setDisplay(value);
-      }
-    };
-    requestAnimationFrame(animate);
-  }, [inView, value, num, isNumeric]);
-
-  return (
-    <span ref={ref}>
-      {display}{suffix}
-    </span>
-  );
-}
-
-function SectionDivider({ label }: { label: string }) {
-  const hexLeft = ('0x' + (label.charCodeAt(0) || 0x30).toString(16).toUpperCase().padStart(2, '0'));
-  const hexRight = ('0x' + (label.charCodeAt(label.length - 1) || 0x30).toString(16).toUpperCase().padStart(2, '0'));
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <span className="hex-coord">{hexLeft}</span>
-      <div className="flex-1 h-px bg-[#1c1c1c]" />
-      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-[0.3em]">{label}</span>
-      <div className="flex-1 h-px bg-[#1c1c1c]" />
-      <span className="hex-coord">{hexRight}</span>
-    </div>
-  );
-}
-
-function CodeBlock({ code, title, variant }: { code: string; title: string; variant: "baseline" | "optimized" }) {
-  const [copied, setCopied] = useState(false);
-  const lineCount = code.split('\n').length;
-  const charCount = code.length;
-  const tokenEstimate = Math.round(charCount / 4);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="overflow-hidden border border-[#262626] code-block-hover">
-      <div className="px-4 py-2 flex items-center justify-between border-b border-[#262626] bg-[#0f0f0f]">
-        <div className="flex items-center gap-2 min-w-0">
-          <Code2 className="size-3.5 text-[#8a8a8a] shrink-0" />
-          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] truncate">{title}</span>
-          <span className="tooltip-container">
-            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] cursor-help">{lineCount} lines</span>
-            <span className="tooltip-content">
-              {lineCount} lines · {charCount} chars · ~{tokenEstimate} tokens
-            </span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleCopy(); }}
-            className="text-[#8a8a8a] hover:text-[#d4d4d4] transition-colors p-1"
-          >
-            {copied ? <Check className="size-3.5 text-[#4ade80]" /> : <Copy className="size-3.5" />}
-          </button>
-          <span
-            className={`text-[10px] font-[family-name:var(--font-ibm-mono)] font-medium uppercase tracking-wider px-2 py-0.5 badge-hover ${
-              variant === "baseline"
-                ? "text-[#f87171] bg-[#f87171]/10"
-                : "text-[#4ade80] bg-[#4ade80]/10"
-            }`}
-          >
-            {variant === "baseline" ? "Baseline" : "Optimized"}
-          </span>
-        </div>
-      </div>
-      <div className="max-h-[480px] overflow-auto custom-scrollbar bg-[#0d0d0d] code-glow">
-        <SyntaxHighlighter
-          language="rust"
-          style={oneDark}
-          customStyle={{
-            margin: 0,
-            padding: "1rem",
-            background: "#0d0d0d",
-            fontSize: "0.8rem",
-            lineHeight: "1.5",
-            fontFamily: "var(--font-ibm-mono), monospace",
-          }}
-          showLineNumbers
-          lineNumberStyle={{ color: "#666666", minWidth: "2.5em" }}
-        >
-          {code}
-        </SyntaxHighlighter>
-      </div>
-    </div>
-  );
-}
-
-const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
-  const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
-  const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
-
-
-
-  const chartData = [
-    { name: "Time", Baseline: task.baseline.time, Optimized: task.optimized.time },
-    { name: "Memory", Baseline: task.baseline.memory, Optimized: task.optimized.memory },
-  ];
-
-  return (
-    <Card className="h-full bg-[#141414] border border-[#262626] card-industrial card-lift">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#8a8a8a]">
-          <Gauge className="size-3.5" />
-          Benchmark
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 text-center border border-[#262626] metric-card depth-shadow-1" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
-            <p className="text-2xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] text-shadow-industrial">
-              {speedup}×
-            </p>
-            <p className="text-[10px] text-[#8a8a8a] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
-              Speedup
-            </p>
-          </div>
-          <div className="p-4 text-center border border-[#262626] metric-card depth-shadow-1" style={{ "--metric-color": parseInt(memSave) > 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
-            <p className={`text-2xl font-bold font-[family-name:var(--font-ibm-mono)] text-shadow-industrial ${parseInt(memSave) > 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
-              {parseInt(memSave) > 0 ? `−${memSave}%` : `+${Math.abs(parseInt(memSave))}%`}
-            </p>
-            <p className="text-[10px] text-[#8a8a8a] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
-              Memory
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <Clock className="size-3" /> baseline
-            </span>
-            <span className="font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
-              {formatMs(task.baseline.time)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <Clock className="size-3" /> optimized
-            </span>
-            <span className="font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
-              {formatMs(task.optimized.time)}
-            </span>
-          </div>
-          <Separator className="bg-[#262626]" />
-          <div className="flex items-center justify-between">
-            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <MemoryStick className="size-3" /> baseline
-            </span>
-            <span className="font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
-              {task.baseline.memory} MB
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <MemoryStick className="size-3" /> optimized
-            </span>
-            <span className="font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
-              {task.optimized.memory} MB
-            </span>
-          </div>
-        </div>
-
-        {/* Tradeoff note for tasks where optimized memory > baseline memory */}
-        {task.optimized.memory > task.baseline.memory && (
-          <div className="flex items-start gap-2 p-2.5 bg-[#fbbf24]/5 border border-[#fbbf24]/20">
-            <AlertTriangle className="size-3.5 text-[#fbbf24] shrink-0 mt-0.5" />
-            <p className="text-[10px] text-[#fbbf24] leading-relaxed font-[family-name:var(--font-ibm-mono)]">
-              Memory tradeoff: +{task.optimized.memory - task.baseline.memory} MB in exchange for {(task.baseline.time / task.optimized.time).toFixed(1)}× speed improvement
-            </p>
-          </div>
-        )}
-
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} barCategoryGap="20%" barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1c1c1c" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#525252" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#525252" }} />
-              <Bar dataKey="Baseline" fill="#3a3a3a" />
-              <Bar dataKey="Optimized" fill="#ff6b2b" />
-              <Legend
-                iconSize={8}
-                wrapperStyle={{ fontSize: "10px", color: "#525252", fontFamily: "var(--font-ibm-mono), monospace" }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
-  );
-});
-
-/* ── Ambient Particles Component (deterministic to avoid hydration mismatch) ── */
-function AmbientParticles() {
-  const particles = [
-    { id: 0, left: '12%', bottom: '5%', delay: '0.2s', duration: '5s', size: 1, opacity: 0.15 },
-    { id: 1, left: '28%', bottom: '12%', delay: '1.1s', duration: '6s', size: 2, opacity: 0.25 },
-    { id: 2, left: '45%', bottom: '3%', delay: '0.8s', duration: '4s', size: 1, opacity: 0.18 },
-    { id: 3, left: '67%', bottom: '18%', delay: '2.3s', duration: '7s', size: 2, opacity: 0.2 },
-    { id: 4, left: '82%', bottom: '8%', delay: '3.5s', duration: '5s', size: 1, opacity: 0.3 },
-    { id: 5, left: '5%', bottom: '22%', delay: '1.7s', duration: '6s', size: 2, opacity: 0.12 },
-    { id: 6, left: '35%', bottom: '15%', delay: '0.5s', duration: '4s', size: 1, opacity: 0.22 },
-    { id: 7, left: '55%', bottom: '10%', delay: '4.1s', duration: '7s', size: 2, opacity: 0.28 },
-    { id: 8, left: '90%', bottom: '25%', delay: '2.8s', duration: '5s', size: 1, opacity: 0.16 },
-    { id: 9, left: '18%', bottom: '20%', delay: '3.2s', duration: '6s', size: 2, opacity: 0.24 },
-    { id: 10, left: '72%', bottom: '6%', delay: '0.9s', duration: '4s', size: 1, opacity: 0.19 },
-    { id: 11, left: '40%', bottom: '28%', delay: '5.0s', duration: '7s', size: 2, opacity: 0.14 },
-    { id: 12, left: '60%', bottom: '14%', delay: '1.5s', duration: '5s', size: 1, opacity: 0.26 },
-    { id: 13, left: '95%', bottom: '2%', delay: '3.8s', duration: '6s', size: 2, opacity: 0.17 },
-    { id: 14, left: '50%', bottom: '22%', delay: '2.0s', duration: '4s', size: 1, opacity: 0.21 },
-  ];
-  return (
-    <div className="ambient-particles">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="particle"
-          style={{
-            left: p.left,
-            bottom: p.bottom,
-            animationDelay: p.delay,
-            animationDuration: p.duration,
-            width: p.size,
-            height: p.size,
-            opacity: p.opacity,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ── Performance Grade Helper ── */
-function getGrade(speedup: number): { letter: string; className: string } {
-  if (speedup >= 30) return { letter: "S", className: "grade-s" };
-  if (speedup >= 10) return { letter: "A", className: "grade-a" };
-  if (speedup >= 3) return { letter: "B", className: "grade-b" };
-  return { letter: "C", className: "grade-c" };
-}
-
-/* ── Code Diff Component ── */
-function CodeDiff({ baseline, optimized, title }: { baseline: string; optimized: string; title: string }) {
-  const bLines = baseline.split('\n');
-  const oLines = optimized.split('\n');
-  const maxLines = Math.max(bLines.length, oLines.length);
-
-  const diffLines: { type: 'context' | 'added' | 'removed'; line: string; num: number }[] = [];
-  for (let i = 0; i < maxLines; i++) {
-    if (i < bLines.length && i < oLines.length) {
-      if (bLines[i] === oLines[i]) {
-        diffLines.push({ type: 'context', line: oLines[i], num: i + 1 });
-      } else {
-        diffLines.push({ type: 'removed', line: bLines[i], num: i + 1 });
-        diffLines.push({ type: 'added', line: oLines[i], num: i + 1 });
-      }
-    } else if (i < bLines.length) {
-      diffLines.push({ type: 'removed', line: bLines[i], num: i + 1 });
-    } else {
-      diffLines.push({ type: 'added', line: oLines[i], num: i + 1 });
-    }
-  }
-
-  const addedCount = diffLines.filter(d => d.type === 'added').length;
-  const removedCount = diffLines.filter(d => d.type === 'removed').length;
-
-  return (
-    <div className="overflow-hidden border border-[#262626] code-block-hover">
-      <div className="px-4 py-2 flex items-center justify-between border-b border-[#262626] bg-[#0f0f0f]">
-        <div className="flex items-center gap-2 min-w-0">
-          <GitCompareArrows className="size-3.5 text-[#8a8a8a] shrink-0" />
-          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] truncate">{title}</span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="diff-badge diff-badge-added"><Plus className="size-2.5" />{addedCount}</span>
-          <span className="diff-badge diff-badge-removed"><Minus className="size-2.5" />{removedCount}</span>
-        </div>
-      </div>
-      <div className="max-h-[480px] overflow-auto scrollbar-glow bg-[#0d0d0d]">
-        <div className="text-[11px] font-[family-name:var(--font-ibm-mono)] leading-[1.6]">
-          {diffLines.map((d, i) => (
-            <div
-              key={i}
-              className={`flex items-start px-3 ${
-                d.type === 'added' ? 'diff-line-added' : d.type === 'removed' ? 'diff-line-removed' : 'diff-line-context'
-              }`}
-            >
-              <span className="w-8 shrink-0 text-right text-[#666666] select-none mr-3 text-[10px]">{d.num}</span>
-              <span className={`w-4 shrink-0 text-center select-none mr-3 ${
-                d.type === 'added' ? 'text-[#4ade80]' : d.type === 'removed' ? 'text-[#f87171]' : 'text-[#666666]'
-              }`}>
-                {d.type === 'added' ? '+' : d.type === 'removed' ? '−' : ' '}
-              </span>
-              <span className={`flex-1 whitespace-pre ${d.type === 'added' ? 'text-[#4ade80]/80' : d.type === 'removed' ? 'text-[#f87171]/60 line-through' : 'text-[#8a8a8a]'}`}>
-                {d.line}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Radar Chart Component (pure CSS/SVG) ── */
-const RadarChart = memo(function RadarChart({ tasks }: { tasks: TaskData[] }) {
-  const dimensions = ["Speed", "Memory", "Complexity", "Techniques", "Code Quality"];
-  const n = dimensions.length;
-  const cx = 150, cy = 150, r = 110;
-  const angleStep = (2 * Math.PI) / n;
-
-  const getPoint = (angle: number, dist: number) => ({
-    x: cx + dist * Math.cos(angle - Math.PI / 2),
-    y: cy + dist * Math.sin(angle - Math.PI / 2),
-  });
-
-  const getTaskData = (task: TaskData) => {
-    const sp = task.baseline.time / task.optimized.time;
-    const maxSp = Math.max(...tasks.map(t => t.baseline.time / t.optimized.time));
-    const memDelta = task.optimized.memory < task.baseline.memory ? 1 : 0.5;
-    const complexScore = task.optimized.timeComplexity.length < task.baseline.timeComplexity.length ? 1 : 0.7;
-    const techScore = Math.min(task.techniques.length / 5, 1);
-    const codeScore = task.optimized.code.length > task.baseline.code.length ? 0.9 : 0.7;
-    return [sp / maxSp, memDelta, complexScore, techScore, codeScore];
-  };
-
-  const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
-
-  const colors = ["#ff6b2b", "#4ade80", "#fbbf24", "#22d3ee", "#a78bfa"];
-
-  return (
-    <div className="radar-container p-4">
-      <svg viewBox="0 0 300 300" className="w-full h-auto">
-        {/* Grid */}
-        {gridLevels.map((level, li) => {
-          const pts = Array.from({ length: n }, (_, i) => {
-            const p = getPoint(i * angleStep, r * level);
-            return `${p.x},${p.y}`;
-          }).join(" ");
-          return <polygon key={li} points={pts} fill="none" stroke="#1c1c1c" strokeWidth="0.5" />;
-        })}
-        {/* Axis lines */}
-        {Array.from({ length: n }, (_, i) => {
-          const p = getPoint(i * angleStep, r);
-          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#1c1c1c" strokeWidth="0.5" />;
-        })}
-        {/* Labels */}
-        {dimensions.map((dim, i) => {
-          const p = getPoint(i * angleStep, r + 16);
-          const anchor = Math.abs(p.x - cx) < 10 ? "middle" : p.x > cx ? "start" : "end";
-          return (
-            <text key={dim} x={p.x} y={p.y} textAnchor={anchor} fill="#525252" fontSize="9" fontFamily="var(--font-ibm-mono), monospace">
-              {dim}
-            </text>
-          );
-        })}
-        {/* Task polygons */}
-        {tasks.map((task, ti) => {
-          const data = getTaskData(task);
-          const pts = data.map((val, i) => {
-            const p = getPoint(i * angleStep, r * val);
-            return `${p.x},${p.y}`;
-          }).join(" ");
-          return (
-            <g key={task.id}>
-              <polygon
-                points={pts}
-                fill={`${colors[ti]}10`}
-                stroke={colors[ti]}
-                strokeWidth="1"
-                opacity={0.7}
-              />
-              {/* Data points */}
-              {data.map((val, i) => {
-                const p = getPoint(i * angleStep, r * val);
-                return <circle key={i} cx={p.x} cy={p.y} r="2.5" fill={colors[ti]} />;
-              })}
-            </g>
-          );
-        })}
-      </svg>
-      {/* Legend */}
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-        {tasks.map((task, i) => (
-          <div key={task.id} className="flex items-center gap-1.5">
-            <span className="size-2" style={{ background: colors[i] }} />
-            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">#{task.id}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-});
-
-/* ── Command Palette Component ── */
-function CommandPalette({
-  open,
-  onClose,
-  onNavigate,
-  onAction,
-  allTasks,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onNavigate: (id: string) => void;
-  onAction: (action: string) => void;
-  allTasks: TaskData[];
+/* ─────────────── TASK SECTION (inline — tightly coupled to PerformanceLab state) ─────────────── */
+
+function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed, starred, onToggleStar, taskCompareMode, onCompareSelect, compareSelected, readingTime, diffMode, onToggleDiff, noteOpen, noteText, onToggleNote, onSaveNote }: {
+  task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void;
+  reviewed: boolean; starred: boolean; onToggleStar: () => void; taskCompareMode: boolean; onCompareSelect: () => void;
+  compareSelected: boolean; readingTime: number; diffMode: boolean; onToggleDiff: () => void;
+  noteOpen: boolean; noteText: string; onToggleNote: () => void; onSaveNote: (text: string) => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [activeIdx, setActiveIdx] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const navItems = [
-    { id: "hero", label: "Overview", icon: Sparkles, group: "Navigation" },
-    ...allTasks.map(t => ({ id: `task-${t.id}`, label: `#${t.id} ${t.title}`, icon: Hash, group: "Tasks" })),
-    { id: "methodology", label: "Methodology", icon: Brain, group: "Navigation" },
-    { id: "results", label: "Results", icon: Award, group: "Navigation" },
-    { id: "summary", label: "Summary", icon: Target, group: "Navigation" },
-  ];
-
-  const actions = [
-    { id: "expand-all", label: "Expand All Tasks", icon: ChevronDown, group: "Actions" },
-    { id: "collapse-all", label: "Collapse All Tasks", icon: ChevronUp, group: "Actions" },
-    { id: "export-md", label: "Export as Markdown", icon: Download, group: "Actions" },
-    { id: "compare", label: "Toggle Compare Mode", icon: GitCompareArrows, group: "Actions" },
-    { id: "starred-filter", label: "Filter Starred Tasks", icon: Star, group: "Actions" },
-  ];
-
-  const q = query.toLowerCase().trim();
-  const filteredNav = q ? navItems.filter(item => item.label.toLowerCase().includes(q)) : navItems;
-  const filteredActions = q ? actions.filter(a => a.label.toLowerCase().includes(q)) : actions;
-  const allItems = [...filteredNav.map(i => ({ ...i, type: 'nav' as const })), ...filteredActions.map(a => ({ ...a, type: 'action' as const }))];
-
-  const executeItem = (item: typeof allItems[number]) => {
-    if (item.type === 'nav') onNavigate(item.id);
-    else onAction(item.id);
-    onClose();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, allItems.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)); }
-    else if (e.key === "Enter" && allItems[activeIdx]) { executeItem(allItems[activeIdx]); }
-    else if (e.key === "Escape") { onClose(); }
-  };
-
-  if (!open) return null;
-
-  return (
-    <div className="cmd-overlay" onClick={onClose}>
-      <div className="cmd-palette" onClick={e => e.stopPropagation()}>
-        <input
-          ref={inputRef}
-          className="cmd-input"
-          placeholder="Type a command or search..."
-          value={query}
-          onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
-          onKeyDown={handleKeyDown}
-        />
-        <div className="cmd-list">
-          {allItems.length === 0 ? (
-            <div className="p-4 text-center text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">No results</div>
-          ) : (
-            allItems.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  className={`cmd-item ${i === activeIdx ? 'active' : ''}`}
-                  onClick={() => executeItem(item)}
-                  onMouseEnter={() => setActiveIdx(i)}
-                >
-                  <div className="cmd-icon">
-                    <Icon className="size-3.5 text-[#8a8a8a]" />
-                  </div>
-                  <div className="cmd-label">{item.label}</div>
-                  <span className="cmd-hint">{item.type === 'nav' ? 'Go to' : 'Action'}</span>
-                </div>
-              );
-            })
-          )}
-        </div>
-        <div className="px-3 py-2 border-t border-[#1c1c1c] flex items-center gap-3">
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↑↓</span> Navigate</span>
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↵</span> Select</span>
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">Esc</span> Close</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Help Modal Component ── */
-function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null;
-  const shortcuts = [
-    { keys: ["Ctrl+K"], desc: "Open command palette" },
-    { keys: ["?"], desc: "Show keyboard shortcuts" },
-    { keys: ["E"], desc: "Expand / Collapse all tasks" },
-    { keys: ["1", "-", "5"], desc: "Jump to task 1-5" },
-    { keys: ["Esc"], desc: "Close dialogs" },
-  ];
-
-  return (
-    <div className="help-overlay" onClick={onClose}>
-      <div className="help-modal" onClick={e => e.stopPropagation()}>
-        <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Keyboard className="size-3.5 text-[#ff6b2b]" />
-            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Keyboard Shortcuts</span>
-          </div>
-          <button onClick={onClose} className="text-[#666666] hover:text-[#d4d4d4] transition-colors">
-            <ChevronUp className="size-4 rotate-45" />
-          </button>
-        </div>
-        <div className="py-2">
-          {shortcuts.map((s, i) => (
-            <div key={i} className="help-shortcut-row">
-              <span className="text-xs text-[#8a8a8a]">{s.desc}</span>
-              <div className="flex items-center gap-1">
-                {s.keys.map((k, ki) => (
-                  <span key={ki} className="help-key">{k}</span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="px-4 py-2 border-t border-[#1c1c1c]">
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
-            Tip: Press <span className="help-key text-[8px]">Ctrl+K</span> anytime for quick access
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ComplexityBadge({ label, complexity }: { label: string; complexity: string }) {
-  const isBad = complexity.includes("n³") || complexity === "O(n×m)" || complexity === "O(n) sequential" || complexity === "O(n) + contention";
-  const isMedium = complexity === "O(n)" || complexity === "O(n) avg" || complexity === "O(n²)";
-  const color = isBad
-    ? "border-[#f87171]/30 text-[#f87171]"
-    : isMedium
-      ? "border-[#fbbf24]/30 text-[#fbbf24]"
-      : "border-[#4ade80]/30 text-[#4ade80]";
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-[11px] font-[family-name:var(--font-ibm-mono)] font-medium px-2 py-0.5 border badge-hover ${color}`}
-    >
-      {label}: {complexity}
-    </span>
-  );
-}
-
-/* ── Animated Progress Bar Component ── */
-function AnimatedProgressBar({ value, max }: { value: number; max: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true });
-  const pct = max > 0 ? (value / max) * 100 : 0;
-
-  return (
-    <div ref={ref} className="progress-bar-track w-full">
-      <div
-        className="progress-bar-fill"
-        style={{ width: inView ? `${pct}%` : "0%" }}
-      />
-    </div>
-  );
-}
-
-function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, reviewed, starred, onToggleStar, taskCompareMode, onCompareSelect, compareSelected, readingTime, diffMode, onToggleDiff, noteOpen, noteText, onToggleNote, onSaveNote }: { task: TaskData; expanded: boolean; onToggle: () => void; compareMode: boolean; onToggleCompare: () => void; reviewed: boolean; starred: boolean; onToggleStar: () => void; taskCompareMode: boolean; onCompareSelect: () => void; compareSelected: boolean; readingTime: number; diffMode: boolean; onToggleDiff: () => void; noteOpen: boolean; noteText: string; onToggleNote: () => void; onSaveNote: (text: string) => void }) {
   const Icon = task.icon;
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
 
   return (
     <section id={`task-${task.id}`} className="scroll-mt-16">
       <FadeIn>
-        <Card
-          role="button"
-          tabIndex={0}
-          aria-expanded={expanded}
+        <Card role="button" tabIndex={0} aria-expanded={expanded}
           className={`bg-[#141414] border transition-all cursor-pointer card-industrial card-lift ${
-            expanded
-              ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated pulse-ring neon-border"
-              : "border-[#262626] hover:border-[#3a3a3a]"
+            expanded ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated pulse-ring neon-border" : "border-[#262626] hover:border-[#3a3a3a]"
           }`}
-          onClick={onToggle}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+          onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
         >
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
                 {taskCompareMode && (
-                  <div
-                    className={`compare-checkbox ${compareSelected ? 'checked' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); onCompareSelect(); }}
-                  >
-                    {compareSelected && <Check className="size-2.5 text-[#ff6b2b]" />}
+                  <div className={`compare-checkbox ${compareSelected ? 'checked' : ''}`} onClick={(e) => { e.stopPropagation(); onCompareSelect(); }}>
+                    {compareSelected && <Check className="size-2.5" />}
                   </div>
                 )}
+                <button onClick={(e) => { e.stopPropagation(); onToggleStar(); }} className="star-btn" aria-label={starred ? "Remove star" : "Add star"}>
+                  <Star className="size-3.5" fill={starred ? '#fbbf24' : 'none'} />
+                </button>
                 <div className="size-10 bg-[#1c1c1c] flex items-center justify-center shrink-0">
                   <Icon className="size-4 text-[#8a8a8a]" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
-                      #{task.id}
-                    </span>
-                    <button
-                      className={`star-btn p-0 ${starred ? 'starred' : 'text-[#666666]'}`}
-                      onClick={(e) => { e.stopPropagation(); onToggleStar(); }}
-                      aria-label={starred ? 'Unstar task' : 'Star task'}
-                    >
-                      <Star className="size-3" fill={starred ? '#fbbf24' : 'none'} />
-                    </button>
-                    {reviewed && (
-                      <Check className="size-3 text-[#4ade80]" />
-                    )}
-                    <Badge
-                      variant="outline"
-                      className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover"
-                    >
-                      {task.difficulty}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover"
-                    >
-                      {task.category}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="border-[#ff6b2b]/30 text-[#ff6b2b] text-[10px] badge-hover"
-                    >
-                      {speedup}×
-                    </Badge>
-                    <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${getGrade(parseFloat(speedup)).className}`}>
-                      {getGrade(parseFloat(speedup)).letter}
-                    </span>
-                    {expanded && (
-                      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
-                        {readingTime} min read
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onToggleNote(); }}
-                      className={`p-0.5 ml-1 transition-colors ${noteOpen ? 'text-[#ff6b2b]' : 'text-[#666666] hover:text-[#ff6b2b]'}`}
-                      title="Add note"
-                      aria-label="Add note"
-                    >
-                      <MessageSquare className="size-3" />
-                    </button>
+                    <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">#{task.id}</span>
+                    <Badge variant="outline" className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover">{task.difficulty}</Badge>
+                    <Badge variant="outline" className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover">{task.category}</Badge>
+                    <Badge variant="outline" className="border-[#ff6b2b]/30 text-[#ff6b2b] text-[10px] badge-hover">{speedup}×</Badge>
+                    {reviewed && <Check className="size-2.5 text-[#4ade80]" />}
+                    {readingTime > 0 && expanded && <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">{readingTime} min read</span>}
                   </div>
-                  <CardTitle className="text-sm font-medium text-[#d4d4d4]">
-                    {task.title}
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-[#d4d4d4]">{task.title}</CardTitle>
                 </div>
               </div>
-              <div className="text-[#8a8a8a] sm:pr-2">
-                {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              <div className="flex items-center gap-1">
+                {diffMode !== undefined && (
+                  <button onClick={(e) => { e.stopPropagation(); onToggleDiff(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Toggle diff view">
+                    <GitCompareArrows className="size-3.5" />
+                  </button>
+                )}
+                <span className="text-[#8a8a8a] sm:pr-2">{expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
               </div>
             </div>
           </CardHeader>
@@ -1487,107 +95,25 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
       </FadeIn>
 
       {expanded && (
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="mt-4 space-y-4"
-        >
-          {/* Task Note Editor */}
-          <AnimatePresence>
-            {noteOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="bg-[#0d0d0d] border border-[#262626] p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
-                      <MessageSquare className="size-2.5 inline mr-1" />
-                      Personal Notes
-                    </span>
-                    <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
-                      {noteText.length} chars
-                    </span>
-                  </div>
-                  <textarea
-                    value={noteText}
-                    onChange={(e) => onSaveNote(e.target.value)}
-                    placeholder="Write your notes about this optimization technique..."
-                    rows={3}
-                    className="w-full bg-transparent border-0 text-[#d4d4d4] text-xs font-[family-name:var(--font-ibm-mono)] leading-relaxed placeholder:text-[#262626] resize-none focus:outline-none"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Problem Statement */}
+        <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="mt-4 space-y-4">
           <FadeIn delay={0.05}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                  Problem Statement
-                </CardTitle>
-              </CardHeader>
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Problem Statement</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-[#8a8a8a] leading-relaxed">{task.problem}</p>
-                <div className="flex flex-wrap gap-2">
-                  {task.constraints.map((c, i) => (
-                    <Badge
-                      key={i}
-                      variant="outline"
-                      className="text-[#8a8a8a] border-[#262626] text-[10px] font-normal badge-hover"
-                    >
-                      {c}
-                    </Badge>
-                  ))}
-                </div>
+                <div className="flex flex-wrap gap-2">{task.constraints.map((c, i) => (
+                  <Badge key={i} variant="outline" className="text-[#8a8a8a] border-[#262626] text-[10px] font-normal badge-hover">{c}</Badge>
+                ))}</div>
               </CardContent>
             </Card>
           </FadeIn>
 
-          {/* Code Comparison + Bench Chart */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {diffMode ? (
-              /* Diff view */
-              <div className="xl:col-span-1">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Code Diff</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
-                    className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
-                    title="Switch to tabbed view"
-                  >
-                    <Rows3 className="size-3.5" />
-                  </button>
-                </div>
-                <CodeDiff baseline={task.baseline.code} optimized={task.optimized.code} title={task.title} />
-              </div>
-            ) : compareMode ? (
-              /* Side-by-side comparison */
+            {compareMode ? (
               <div className="xl:col-span-1">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Code Comparison</span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
-                      className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
-                      title="Switch to diff view"
-                    >
-                      <GitCompareArrows className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
-                      className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
-                      title="Switch to tabbed view"
-                    >
-                      <Rows3 className="size-3.5" />
-                    </button>
-                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Switch to tabbed view"><Rows3 className="size-3.5" /></button>
                 </div>
                 <div className="code-compare-grid">
                   <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
@@ -1595,79 +121,40 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                 </div>
               </div>
             ) : (
-              /* Tabbed view */
               <div className="xl:col-span-1">
-                <div className="flex items-center justify-end mb-0 gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
-                    className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
-                    title="Switch to diff view"
-                  >
-                    <GitCompareArrows className="size-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
-                    className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
-                    title="Switch to side-by-side view"
-                  >
-                    <Columns2 className="size-3.5" />
-                  </button>
+                <div className="flex items-center justify-end mb-0">
+                  <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Switch to side-by-side view"><Columns2 className="size-3.5" /></button>
                 </div>
-                <Tabs defaultValue="baseline" className="w-full">
-                  <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
-                    <TabsTrigger
-                      value="baseline"
-                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#8a8a8a]"
-                    >
-                      <XCircle className="size-3 mr-1" /> Baseline
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="optimized"
-                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#8a8a8a]"
-                    >
-                      <CheckCircle2 className="size-3 mr-1" /> Optimized
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="baseline" className="mt-3">
-                    <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
-                  </TabsContent>
-                  <TabsContent value="optimized" className="mt-3">
-                    <CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" />
-                  </TabsContent>
-                </Tabs>
+                {diffMode ? (
+                  <CodeDiff baseline={task.baseline.code} optimized={task.optimized.code} title={`Diff — ${task.title}`} />
+                ) : (
+                  <Tabs defaultValue="baseline" className="w-full">
+                    <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
+                      <TabsTrigger value="baseline" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#8a8a8a]"><XCircle className="size-3 mr-1" /> Baseline</TabsTrigger>
+                      <TabsTrigger value="optimized" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#8a8a8a]"><CheckCircle2 className="size-3 mr-1" /> Optimized</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="baseline" className="mt-3"><CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" /></TabsContent>
+                    <TabsContent value="optimized" className="mt-3"><CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" /></TabsContent>
+                  </Tabs>
+                )}
               </div>
             )}
             <BenchChart task={task} />
           </div>
 
-          {/* Big O Analysis */}
           <FadeIn delay={0.1}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                  Big O Analysis
-                </CardTitle>
-              </CardHeader>
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Big O Analysis</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 border border-[#262626] border-l-2 border-l-[#f87171]">
-                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">
-                      Baseline
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <ComplexityBadge label="Time" complexity={task.baseline.timeComplexity} />
-                      <ComplexityBadge label="Space" complexity={task.baseline.spaceComplexity} />
-                    </div>
+                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">Baseline</p>
+                    <div className="flex flex-wrap gap-2 mb-3"><ComplexityBadge label="Time" complexity={task.baseline.timeComplexity} /><ComplexityBadge label="Space" complexity={task.baseline.spaceComplexity} /></div>
                     <p className="text-xs text-[#8a8a8a] leading-relaxed">{task.baseline.explanation}</p>
                   </div>
                   <div className="p-4 border border-[#262626] border-l-2 border-l-[#4ade80]">
-                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">
-                      Optimized
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <ComplexityBadge label="Time" complexity={task.optimized.timeComplexity} />
-                      <ComplexityBadge label="Space" complexity={task.optimized.spaceComplexity} />
-                    </div>
+                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">Optimized</p>
+                    <div className="flex flex-wrap gap-2 mb-3"><ComplexityBadge label="Time" complexity={task.optimized.timeComplexity} /><ComplexityBadge label="Space" complexity={task.optimized.spaceComplexity} /></div>
                     <p className="text-xs text-[#8a8a8a] leading-relaxed">{task.optimized.explanation}</p>
                   </div>
                 </div>
@@ -1675,206 +162,30 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
             </Card>
           </FadeIn>
 
-          {/* Key Optimizations */}
           <FadeIn delay={0.15}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                  Key Optimizations
-                </CardTitle>
-              </CardHeader>
+            <Card className="bg-[#141414] border border-[#262626] card-industrial">
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Key Optimizations</CardTitle></CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {task.techniques.map((t, i) => (
-                    <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626] hover-sweep">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <p className="text-sm font-medium text-[#d4d4d4]">{t.name}</p>
-                      </div>
-                      <p className="text-xs text-[#8a8a8a] leading-relaxed">{t.desc}</p>
-                    </div>
-                  ))}
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{task.techniques.map((t, i) => (
+                  <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626]">
+                    <div className="flex items-center gap-2 mb-1"><span className="text-xs font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">{String(i + 1).padStart(2, "0")}</span><p className="text-sm font-medium text-[#d4d4d4]">{t.name}</p></div>
+                    <p className="text-xs text-[#8a8a8a] leading-relaxed">{t.desc}</p>
+                  </div>
+                ))}</div>
               </CardContent>
             </Card>
           </FadeIn>
 
-          {/* Execution Pipeline */}
-          <FadeIn delay={0.25}>
-            <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
-              <CardContent className="pt-4">
-                <ExecutionPipeline taskId={task.id} />
-              </CardContent>
-            </Card>
-          </FadeIn>
+          {noteOpen && (
+            <FadeIn><Card className="bg-[#141414] border border-[#262626] card-industrial">
+              <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Notes</CardTitle></CardHeader>
+              <CardContent><textarea value={noteText} onChange={(e) => onSaveNote(e.target.value)} placeholder="Add notes for this task..." className="w-full bg-[#0f0f0f] border border-[#262626] text-sm text-[#d4d4d4] p-3 font-[family-name:var(--font-ibm-mono)] resize-y min-h-[80px] focus:outline-none focus:border-[#ff6b2b]/30" /></CardContent>
+            </Card></FadeIn>
+          )}
         </motion.div>
       )}
     </section>
   );
-}
-
-/* ─────────────────────── PIPELINE DATA ─────────────────────── */
-
-const PIPELINE_STAGES: Record<number, string[]> = {
-  1: ["Input 10M strings", "String Interning", "Sort (cache-local)", "Binary Search Groups", "Output duplicates"],
-  2: ["500MB CSV file", "mmap (zero-copy)", "SIMD \\n scan", "Selective parse", "Output columns"],
-  3: ["100K URLs", "Semaphore (500)", "Connection Pool", "buffer_unordered", "Collect results"],
-  4: ["1000×1000 input", "Pack matrix B", "Tile 64×64", "4×4 micro-kernel", "AVX2 vectorize"],
-  5: ["8 producers", "CAS atomic push", "Ring buffer", "Cache-padded H/T", "Consumer pop"],
-};
-
-const HEATMAP_DATA = [
-  // [task, speed, memory, cache, parallelism, complexity]
-  { task: 1, speed: 0.7, memory: 0.6, cache: 0.8, parallelism: 0.1, complexity: 0.5 },
-  { task: 2, speed: 0.95, memory: 0.85, cache: 0.6, parallelism: 0.1, complexity: 0.7 },
-  { task: 3, speed: 0.9, memory: 0.3, cache: 0.2, parallelism: 0.95, complexity: 0.6 },
-  { task: 4, speed: 0.8, memory: 0.2, cache: 0.95, parallelism: 0.3, complexity: 0.9 },
-  { task: 5, speed: 0.85, memory: 0.5, cache: 0.7, parallelism: 0.9, complexity: 0.95 },
-];
-
-const ACHIEVEMENTS = [
-  { id: "first-look", name: "First Look", desc: "Expand your first task", icon: "👁", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 1 },
-  { id: "code-reviewer", name: "Code Reviewer", desc: "Review 3 tasks", icon: "🔍", check: (ctx: AchievementCtx) => ctx.reviewed >= 3 },
-  { id: "speed-demon", name: "Speed Demon", desc: "View the fastest task (#3)", icon: "⚡", check: (ctx: AchievementCtx) => ctx.viewedTask3 },
-  { id: "completionist", name: "Completionist", desc: "Review all 5 tasks", icon: "🏆", check: (ctx: AchievementCtx) => ctx.reviewed >= 5 },
-  { id: "bookworm", name: "Bookworm", desc: "Expand all tasks at once", icon: "📖", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 5 },
-];
-
-interface AchievementCtx {
-  totalExpanded: number;
-  reviewed: number;
-  viewedTask3: boolean;
-  earned: Set<string>;
-}
-
-/* ─────────────────────── ACCENT COLORS ─────────────────────── */
-
-const ACCENT_COLORS = [
-  { name: "Orange", value: "#ff6b2b" },
-  { name: "Cyan", value: "#22d3ee" },
-  { name: "Rose", value: "#f43f5e" },
-  { name: "Lime", value: "#84cc16" },
-  { name: "Violet", value: "#a78bfa" },
-];
-
-/* ─────────────────────── EXECUTION PIPELINE COMPONENT ─────────────────────── */
-
-function ExecutionPipeline({ taskId }: { taskId: number }) {
-  const stages = PIPELINE_STAGES[taskId];
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-20px" });
-  if (!stages) return null;
-
-  return (
-    <div ref={ref} className="space-y-2">
-      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Execution Pipeline</p>
-      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar py-1">
-        {stages.map((stage, i) => (
-          <div key={i} className="flex items-center shrink-0">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.3, delay: i * 0.1 }}
-              className="pipeline-node px-2.5 py-1.5 bg-[#0f0f0f] border border-[#262626] text-center min-w-[100px]"
-            >
-              <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666] block mb-0.5">STEP {i + 1}</span>
-              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] leading-tight block">{stage}</span>
-            </motion.div>
-            {i < stages.length - 1 && (
-              <motion.div
-                initial={{ opacity: 0, scaleX: 0 }}
-                animate={inView ? { opacity: 1, scaleX: 1 } : {}}
-                transition={{ duration: 0.2, delay: i * 0.1 + 0.15 }}
-                className="pipeline-connector w-6 h-px bg-[#333] shrink-0 origin-left"
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────── OPTIMIZATION HEATMAP ─────────────────────── */
-
-function OptimizationHeatmap() {
-  const metrics = ["Speed", "Memory", "Cache Locality", "Parallelism", "Code Complexity"] as const;
-
-  return (
-    <div className="overflow-x-auto custom-scrollbar">
-      <div className="min-w-[400px]">
-        <div className="grid grid-cols-[100px_repeat(5,1fr)] gap-px">
-          {/* Header row */}
-          <div className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest" />
-          {metrics.map((m) => (
-            <div key={m} className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest text-center">
-              {m}
-            </div>
-          ))}
-          {/* Data rows */}
-          {HEATMAP_DATA.map((row) => (
-            <Fragment key={row.task}>
-              <div className="p-2 text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] flex items-center">
-                #{row.task}
-              </div>
-              {[row.speed, row.memory, row.cache, row.parallelism, row.complexity].map((val, mi) => (
-                <div
-                  key={mi}
-                  className="heatmap-cell p-2 text-center"
-                  style={{ '--heat': val } as React.CSSProperties}
-                >
-                  <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
-                    {(val * 100).toFixed(0)}
-                  </span>
-                </div>
-              ))}
-            </Fragment>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────── ACHIEVEMENT TOAST ─────────────────────── */
-
-function AchievementToast({ achievement, onDismiss }: { achievement: typeof ACHIEVEMENTS[0]; onDismiss: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onDismiss, 4000);
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.9 }}
-      className="fixed top-20 right-6 z-[70] glass-accent p-4 w-72"
-    >
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">{achievement.icon}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-widest mb-0.5">Achievement Unlocked</p>
-          <p className="text-sm font-bold text-[#d4d4d4]">{achievement.name}</p>
-          <p className="text-[10px] text-[#8a8a8a]">{achievement.desc}</p>
-        </div>
-        <button onClick={onDismiss} className="text-[#666666] hover:text-[#8a8a8a] transition-colors">
-          <XCircle className="size-3" />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────── SORT ICON ─────────────────────── */
-
-function SortIcon({ col, activeCol, direction }: { col: string; activeCol: string; direction: "asc" | "desc" }) {
-  if (activeCol !== col) return <ArrowUpDown className="size-3 inline ml-1 opacity-40" />;
-  return direction === "desc"
-    ? <ArrowDown className="size-3 inline ml-1 text-[#ff6b2b]" />
-    : <ArrowUp className="size-3 inline ml-1 text-[#ff6b2b]" />;
 }
 
 /* ─────────────────────── MAIN PAGE ─────────────────────── */
@@ -3060,7 +1371,7 @@ export default function PerformanceLab() {
                 {/* Speedup Chart */}
                 <div className="h-[260px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <RechartsBarChart
                       data={TASKS.map((t) => ({
                         name: `#${t.id}`,
                         speedup: parseFloat(
@@ -3101,7 +1412,7 @@ export default function PerformanceLab() {
                           fontFamily: "var(--font-ibm-mono), monospace",
                         }}
                       />
-                    </BarChart>
+                    </RechartsBarChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>

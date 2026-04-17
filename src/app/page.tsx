@@ -1,24 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useTheme } from "next-themes";
 import { motion, useInView } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   BarChart,
   Bar,
@@ -26,14 +14,11 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Cell,
   Legend,
 } from "recharts";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
-  Sun,
-  Moon,
   Search,
   FileText,
   Network,
@@ -42,7 +27,6 @@ import {
   Zap,
   Clock,
   MemoryStick,
-  TrendingUp,
   ChevronDown,
   ChevronUp,
   Cpu,
@@ -52,14 +36,13 @@ import {
   Shield,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   GitCompareArrows,
   BookOpen,
   Target,
   Award,
   Code2,
+  TrendingUp,
   Brain,
-  BarChart3,
 } from "lucide-react";
 
 /* ───────────────────────── TASK DATA ───────────────────────── */
@@ -87,9 +70,9 @@ const TASKS: TaskData[] = [
     subtitle: "Algorithm + Memory",
     icon: Search,
     category: "Алгоритмы",
-    categoryColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300",
+    categoryColor: "bg-[#4589ff]/10 text-[#4589ff]",
     difficulty: "Advanced",
-    difficultyColor: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
+    difficultyColor: "bg-[#f1c21b]/10 text-[#f1c21b]",
     problem: "Найти все дублирующиеся строки в массиве из 10 миллионов строк (средняя длина 32 символа). Задача требует оптимального баланса между скоростью и потреблением памяти.",
     constraints: ["10M строк, avg 32 chars", "Возвратить уникальные дубликаты", "Минимизировать аллокации", "Строки содержат UTF-8"],
     baseline: {
@@ -152,9 +135,9 @@ fn find_duplicates_optimized(data: &mut [String]) -> Vec<String> {
     subtitle: "I/O + Allocations",
     icon: FileText,
     category: "I/O",
-    categoryColor: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
+    categoryColor: "bg-[#a56eff]/10 text-[#a56eff]",
     difficulty: "Expert",
-    difficultyColor: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
+    difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
     problem: "Парсинг CSV файла 500MB с 5M строками и 10 колонками. Необходимо извлечь только 3 конкретные колонки, минимизируя использование памяти и I/O операции.",
     constraints: ["500MB файл, 5M строк, 10 колонок", "Извлечь колонки 2, 5, 8", "Zero-copy где возможно", "Не загружать весь файл в память"],
     baseline: {
@@ -243,9 +226,9 @@ fn parse_csv_optimized(path: &str) -> Vec<Vec<&'static str>> {
     subtitle: "Concurrency",
     icon: Network,
     category: "Конкурентность",
-    categoryColor: "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300",
+    categoryColor: "bg-[#a56eff]/10 text-[#a56eff]",
     difficulty: "Advanced",
-    difficultyColor: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
+    difficultyColor: "bg-[#f1c21b]/10 text-[#f1c21b]",
     problem: "Выполнить 100K HTTP GET запросов к REST API, собрав все ответы. Необходимо максимизировать throughput при ограниченных ресурсах клиента.",
     constraints: ["100K запросов", "Максимальный throughput", "Ограничение: 500 concurrent", "Обработка ошибок и таймаутов"],
     baseline: {
@@ -322,9 +305,9 @@ async fn fetch_all_concurrent(
     subtitle: "SIMD + Cache",
     icon: Grid3x3,
     category: "Вычисления",
-    categoryColor: "bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300",
+    categoryColor: "bg-[#08bdba]/10 text-[#08bdba]",
     difficulty: "Expert",
-    difficultyColor: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
+    difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
     problem: "Умножить две матрицы 1000×1000 (f32). Наивная реализация страдает от cache misses — необходимо оптимизировать доступ к памяти.",
     constraints: ["1000×1000 f32 матрицы", "12MB на матрицу", "Оптимизировать для L3 cache", "No external dependencies"],
     baseline: {
@@ -425,9 +408,9 @@ fn pack_matrix(b: &[f32], n: usize, _t: usize)
     subtitle: "Parallelism",
     icon: ArrowRightLeft,
     category: "Параллелизм",
-    categoryColor: "bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300",
+    categoryColor: "bg-[#08bdba]/10 text-[#08bdba]",
     difficulty: "Expert",
-    difficultyColor: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
+    difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
     problem: "Реализовать bounded MPSC очередь: 8 producer threads, 1 consumer thread, 10M сообщений. Mutex-блокировки создают contention bottleneck.",
     constraints: ["8 producers, 1 consumer", "10M сообщений", "Bounded ring buffer", "Wait-free для producers"],
     baseline: {
@@ -549,66 +532,44 @@ impl<T> Drop for LockFreeQueue<T> {
 
 /* ─────────────────────── SMALL COMPONENTS ─────────────────────── */
 
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
-  if (!mounted) return <Button variant="ghost" size="icon" className="size-9"><Sun className="size-4" /></Button>;
-  return (
-    <Button variant="ghost" size="icon" className="size-9" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme">
-      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </Button>
-  );
-}
-
-function SectionTitle({ children, id }: { children: React.ReactNode; id?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-  return (
-    <motion.div ref={ref} id={id} initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5 }} className="mb-6">
-      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{children}</h2>
-      <Separator className="mt-3 h-0.5 bg-emerald-200 dark:bg-emerald-800 w-24" />
-    </motion.div>
-  );
-}
-
 function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5, delay }} className={className}>
+    <motion.div ref={ref} initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.3, delay }} className={className}>
       {children}
     </motion.div>
   );
 }
 
 function CodeBlock({ code, title, variant }: { code: string; title: string; variant: "baseline" | "optimized" }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
   return (
-    <Card className="overflow-hidden border-0">
-      <div className={`px-4 py-2.5 flex items-center justify-between ${variant === "baseline" ? "bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800" : "bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-200 dark:border-emerald-800"}`}>
+    <div className="overflow-hidden border border-[#393939]">
+      <div className={`px-4 py-2.5 flex items-center justify-between border-b border-[#393939] ${variant === "baseline" ? "bg-[#fa4d56]/10" : "bg-[#4589ff]/10"}`}>
         <div className="flex items-center gap-2">
-          <Code2 className={`size-4 ${variant === "baseline" ? "text-red-500" : "text-emerald-500"}`} />
-          <span className={`text-sm font-semibold ${variant === "baseline" ? "text-red-700 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>{title}</span>
+          <Code2 className={`size-4 ${variant === "baseline" ? "text-[#fa4d56]" : "text-[#4589ff]"}`} />
+          <span className={`text-xs font-medium uppercase tracking-wider ${variant === "baseline" ? "text-[#fa4d56]" : "text-[#4589ff]"}`}>{title}</span>
         </div>
-        <Badge variant={variant === "baseline" ? "destructive" : "default"} className="text-[10px]">
+        <Badge variant={variant === "baseline" ? "destructive" : "outline"} className="text-[10px] uppercase tracking-wider">
           {variant === "baseline" ? "Naive" : "Optimized"}
         </Badge>
       </div>
-      <div className="max-h-[480px] overflow-auto custom-scrollbar">
-        <SyntaxHighlighter language="rust" style={isDark ? oneDark : undefined} customStyle={{ margin: 0, padding: "1rem", background: isDark ? "#1e1e1e" : "#fafafa", fontSize: "0.8rem", lineHeight: "1.5" }} showLineNumbers lineNumberStyle={{ color: isDark ? "#555" : "#ccc", minWidth: "2.5em" }}>
+      <div className="max-h-[480px] overflow-auto custom-scrollbar bg-[#1a1a1a]">
+        <SyntaxHighlighter
+          language="rust"
+          style={oneDark}
+          customStyle={{ margin: 0, padding: "1rem", background: "#1a1a1a", fontSize: "0.8rem", lineHeight: "1.5", fontFamily: "var(--font-ibm-mono), monospace" }}
+          showLineNumbers
+          lineNumberStyle={{ color: "#4d4d4d", minWidth: "2.5em" }}
+        >
           {code}
         </SyntaxHighlighter>
       </div>
-    </Card>
+    </div>
   );
 }
 
 function BenchChart({ task }: { task: TaskData }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
   const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
 
@@ -618,57 +579,49 @@ function BenchChart({ task }: { task: TaskData }) {
   };
 
   const chartData = [
-    {
-      name: "Время",
-      Baseline: task.baseline.time,
-      Optimized: task.optimized.time,
-    },
-    {
-      name: "Память (MB)",
-      Baseline: task.baseline.memory,
-      Optimized: task.optimized.memory,
-    },
+    { name: "Время", Baseline: task.baseline.time, Optimized: task.optimized.time },
+    { name: "Память (MB)", Baseline: task.baseline.memory, Optimized: task.optimized.memory },
   ];
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Gauge className="size-5 text-emerald-600 dark:text-emerald-400" />
+    <Card className="h-full bg-[#262626] border-[#393939]">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-[#a8a8a8]">
+          <Gauge className="size-4" />
           Benchmark
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-3 text-center border border-emerald-200 dark:border-emerald-800">
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{speedup}×</p>
-            <p className="text-xs text-muted-foreground">ускорение</p>
+          <div className="bg-[#4589ff]/5 p-4 text-center border border-[#4589ff]/20">
+            <p className="text-2xl font-bold text-[#4589ff] font-[family-name:var(--font-ibm-mono)]">{speedup}×</p>
+            <p className="text-[10px] text-[#8d8d8d] uppercase tracking-wider mt-1">Speedup</p>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3 text-center border border-amber-200 dark:border-amber-800">
-            <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">−{memSave}%</p>
-            <p className="text-xs text-muted-foreground">экономия памяти</p>
+          <div className="bg-[#42be65]/5 p-4 text-center border border-[#42be65]/20">
+            <p className="text-2xl font-bold text-[#42be65] font-[family-name:var(--font-ibm-mono)]">−{memSave}%</p>
+            <p className="text-[10px] text-[#8d8d8d] uppercase tracking-wider mt-1">Memory save</p>
           </div>
         </div>
 
         {/* Detail table */}
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2.5 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground flex items-center gap-1.5"><Clock className="size-3.5" /> Baseline</span>
-            <span className="font-mono font-medium">{formatTime(task.baseline.time)}</span>
+            <span className="text-[#8d8d8d] flex items-center gap-1.5 text-xs uppercase tracking-wider"><Clock className="size-3.5" /> Baseline</span>
+            <span className="font-[family-name:var(--font-ibm-mono)] font-medium text-[#f4f4f4]">{formatTime(task.baseline.time)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground flex items-center gap-1.5"><Clock className="size-3.5 text-emerald-500" /> Optimized</span>
-            <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{formatTime(task.optimized.time)}</span>
+            <span className="text-[#8d8d8d] flex items-center gap-1.5 text-xs uppercase tracking-wider"><Clock className="size-3.5 text-[#42be65]" /> Optimized</span>
+            <span className="font-[family-name:var(--font-ibm-mono)] font-medium text-[#42be65]">{formatTime(task.optimized.time)}</span>
           </div>
-          <Separator />
+          <Separator className="bg-[#393939]" />
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground flex items-center gap-1.5"><MemoryStick className="size-3.5" /> Baseline</span>
-            <span className="font-mono font-medium">{task.baseline.memory} MB</span>
+            <span className="text-[#8d8d8d] flex items-center gap-1.5 text-xs uppercase tracking-wider"><MemoryStick className="size-3.5" /> Baseline</span>
+            <span className="font-[family-name:var(--font-ibm-mono)] font-medium text-[#f4f4f4]">{task.baseline.memory} MB</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground flex items-center gap-1.5"><MemoryStick className="size-3.5 text-emerald-500" /> Optimized</span>
-            <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{task.optimized.memory} MB</span>
+            <span className="text-[#8d8d8d] flex items-center gap-1.5 text-xs uppercase tracking-wider"><MemoryStick className="size-3.5 text-[#42be65]" /> Optimized</span>
+            <span className="font-[family-name:var(--font-ibm-mono)] font-medium text-[#42be65]">{task.optimized.memory} MB</span>
           </div>
         </div>
 
@@ -676,12 +629,12 @@ function BenchChart({ task }: { task: TaskData }) {
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} barCategoryGap="20%" barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#333" : "#e5e5e5"} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: isDark ? "#999" : "#666" }} />
-              <YAxis tick={{ fontSize: 11, fill: isDark ? "#999" : "#666" }} />
-              <Bar dataKey="Baseline" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Optimized" fill="#10b981" radius={[4, 4, 0, 0]} />
-              <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#393939" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#8d8d8d" }} />
+              <YAxis tick={{ fontSize: 11, fill: "#8d8d8d" }} />
+              <Bar dataKey="Baseline" fill="#fa4d56" />
+              <Bar dataKey="Optimized" fill="#4589ff" />
+              <Legend iconSize={8} wrapperStyle={{ fontSize: "11px", color: "#8d8d8d" }} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -691,14 +644,14 @@ function BenchChart({ task }: { task: TaskData }) {
 }
 
 function ComplexityBadge({ label, complexity }: { label: string; complexity: string }) {
-  const isGood = complexity.includes("1)") || complexity.includes("log") || complexity === "O(n) amortized" || complexity === "O(k) output only" || complexity === "O(capacity)" || complexity === "O(n/c) c=concurrency";
   const isOk = complexity.includes("n³") || complexity === "O(n×m)";
-  const color = isOk ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 border-red-200 dark:border-red-800"
+  const color = isOk
+    ? "border-[#fa4d56]/30 text-[#fa4d56] bg-[#fa4d56]/5"
     : complexity === "O(n)" || complexity === "O(n) avg" || complexity === "O(n²)" || complexity === "O(n×m)"
-      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+      ? "border-[#f1c21b]/30 text-[#f1c21b] bg-[#f1c21b]/5"
+      : "border-[#42be65]/30 text-[#42be65] bg-[#42be65]/5";
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-mono font-medium px-2 py-0.5 rounded-md border ${color}`}>
+    <span className={`inline-flex items-center gap-1 text-[11px] font-[family-name:var(--font-ibm-mono)] font-medium px-2 py-0.5 border ${color}`}>
       {label}: {complexity}
     </span>
   );
@@ -713,26 +666,29 @@ function TaskSection({ task }: { task: TaskData }) {
     <section id={`task-${task.id}`} className="scroll-mt-20">
       {/* Task Header */}
       <FadeIn>
-        <Card className="border-2 hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <Card
+          className="border border-[#393939] bg-[#262626] hover:border-[#4589ff]/50 transition-colors cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
+        >
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 flex-1">
-                <div className="size-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
+                <div className="size-12 bg-[#4589ff] flex items-center justify-center shrink-0">
                   <Icon className="size-6 text-white" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 text-[10px]">#{task.id}</Badge>
+                    <Badge className="bg-[#4589ff] text-white text-[10px]">#{task.id}</Badge>
                     <Badge className={task.difficultyColor}>{task.difficulty}</Badge>
                     <Badge className={task.categoryColor}>{task.category}</Badge>
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:text-emerald-400 dark:border-emerald-700">
+                    <Badge variant="outline" className="border-[#42be65]/40 text-[#42be65]">
                       <Zap className="size-3 mr-0.5" /> {speedup}× faster
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg">{task.title}</CardTitle>
+                  <CardTitle className="text-base font-semibold">{task.title}</CardTitle>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground sm:pr-2">
+              <div className="flex items-center gap-2 text-[#8d8d8d] sm:pr-2">
                 {expanded ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
               </div>
             </div>
@@ -742,21 +698,26 @@ function TaskSection({ task }: { task: TaskData }) {
 
       {/* Expanded Content */}
       {expanded && (
-        <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mt-4 space-y-4"
+        >
           {/* Problem Statement */}
           <FadeIn delay={0.05}>
-            <Card>
+            <Card className="bg-[#262626] border-[#393939]">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Target className="size-5 text-amber-500" />
-                  Условие задачи
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-[#a8a8a8]">
+                  <Target className="size-4" />
+                  Problem Statement
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm leading-relaxed">{task.problem}</p>
+                <p className="text-sm leading-relaxed text-[#c6c6c6]">{task.problem}</p>
                 <div className="flex flex-wrap gap-2">
                   {task.constraints.map((c, i) => (
-                    <Badge key={i} variant="outline" className="text-xs font-normal">
+                    <Badge key={i} variant="outline" className="text-[11px] font-normal border-[#393939] text-[#8d8d8d]">
                       <Shield className="size-3 mr-1" /> {c}
                     </Badge>
                   ))}
@@ -768,12 +729,12 @@ function TaskSection({ task }: { task: TaskData }) {
           {/* Code Comparison + Bench Chart */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <Tabs defaultValue="baseline" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="baseline" className="flex-1 text-xs">
-                  <XCircle className="size-3.5 mr-1 text-red-500" /> Baseline
+              <TabsList className="w-full bg-[#262626] border border-[#393939]">
+                <TabsTrigger value="baseline" className="flex-1 text-xs uppercase tracking-wider">
+                  <XCircle className="size-3.5 mr-1 text-[#fa4d56]" /> Baseline
                 </TabsTrigger>
-                <TabsTrigger value="optimized" className="flex-1 text-xs">
-                  <CheckCircle2 className="size-3.5 mr-1 text-emerald-500" /> Optimized
+                <TabsTrigger value="optimized" className="flex-1 text-xs uppercase tracking-wider">
+                  <CheckCircle2 className="size-3.5 mr-1 text-[#4589ff]" /> Optimized
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="baseline" className="mt-3">
@@ -788,30 +749,30 @@ function TaskSection({ task }: { task: TaskData }) {
 
           {/* Big O Analysis */}
           <FadeIn delay={0.1}>
-            <Card>
+            <Card className="bg-[#262626] border-[#393939]">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <GitCompareArrows as={GitCompareArrows} className="size-5 text-emerald-600 dark:text-emerald-400" />
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-[#a8a8a8]">
+                  <GitCompareArrows className="size-4" />
                   Big O Analysis
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Baseline</p>
+                  <div className="bg-[#fa4d56]/5 p-4 border border-[#fa4d56]/20">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#fa4d56] mb-2">Baseline</p>
                     <div className="flex flex-wrap gap-2">
                       <ComplexityBadge label="Time" complexity={task.baseline.timeComplexity} />
                       <ComplexityBadge label="Space" complexity={task.baseline.spaceComplexity} />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{task.baseline.explanation}</p>
+                    <p className="text-xs text-[#8d8d8d] mt-2 leading-relaxed">{task.baseline.explanation}</p>
                   </div>
-                  <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-800">
-                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-2">Optimized</p>
+                  <div className="bg-[#4589ff]/5 p-4 border border-[#4589ff]/20">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#4589ff] mb-2">Optimized</p>
                     <div className="flex flex-wrap gap-2">
                       <ComplexityBadge label="Time" complexity={task.optimized.timeComplexity} />
                       <ComplexityBadge label="Space" complexity={task.optimized.spaceComplexity} />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{task.optimized.explanation}</p>
+                    <p className="text-xs text-[#8d8d8d] mt-2 leading-relaxed">{task.optimized.explanation}</p>
                   </div>
                 </div>
               </CardContent>
@@ -820,29 +781,29 @@ function TaskSection({ task }: { task: TaskData }) {
 
           {/* Key Optimizations */}
           <FadeIn delay={0.15}>
-            <Card>
+            <Card className="bg-[#262626] border-[#393939]">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <BookOpen className="size-5 text-amber-500" />
-                  Ключевые оптимизации
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-[#a8a8a8]">
+                  <BookOpen className="size-4" />
+                  Key Optimizations
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {task.techniques.map((t, i) => (
-                    <div key={i} className="bg-muted/50 rounded-lg p-3 border border-border">
+                    <div key={i} className="bg-[#161616] p-3 border border-[#393939]">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="size-2 rounded-full bg-emerald-500" />
+                        <div className="size-2 bg-[#4589ff]" />
                         <p className="text-sm font-semibold">{t.name}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{t.desc}</p>
+                      <p className="text-xs text-[#8d8d8d] leading-relaxed">{t.desc}</p>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </FadeIn>
-        </div>
+        </motion.div>
       )}
     </section>
   );
@@ -883,91 +844,101 @@ export default function PerformanceLab() {
     { id: "results", label: "Результаты" },
   ];
 
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
   const totalSpeedup = TASKS.reduce((a, t) => a + t.baseline.time / t.optimized.time, 0);
+  const avgMemSave = Math.round(TASKS.reduce((a, t) => a + (1 - t.optimized.memory / t.baseline.memory), 0) / TASKS.length * 100);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* ─── STICKY NAV ─── */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
+    <div className="min-h-screen flex flex-col bg-[#161616]">
+      {/* ─── STICKY HEADER ─── */}
+      <header className="sticky top-0 z-50 bg-[#161616] border-b border-[#393939]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar max-w-[75vw]">
               {navItems.map((item) => (
-                <Button key={item.id} variant={activeSection === item.id ? "default" : "ghost"} size="sm" className="text-xs shrink-0" onClick={() => scrollTo(item.id)}>
+                <Button
+                  key={item.id}
+                  variant={activeSection === item.id ? "default" : "ghost"}
+                  size="sm"
+                  className="text-xs shrink-0 h-8 uppercase tracking-wider"
+                  onClick={() => scrollTo(item.id)}
+                >
                   {item.label}
                 </Button>
               ))}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline" className="hidden sm:inline-flex text-emerald-700 border-emerald-300 dark:text-emerald-400 dark:border-emerald-700">
+              <Badge variant="outline" className="hidden sm:inline-flex text-[#a8a8a8] border-[#393939] text-[10px]">
                 <Cpu className="size-3 mr-1" /> 5 Tasks
               </Badge>
-              <ThemeToggle />
+              <Badge variant="outline" className="hidden sm:inline-flex text-[#a8a8a8] border-[#393939] text-[10px]">
+                Rust
+              </Badge>
             </div>
           </div>
-        </nav>
+        </div>
       </header>
 
       {/* ─── MAIN ─── */}
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        {/* ═══ HERO ═══ */}
+        {/* ═══ HERO SECTION ═══ */}
         <section ref={registerSection("hero")} id="hero">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 dark:from-emerald-900 dark:via-emerald-950 dark:to-emerald-900 p-6 sm:p-10">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/20 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-
-            <div className="relative z-10 space-y-6">
+          <div className="bg-[#0f62fe] p-6 sm:p-10">
+            <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="size-12 rounded-xl bg-white/15 flex items-center justify-center">
-                    <Zap className="size-7 text-amber-300" />
+                  <div className="size-12 bg-white/10 flex items-center justify-center border border-white/20">
+                    <Zap className="size-7 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">Performance Lab</h1>
-                    <p className="text-emerald-200 text-sm">5 задач на высокопроизводительный код</p>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight uppercase">Performance Lab</h1>
+                    <p className="text-blue-200 text-xs uppercase tracking-wider mt-0.5">5 задач на высокопроизводительный код</p>
                   </div>
                 </div>
-                <p className="text-white/80 text-sm sm:text-base max-w-2xl leading-relaxed">
+                <p className="text-white/70 text-sm sm:text-base max-w-2xl leading-relaxed mt-4">
                   Каждый challenge — реальная задача системного программирования. Naive vs Optimized подход на Rust с анализом Big O, бенчмарками и объяснением каждой оптимизации.
                 </p>
               </div>
 
               {/* Stats */}
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3">
                 {[
-                  { icon: Layers, val: "5", label: "Задач" },
-                  { icon: Gauge, val: `${totalSpeedup.toFixed(0)}×`, label: "Суммарное ускорение" },
-                  { icon: MemoryStick, val: "73%", label: "Ср. экономия памяти" },
-                  { icon: Cpu, val: "Rust", label: "Язык" },
-                ].map((s, i) => (
-                  <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-white/10">
-                    <div className="flex items-center gap-2">
-                      <s.icon className="size-4 text-amber-300" />
-                      <span className="text-xl font-bold text-white">{s.val}</span>
-                      <span className="text-xs text-emerald-200">{s.label}</span>
+                  { icon: Layers, val: "5", label: "Tasks" },
+                  { icon: Gauge, val: `${totalSpeedup.toFixed(0)}×`, label: "Total speedup" },
+                  { icon: MemoryStick, val: `${avgMemSave}%`, label: "Avg memory save" },
+                  { icon: Cpu, val: "Rust", label: "Language" },
+                ].map((s, i) => {
+                  const SIcon = s.icon;
+                  return (
+                    <div key={i} className="bg-white/5 px-4 py-2.5 border border-white/10">
+                      <div className="flex items-center gap-2">
+                        <SIcon className="size-4 text-white/60" />
+                        <span className="text-xl font-bold text-white font-[family-name:var(--font-ibm-mono)]">{s.val}</span>
+                        <span className="text-[10px] text-white/50 uppercase tracking-wider">{s.label}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Task Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                 {TASKS.map((t) => {
-                  const Icon = t.icon;
-                  const speedup = (t.baseline.time / t.optimized.time).toFixed(1);
+                  const TIcon = t.icon;
+                  const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                   return (
-                    <button key={t.id} onClick={() => scrollTo(`task-${t.id}`)} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/20 transition-colors text-left group">
+                    <button
+                      key={t.id}
+                      onClick={() => scrollTo(`task-${t.id}`)}
+                      className="bg-white/5 p-4 border border-white/10 hover:bg-white/10 transition-colors text-left group"
+                    >
                       <div className="flex items-center gap-2 mb-2">
-                        <Icon className="size-5 text-amber-300 group-hover:text-amber-200 transition-colors" />
-                        <Badge className="bg-white/15 text-white text-[10px] border-white/20">#{t.id}</Badge>
-                        <Badge className={`${t.difficultyColor} text-[10px] border`}>{t.difficulty}</Badge>
+                        <TIcon className="size-4 text-white/60 group-hover:text-white transition-colors" />
+                        <Badge className="bg-white/10 text-white/80 text-[10px] border-white/10">#{t.id}</Badge>
+                        <Badge className={`${t.difficultyColor} text-[10px]`}>{t.difficulty}</Badge>
                       </div>
-                      <p className="text-white text-xs font-medium line-clamp-2 leading-relaxed">{t.title}</p>
-                      <p className="text-amber-300 text-lg font-bold mt-2">{speedup}×</p>
+                      <p className="text-white/80 text-xs font-medium line-clamp-2 leading-relaxed">{t.title}</p>
+                      <p className="text-white font-bold mt-2 font-[family-name:var(--font-ibm-mono)]">{sp}×</p>
                     </button>
                   );
                 })}
@@ -986,13 +957,12 @@ export default function PerformanceLab() {
         {/* ═══ METHODOLOGY ═══ */}
         <section ref={registerSection("methodology")} id="methodology">
           <FadeIn>
-            <Card className="border-2 border-amber-200 dark:border-amber-800">
+            <Card className="border border-[#393939] bg-[#262626] border-l-4 border-l-[#4589ff]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="size-5 text-amber-500" />
+                <CardTitle className="flex items-center gap-2 text-lg uppercase tracking-wider">
+                  <Brain className="size-5 text-[#4589ff]" />
                   8 принципов high-performance кода
                 </CardTitle>
-                <CardDescription>Методология performance-code-generator</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1008,10 +978,10 @@ export default function PerformanceLab() {
                   ].map((p, i) => {
                     const PIcon = p.icon;
                     return (
-                      <div key={i} className="bg-muted/50 rounded-lg p-3 border border-border hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors">
-                        <PIcon className="size-5 text-emerald-600 dark:text-emerald-400 mb-2" />
-                        <p className="text-sm font-semibold">{p.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{p.desc}</p>
+                      <div key={i} className="bg-[#161616] p-3 border border-[#393939] hover:border-[#4589ff]/30 transition-colors">
+                        <PIcon className="size-5 text-[#4589ff] mb-2" />
+                        <p className="text-sm font-semibold uppercase tracking-wider text-[#f4f4f4]">{p.title}</p>
+                        <p className="text-xs text-[#8d8d8d] mt-1 leading-relaxed">{p.desc}</p>
                       </div>
                     );
                   })}
@@ -1024,10 +994,10 @@ export default function PerformanceLab() {
         {/* ═══ RESULTS TABLE ═══ */}
         <section ref={registerSection("results")} id="results">
           <FadeIn>
-            <Card>
+            <Card className="bg-[#262626] border-[#393939]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="size-5 text-emerald-600 dark:text-emerald-400" />
+                <CardTitle className="flex items-center gap-2 text-lg uppercase tracking-wider">
+                  <Gauge className="size-5 text-[#4589ff]" />
                   Сводная таблица результатов
                 </CardTitle>
               </CardHeader>
@@ -1036,36 +1006,36 @@ export default function PerformanceLab() {
                 <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-2 pr-4 font-semibold">#</th>
-                        <th className="text-left py-2 pr-4 font-semibold">Задача</th>
-                        <th className="text-right py-2 px-3 font-semibold">Baseline</th>
-                        <th className="text-right py-2 px-3 font-semibold">Optimized</th>
-                        <th className="text-right py-2 px-3 font-semibold">Speedup</th>
-                        <th className="text-right py-2 font-semibold">Memory save</th>
+                      <tr className="border-b border-[#393939]">
+                        <th className="text-left py-2 pr-4 text-[#8d8d8d]">#</th>
+                        <th className="text-left py-2 pr-4 text-[#8d8d8d]">Task</th>
+                        <th className="text-right py-2 px-3 text-[#8d8d8d]">Baseline</th>
+                        <th className="text-right py-2 px-3 text-[#8d8d8d]">Optimized</th>
+                        <th className="text-right py-2 px-3 text-[#8d8d8d]">Speedup</th>
+                        <th className="text-right py-2 text-[#8d8d8d]">Memory save</th>
                       </tr>
                     </thead>
                     <tbody>
                       {TASKS.map((t) => {
                         const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                         const ms = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
-                        const formatT = (v: number) => v >= 1000 ? `${(v/1000).toFixed(v >= 10000 ? 0 : 1)}s` : `${v}ms`;
+                        const formatT = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}s` : `${v}ms`;
                         return (
-                          <tr key={t.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <tr key={t.id} className="border-b border-[#393939]/50 hover:bg-[#161616] transition-colors">
                             <td className="py-2.5 pr-4">
-                              <Badge variant="outline" className="text-[10px]">#{t.id}</Badge>
+                              <Badge variant="outline" className="text-[10px] border-[#393939] text-[#8d8d8d]">#{t.id}</Badge>
                             </td>
                             <td className="py-2.5 pr-4 max-w-[200px]">
-                              <p className="font-medium truncate">{t.title}</p>
-                              <Badge variant="secondary" className="text-[9px] mt-0.5">{t.difficulty}</Badge>
+                              <p className="font-medium text-[#c6c6c6] truncate">{t.title}</p>
+                              <Badge variant="secondary" className="text-[9px] mt-0.5 bg-[#393939] text-[#8d8d8d]">{t.difficulty}</Badge>
                             </td>
-                            <td className="py-2.5 px-3 text-right font-mono text-red-600 dark:text-red-400">{formatT(t.baseline.time)}</td>
-                            <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatT(t.optimized.time)}</td>
+                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#fa4d56]">{formatT(t.baseline.time)}</td>
+                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#42be65]">{formatT(t.optimized.time)}</td>
                             <td className="py-2.5 px-3 text-right">
-                              <span className="font-bold text-emerald-700 dark:text-emerald-400">{sp}×</span>
+                              <span className="font-bold text-[#42be65] font-[family-name:var(--font-ibm-mono)]">{sp}×</span>
                             </td>
                             <td className="py-2.5 text-right">
-                              <span className="font-medium text-amber-600 dark:text-amber-400">-{ms}%</span>
+                              <span className="font-medium text-[#08bdba] font-[family-name:var(--font-ibm-mono)]">-{ms}%</span>
                             </td>
                           </tr>
                         );
@@ -1077,13 +1047,21 @@ export default function PerformanceLab() {
                 {/* Speedup Chart - Horizontal bars */}
                 <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={TASKS.map(t => ({ name: `#${t.id}`, speedup: parseFloat((t.baseline.time / t.optimized.time).toFixed(1)), memory: parseFloat(((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0)) }))} layout="vertical" barCategoryGap="15%">
-                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#333" : "#e5e5e5"} horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 11, fill: isDark ? "#999" : "#666" }} />
-                      <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 12, fill: isDark ? "#ccc" : "#333" }} />
-                      <Bar dataKey="speedup" name="Speedup (x)" fill="#10b981" radius={[0, 4, 4, 0]} />
-                      <Bar dataKey="memory" name="Memory save (%)" fill="#f59e0b" radius={[0, 4, 4, 0]} />
-                      <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                    <BarChart
+                      data={TASKS.map(t => ({
+                        name: `#${t.id}`,
+                        speedup: parseFloat((t.baseline.time / t.optimized.time).toFixed(1)),
+                        memory: parseFloat(((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0)),
+                      }))}
+                      layout="vertical"
+                      barCategoryGap="15%"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#393939" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: "#8d8d8d" }} />
+                      <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 12, fill: "#c6c6c6" }} />
+                      <Bar dataKey="speedup" name="Speedup (x)" fill="#4589ff" />
+                      <Bar dataKey="memory" name="Memory save (%)" fill="#08bdba" />
+                      <Legend iconSize={8} wrapperStyle={{ fontSize: "11px", color: "#8d8d8d" }} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -1095,30 +1073,36 @@ export default function PerformanceLab() {
         {/* ═══ SUMMARY ═══ */}
         <section ref={registerSection("summary")} id="summary">
           <FadeIn>
-            <Card className="border-2 border-emerald-200 dark:border-emerald-800">
+            <Card className="border border-[#393939] bg-[#262626] border-l-4 border-l-[#4589ff]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="size-5 text-amber-500" />
+                <CardTitle className="flex items-center gap-2 text-lg uppercase tracking-wider">
+                  <Award className="size-5 text-[#4589ff]" />
                   Итоги Performance Lab
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                   {TASKS.map((t) => {
-                    const speedup = (t.baseline.time / t.optimized.time).toFixed(1);
+                    const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                     return (
-                      <div key={t.id} className="text-center p-3 bg-muted/50 rounded-lg">
-                        <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{speedup}×</p>
-                        <p className="text-xs text-muted-foreground mt-1">#{t.id}</p>
+                      <div key={t.id} className="text-center p-3 bg-[#161616] border border-[#393939]">
+                        <p className="text-2xl font-bold text-[#4589ff] font-[family-name:var(--font-ibm-mono)]">{sp}×</p>
+                        <p className="text-[10px] text-[#8d8d8d] uppercase tracking-wider mt-1">#{t.id}</p>
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4 border border-emerald-200 dark:border-emerald-800">
-                  <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                    <span className="font-semibold">8 принципов performance-code-generator:</span>{" "}
+                <div className="mt-4 bg-[#4589ff]/5 p-4 border border-[#4589ff]/20">
+                  <p className="text-sm text-[#c6c6c6] leading-relaxed">
+                    <span className="font-semibold uppercase tracking-wider text-[#f4f4f4]">8 принципов performance-code-generator:</span>{" "}
                     Big O оптимизация → Кэш-локальность (Data-Oriented Design) → Минимизация аллокаций → Async I/O → Lock-free конкурентность → Zero-cost абстракции → SIMD векторизация → Профилирование («Измеряй, а не гадай»).
                   </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <Zap className="size-4 text-[#4589ff]" />
+                    <span className="text-xs text-[#8d8d8d] uppercase tracking-wider">
+                      Total speedup across all tasks: <span className="text-[#4589ff] font-bold font-[family-name:var(--font-ibm-mono)]">{totalSpeedup.toFixed(0)}×</span>
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1127,10 +1111,10 @@ export default function PerformanceLab() {
       </main>
 
       {/* ─── FOOTER ─── */}
-      <footer className="mt-auto border-t border-border bg-muted/30">
+      <footer className="mt-auto border-t border-[#393939] bg-[#161616]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">Performance Lab — 5 задач на высокопроизводительный код</p>
-          <p className="text-xs text-muted-foreground">Rust · SIMD · Lock-free · Zero-copy · Cache-oblivious</p>
+          <p className="text-xs text-[#8d8d8d] uppercase tracking-wider">Performance Lab</p>
+          <p className="text-xs text-[#6f6f6f] uppercase tracking-wider">Rust | SIMD | Lock-free | Zero-copy</p>
         </div>
       </footer>
     </div>

@@ -60,7 +60,7 @@
   --secondary: #262626;
   --secondary-foreground: #d4d4d4;
   --muted: #1c1c1c;
-  --muted-foreground: #737373;
+  --muted-foreground: #8a8a8a;
   --accent: #262626;
   --accent-foreground: #d4d4d4;
   --destructive: #f87171;
@@ -88,8 +88,8 @@
   --ind-border: #262626;
   --ind-border-hover: #3a3a3a;
   --ind-text: #d4d4d4;
-  --ind-text-dim: #737373;
-  --ind-text-muted: #525252;
+  --ind-text-dim: #8a8a8a;
+  --ind-text-muted: #8a8a8a;
   --ind-accent: #ff6b2b;
   --ind-green: #4ade80;
   --ind-red: #f87171;
@@ -183,7 +183,7 @@ table th {
   letter-spacing: 0.5px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #525252;
+  color: #8a8a8a;
 }
 
 /* Industrial fade-in — sharp, no bounce */
@@ -303,7 +303,7 @@ pre .token-line:hover {
   border-bottom: 1px solid #1c1c1c;
   font-family: var(--font-ibm-mono), monospace;
   font-size: 11px;
-  color: #525252;
+  color: #8a8a8a;
   letter-spacing: 0.05em;
 }
 
@@ -365,7 +365,7 @@ pre .token-line:hover {
   letter-spacing: 0.02em;
 }
 .search-industrial::placeholder {
-  color: #333;
+  color: #666666;
 }
 .search-industrial:focus {
   border-color: #ff6b2b;
@@ -464,14 +464,14 @@ pre .token-line:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid #262626;
-  color: #525252;
+  color: #8a8a8a;
   transition: all 0.15s ease;
   cursor: pointer;
   background: transparent;
 }
 .chip-industrial:hover {
   border-color: #3a3a3a;
-  color: #737373;
+  color: #8a8a8a;
 }
 .chip-industrial.active {
   border-color: #ff6b2b;
@@ -487,7 +487,7 @@ pre .token-line:hover {
   top: -8px;
   font-family: var(--font-ibm-mono), monospace;
   font-size: 9px;
-  color: #333;
+  color: #666666;
   letter-spacing: 0.1em;
 }
 
@@ -502,7 +502,7 @@ blockquote.industrial {
   padding-left: 1rem;
   margin-left: 0;
   font-style: normal;
-  color: #737373;
+  color: #8a8a8a;
 }
 
 /* ── Horizontal rule styled ── */
@@ -600,7 +600,7 @@ hr.industrial {
   transform: translateX(-50%);
   background: #0c0c0c;
   border: 1px solid #262626;
-  color: #525252;
+  color: #8a8a8a;
   padding: 4px 8px;
   font-size: 10px;
   font-family: var(--font-ibm-mono), monospace;
@@ -850,7 +850,7 @@ hr.industrial {
   caret-color: #ff6b2b;
 }
 .cmd-input::placeholder {
-  color: #333;
+  color: #666666;
 }
 
 .cmd-list {
@@ -905,7 +905,7 @@ hr.industrial {
 .cmd-item .cmd-hint {
   font-family: var(--font-ibm-mono), monospace;
   font-size: 0.6rem;
-  color: #333;
+  color: #666666;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   flex-shrink: 0;
@@ -913,7 +913,7 @@ hr.industrial {
 .cmd-group-label {
   font-family: var(--font-ibm-mono), monospace;
   font-size: 0.6rem;
-  color: #333;
+  color: #666666;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   padding: 8px 12px 4px;
@@ -1003,7 +1003,7 @@ hr.industrial {
   border: 1px solid #262626;
   font-family: var(--font-ibm-mono), monospace;
   font-size: 0.65rem;
-  color: #737373;
+  color: #8a8a8a;
   text-transform: uppercase;
 }
 
@@ -1538,7 +1538,7 @@ hr.industrial {
   padding: 2px 8px;
   font-family: var(--font-ibm-mono), monospace;
   font-size: 0.65rem;
-  color: #525252;
+  color: #8a8a8a;
   word-break: break-all;
   display: inline-block;
   max-width: 100%;

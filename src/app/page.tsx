@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, Fragment } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, Fragment, memo } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -559,6 +559,22 @@ impl<T> Drop for LockFreeQueue<T> {
   },
 ];
 
+/* ─────────────────────── PRECOMPUTED CONSTANTS ─────────────────────── */
+
+const TOTAL_SPEEDUP = TASKS.reduce((a, t) => a + t.baseline.time / t.optimized.time, 0);
+const MEM_IMPROVED_COUNT = TASKS.filter((t) => t.optimized.memory < t.baseline.memory).length;
+const TOTAL_TIME_SAVED = TASKS.reduce((a, t) => a + (t.baseline.time - t.optimized.time), 0);
+const TOTAL_MEM_SAVED = TASKS.reduce((a, t) => a + (t.baseline.memory - t.optimized.memory), 0);
+const SPEEDUPS = TASKS.map(t => t.baseline.time / t.optimized.time);
+const MIN_SPEEDUP = Math.min(...SPEEDUPS);
+const MAX_SPEEDUP = Math.max(...SPEEDUPS);
+const AVG_SPEEDUP = SPEEDUPS.reduce((a, b) => a + b, 0) / SPEEDUPS.length;
+const DIFF_COUNTS = {
+  all: TASKS.length,
+  Advanced: TASKS.filter(t => t.difficulty === "Advanced").length,
+  Expert: TASKS.filter(t => t.difficulty === "Expert").length,
+};
+
 /* ─────────────────────── TECHNIQUE TAG CLOUD DATA ─────────────────────── */
 
 const ALL_TECHNIQUES = (() => {
@@ -576,40 +592,16 @@ const ALL_TECHNIQUES = (() => {
 /* ─────────────────────── HELPERS ─────────────────────── */
 
 /**
- * Hydration-safe persisted Set<number> backed by localStorage.
- * Both server & client start with empty Set (no hydration mismatch).
- * Loads from localStorage after mount via requestAnimationFrame (avoids lint error).
- */
-function usePersistedSet(key: string): [Set<number>, (next: Set<number>) => void] {
-  const [value, setValue] = useState<Set<number>>(() => new Set<number>());
-  const loadedRef = useRef(false);
-
-  useEffect(() => {
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        requestAnimationFrame(() => {
-          setValue(new Set(JSON.parse(saved) as number[]));
-        });
-      }
-    } catch { /* ignore */ }
-  }, [key]);
-
-  const setAndPersist = useCallback((next: Set<number>) => {
-    setValue(next);
-    try { localStorage.setItem(key, JSON.stringify(Array.from(next))); } catch { /* ignore */ }
-  }, [key]);
-
-  return [value, setAndPersist];
-}
-
-/**
- * Hydration-safe persisted string backed by localStorage.
+ * Generic hydration-safe persisted state backed by localStorage.
  * Both server & client start with `initialValue` (no hydration mismatch).
+ * Includes runtime validation of parsed localStorage data.
  */
-function usePersistedString(key: string, initialValue: string): [string, (next: string) => void] {
+function usePersisted<T>(
+  key: string,
+  initialValue: T,
+  parse: (raw: string) => T,
+  serialize: (val: T) => string
+): [T, (next: T) => void] {
   const [value, setValue] = useState(initialValue);
   const loadedRef = useRef(false);
 
@@ -619,46 +611,43 @@ function usePersistedString(key: string, initialValue: string): [string, (next: 
     try {
       const saved = localStorage.getItem(key);
       if (saved) {
-        requestAnimationFrame(() => { setValue(saved); });
+        requestAnimationFrame(() => { setValue(parse(saved)); });
       }
     } catch { /* ignore */ }
-  }, [key]);
+  }, [key, parse]);
 
-  const setAndPersist = useCallback((next: string) => {
+  const setAndPersist = useCallback((next: T) => {
     setValue(next);
-    try { localStorage.setItem(key, next); } catch { /* ignore */ }
-  }, [key]);
+    try { localStorage.setItem(key, serialize(next)); } catch { /* ignore */ }
+  }, [key, serialize]);
 
   return [value, setAndPersist];
 }
 
-/**
- * Hydration-safe persisted Set<string> (achievements) backed by localStorage.
- */
-function usePersistedAchievements(key: string): [Set<string>, (next: Set<string>) => void] {
-  const [value, setValue] = useState<Set<string>>(() => new Set<string>());
-  const loadedRef = useRef(false);
+/* Safe parsers with runtime validation for localStorage data */
+const parseNumberSet = (raw: string): Set<number> => {
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'number' && isFinite(v))) {
+      return new Set(parsed as number[]);
+    }
+  } catch { /* ignore */ }
+  return new Set<number>();
+};
+const serializeNumberSet = (val: Set<number>) => JSON.stringify(Array.from(val));
 
-  useEffect(() => {
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        requestAnimationFrame(() => {
-          setValue(new Set(JSON.parse(saved) as string[]));
-        });
-      }
-    } catch { /* ignore */ }
-  }, [key]);
+const parseStringSet = (raw: string): Set<string> => {
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every((v) => typeof v === 'string')) {
+      return new Set(parsed as string[]);
+    }
+  } catch { /* ignore */ }
+  return new Set<string>();
+};
+const serializeStringSet = (val: Set<string>) => JSON.stringify(Array.from(val));
 
-  const setAndPersist = useCallback((next: Set<string>) => {
-    setValue(next);
-    try { localStorage.setItem(key, JSON.stringify(Array.from(next))); } catch { /* ignore */ }
-  }, [key]);
-
-  return [value, setAndPersist];
-}
+const parseString = (raw: string): string => (typeof raw === 'string' ? raw : '');
 
 function calcReadingTime(task: TaskData): number {
   const codeLines = task.baseline.code.split('\n').length + task.optimized.code.split('\n').length;
@@ -666,7 +655,7 @@ function calcReadingTime(task: TaskData): number {
   return Math.max(1, Math.ceil(codeLines / 30 + textChars / 250));
 }
 
-function formatTimeBenchmark(ms: number): string {
+function formatMs(ms: number): string {
   if (ms >= 1000) return `${(ms / 1000).toFixed(ms >= 10000 ? 0 : 1)}s`;
   return `${ms.toFixed(0)}ms`;
 }
@@ -726,21 +715,21 @@ function TaskPreviewTooltip({ task, visible, anchorRect }: { task: TaskData; vis
       <div className="flex items-center gap-2 mb-2">
         <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{task.id}</span>
         <span className={`text-[9px] font-[family-name:var(--font-ibm-mono)] uppercase border px-1.5 py-0 ${grade.className}`}>{grade.letter}</span>
-        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">{task.difficulty}</span>
+        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">{task.difficulty}</span>
       </div>
       <p className="text-xs text-[#d4d4d4] font-medium line-clamp-2 mb-2">{task.title}</p>
       <div className="space-y-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)]">
-        <div className="flex justify-between"><span className="text-[#525252]">Speedup</span><span className="text-[#ff6b2b] font-bold">{sp}×</span></div>
-        <div className="flex justify-between"><span className="text-[#525252]">Memory</span><span className={parseInt(memSave) > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}>{parseInt(memSave) > 0 ? '-' : '+'}{Math.abs(parseInt(memSave))}%</span></div>
-        <div className="flex justify-between"><span className="text-[#525252]">Time Complex</span><span className="text-[#d4d4d4]">{task.optimized.timeComplexity}</span></div>
+        <div className="flex justify-between"><span className="text-[#8a8a8a]">Speedup</span><span className="text-[#ff6b2b] font-bold">{sp}×</span></div>
+        <div className="flex justify-between"><span className="text-[#8a8a8a]">Memory</span><span className={parseInt(memSave) > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}>{parseInt(memSave) > 0 ? '-' : '+'}{Math.abs(parseInt(memSave))}%</span></div>
+        <div className="flex justify-between"><span className="text-[#8a8a8a]">Time Complex</span><span className="text-[#d4d4d4]">{task.optimized.timeComplexity}</span></div>
       </div>
       <div className="mt-2 pt-2 border-t border-[#1c1c1c]">
-        <p className="text-[9px] text-[#333] uppercase tracking-widest mb-1">Key Techniques</p>
+        <p className="text-[9px] text-[#666666] uppercase tracking-widest mb-1">Key Techniques</p>
         <div className="flex flex-wrap gap-1">
           {task.techniques.slice(0, 3).map((t, i) => (
-            <span key={i} className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#1c1c1c] px-1.5 py-0.5">{t.name}</span>
+            <span key={i} className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#1c1c1c] px-1.5 py-0.5">{t.name}</span>
           ))}
-          {task.techniques.length > 3 && <span className="text-[8px] text-[#333]">+{task.techniques.length - 3}</span>}
+          {task.techniques.length > 3 && <span className="text-[8px] text-[#666666]">+{task.techniques.length - 3}</span>}
         </div>
       </div>
     </div>
@@ -767,7 +756,7 @@ function ActivityTimeline({ tasks, reviewedTasks }: { tasks: TaskData[]; reviewe
       {activities.map((a) => (
         <div key={a.id} className={`timeline-item ${a.reviewed ? 'active' : ''}`}>
           <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#737373]">
+            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
               #{a.id} {a.title.substring(0, 35)}...
             </span>
             <div className="flex items-center gap-2">
@@ -775,7 +764,7 @@ function ActivityTimeline({ tasks, reviewedTasks }: { tasks: TaskData[]; reviewe
               <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] font-bold">{a.speedup}×</span>
             </div>
           </div>
-          <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+          <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
             {a.reviewed ? 'Reviewed' : 'Not reviewed'} · {a.difficulty}
           </div>
         </div>
@@ -843,7 +832,7 @@ function SectionDivider({ label }: { label: string }) {
     <div className="flex items-center gap-3 py-2">
       <span className="hex-coord">{hexLeft}</span>
       <div className="flex-1 h-px bg-[#1c1c1c]" />
-      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-[0.3em]">{label}</span>
+      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-[0.3em]">{label}</span>
       <div className="flex-1 h-px bg-[#1c1c1c]" />
       <span className="hex-coord">{hexRight}</span>
     </div>
@@ -865,10 +854,10 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
     <div className="overflow-hidden border border-[#262626] code-block-hover">
       <div className="px-4 py-2 flex items-center justify-between border-b border-[#262626] bg-[#0f0f0f]">
         <div className="flex items-center gap-2 min-w-0">
-          <Code2 className="size-3.5 text-[#525252] shrink-0" />
-          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] truncate">{title}</span>
+          <Code2 className="size-3.5 text-[#8a8a8a] shrink-0" />
+          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] truncate">{title}</span>
           <span className="tooltip-container">
-            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] cursor-help">{lineCount} lines</span>
+            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] cursor-help">{lineCount} lines</span>
             <span className="tooltip-content">
               {lineCount} lines · {charCount} chars · ~{tokenEstimate} tokens
             </span>
@@ -877,7 +866,7 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); handleCopy(); }}
-            className="text-[#525252] hover:text-[#d4d4d4] transition-colors p-1"
+            className="text-[#8a8a8a] hover:text-[#d4d4d4] transition-colors p-1"
           >
             {copied ? <Check className="size-3.5 text-[#4ade80]" /> : <Copy className="size-3.5" />}
           </button>
@@ -905,7 +894,7 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
             fontFamily: "var(--font-ibm-mono), monospace",
           }}
           showLineNumbers
-          lineNumberStyle={{ color: "#333", minWidth: "2.5em" }}
+          lineNumberStyle={{ color: "#666666", minWidth: "2.5em" }}
         >
           {code}
         </SyntaxHighlighter>
@@ -914,14 +903,11 @@ function CodeBlock({ code, title, variant }: { code: string; title: string; vari
   );
 }
 
-function BenchChart({ task }: { task: TaskData }) {
+const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
   const speedup = (task.baseline.time / task.optimized.time).toFixed(1);
   const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
 
-  const formatTime = (ms: number) => {
-    if (ms >= 1000) return `${(ms / 1000).toFixed(ms >= 10000 ? 0 : 1)}s`;
-    return `${ms.toFixed(0)}ms`;
-  };
+
 
   const chartData = [
     { name: "Time", Baseline: task.baseline.time, Optimized: task.optimized.time },
@@ -931,7 +917,7 @@ function BenchChart({ task }: { task: TaskData }) {
   return (
     <Card className="h-full bg-[#141414] border border-[#262626] card-industrial card-lift">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#525252]">
+        <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#8a8a8a]">
           <Gauge className="size-3.5" />
           Benchmark
         </CardTitle>
@@ -942,7 +928,7 @@ function BenchChart({ task }: { task: TaskData }) {
             <p className="text-2xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] text-shadow-industrial">
               {speedup}×
             </p>
-            <p className="text-[10px] text-[#525252] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
+            <p className="text-[10px] text-[#8a8a8a] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
               Speedup
             </p>
           </div>
@@ -950,7 +936,7 @@ function BenchChart({ task }: { task: TaskData }) {
             <p className={`text-2xl font-bold font-[family-name:var(--font-ibm-mono)] text-shadow-industrial ${parseInt(memSave) > 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
               {parseInt(memSave) > 0 ? `−${memSave}%` : `+${Math.abs(parseInt(memSave))}%`}
             </p>
-            <p className="text-[10px] text-[#525252] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
+            <p className="text-[10px] text-[#8a8a8a] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
               Memory
             </p>
           </div>
@@ -958,24 +944,24 @@ function BenchChart({ task }: { task: TaskData }) {
 
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[#525252] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
+            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
               <Clock className="size-3" /> baseline
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
-              {formatTime(task.baseline.time)}
+              {formatMs(task.baseline.time)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[#525252] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
+            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
               <Clock className="size-3" /> optimized
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
-              {formatTime(task.optimized.time)}
+              {formatMs(task.optimized.time)}
             </span>
           </div>
           <Separator className="bg-[#262626]" />
           <div className="flex items-center justify-between">
-            <span className="text-[#525252] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
+            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
               <MemoryStick className="size-3" /> baseline
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
@@ -983,7 +969,7 @@ function BenchChart({ task }: { task: TaskData }) {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[#525252] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
+            <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
               <MemoryStick className="size-3" /> optimized
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
@@ -1020,7 +1006,7 @@ function BenchChart({ task }: { task: TaskData }) {
       </CardContent>
     </Card>
   );
-}
+});
 
 /* ── Ambient Particles Component (deterministic to avoid hydration mismatch) ── */
 function AmbientParticles() {
@@ -1099,8 +1085,8 @@ function CodeDiff({ baseline, optimized, title }: { baseline: string; optimized:
     <div className="overflow-hidden border border-[#262626] code-block-hover">
       <div className="px-4 py-2 flex items-center justify-between border-b border-[#262626] bg-[#0f0f0f]">
         <div className="flex items-center gap-2 min-w-0">
-          <GitCompareArrows className="size-3.5 text-[#525252] shrink-0" />
-          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] truncate">{title}</span>
+          <GitCompareArrows className="size-3.5 text-[#8a8a8a] shrink-0" />
+          <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] truncate">{title}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="diff-badge diff-badge-added"><Plus className="size-2.5" />{addedCount}</span>
@@ -1116,13 +1102,13 @@ function CodeDiff({ baseline, optimized, title }: { baseline: string; optimized:
                 d.type === 'added' ? 'diff-line-added' : d.type === 'removed' ? 'diff-line-removed' : 'diff-line-context'
               }`}
             >
-              <span className="w-8 shrink-0 text-right text-[#333] select-none mr-3 text-[10px]">{d.num}</span>
+              <span className="w-8 shrink-0 text-right text-[#666666] select-none mr-3 text-[10px]">{d.num}</span>
               <span className={`w-4 shrink-0 text-center select-none mr-3 ${
-                d.type === 'added' ? 'text-[#4ade80]' : d.type === 'removed' ? 'text-[#f87171]' : 'text-[#333]'
+                d.type === 'added' ? 'text-[#4ade80]' : d.type === 'removed' ? 'text-[#f87171]' : 'text-[#666666]'
               }`}>
                 {d.type === 'added' ? '+' : d.type === 'removed' ? '−' : ' '}
               </span>
-              <span className={`flex-1 whitespace-pre ${d.type === 'added' ? 'text-[#4ade80]/80' : d.type === 'removed' ? 'text-[#f87171]/60 line-through' : 'text-[#525252]'}`}>
+              <span className={`flex-1 whitespace-pre ${d.type === 'added' ? 'text-[#4ade80]/80' : d.type === 'removed' ? 'text-[#f87171]/60 line-through' : 'text-[#8a8a8a]'}`}>
                 {d.line}
               </span>
             </div>
@@ -1134,7 +1120,7 @@ function CodeDiff({ baseline, optimized, title }: { baseline: string; optimized:
 }
 
 /* ── Radar Chart Component (pure CSS/SVG) ── */
-function RadarChart({ tasks }: { tasks: TaskData[] }) {
+const RadarChart = memo(function RadarChart({ tasks }: { tasks: TaskData[] }) {
   const dimensions = ["Speed", "Memory", "Complexity", "Techniques", "Code Quality"];
   const n = dimensions.length;
   const cx = 150, cy = 150, r = 110;
@@ -1215,13 +1201,13 @@ function RadarChart({ tasks }: { tasks: TaskData[] }) {
         {tasks.map((task, i) => (
           <div key={task.id} className="flex items-center gap-1.5">
             <span className="size-2" style={{ background: colors[i] }} />
-            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">#{task.id}</span>
+            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">#{task.id}</span>
           </div>
         ))}
       </div>
     </div>
   );
-}
+});
 
 /* ── Command Palette Component ── */
 function CommandPalette({
@@ -1295,7 +1281,7 @@ function CommandPalette({
         />
         <div className="cmd-list">
           {allItems.length === 0 ? (
-            <div className="p-4 text-center text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">No results</div>
+            <div className="p-4 text-center text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">No results</div>
           ) : (
             allItems.map((item, i) => {
               const Icon = item.icon;
@@ -1307,7 +1293,7 @@ function CommandPalette({
                   onMouseEnter={() => setActiveIdx(i)}
                 >
                   <div className="cmd-icon">
-                    <Icon className="size-3.5 text-[#525252]" />
+                    <Icon className="size-3.5 text-[#8a8a8a]" />
                   </div>
                   <div className="cmd-label">{item.label}</div>
                   <span className="cmd-hint">{item.type === 'nav' ? 'Go to' : 'Action'}</span>
@@ -1317,9 +1303,9 @@ function CommandPalette({
           )}
         </div>
         <div className="px-3 py-2 border-t border-[#1c1c1c] flex items-center gap-3">
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] flex items-center gap-1"><span className="help-key text-[8px]">↑↓</span> Navigate</span>
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] flex items-center gap-1"><span className="help-key text-[8px]">↵</span> Select</span>
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] flex items-center gap-1"><span className="help-key text-[8px]">Esc</span> Close</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↑↓</span> Navigate</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↵</span> Select</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">Esc</span> Close</span>
         </div>
       </div>
     </div>
@@ -1343,16 +1329,16 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Keyboard className="size-3.5 text-[#ff6b2b]" />
-            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Keyboard Shortcuts</span>
+            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Keyboard Shortcuts</span>
           </div>
-          <button onClick={onClose} className="text-[#333] hover:text-[#d4d4d4] transition-colors">
+          <button onClick={onClose} className="text-[#666666] hover:text-[#d4d4d4] transition-colors">
             <ChevronUp className="size-4 rotate-45" />
           </button>
         </div>
         <div className="py-2">
           {shortcuts.map((s, i) => (
             <div key={i} className="help-shortcut-row">
-              <span className="text-xs text-[#737373]">{s.desc}</span>
+              <span className="text-xs text-[#8a8a8a]">{s.desc}</span>
               <div className="flex items-center gap-1">
                 {s.keys.map((k, ki) => (
                   <span key={ki} className="help-key">{k}</span>
@@ -1362,7 +1348,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           ))}
         </div>
         <div className="px-4 py-2 border-t border-[#1c1c1c]">
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
             Tip: Press <span className="help-key text-[8px]">Ctrl+K</span> anytime for quick access
           </span>
         </div>
@@ -1412,12 +1398,16 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
     <section id={`task-${task.id}`} className="scroll-mt-16">
       <FadeIn>
         <Card
+          role="button"
+          tabIndex={0}
+          aria-expanded={expanded}
           className={`bg-[#141414] border transition-all cursor-pointer card-industrial card-lift ${
             expanded
               ? "border-[#ff6b2b] border-l-[3px] ind-glow ind-border-animated pulse-ring neon-border"
               : "border-[#262626] hover:border-[#3a3a3a]"
           }`}
           onClick={onToggle}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
         >
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -1431,15 +1421,15 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                   </div>
                 )}
                 <div className="size-10 bg-[#1c1c1c] flex items-center justify-center shrink-0">
-                  <Icon className="size-4 text-[#737373]" />
+                  <Icon className="size-4 text-[#8a8a8a]" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+                    <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
                       #{task.id}
                     </span>
                     <button
-                      className={`star-btn p-0 ${starred ? 'starred' : 'text-[#333]'}`}
+                      className={`star-btn p-0 ${starred ? 'starred' : 'text-[#666666]'}`}
                       onClick={(e) => { e.stopPropagation(); onToggleStar(); }}
                       aria-label={starred ? 'Unstar task' : 'Star task'}
                     >
@@ -1450,13 +1440,13 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                     )}
                     <Badge
                       variant="outline"
-                      className="text-[#525252] border-[#262626] text-[10px] badge-hover"
+                      className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover"
                     >
                       {task.difficulty}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="text-[#525252] border-[#262626] text-[10px] badge-hover"
+                      className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover"
                     >
                       {task.category}
                     </Badge>
@@ -1470,13 +1460,13 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                       {getGrade(parseFloat(speedup)).letter}
                     </span>
                     {expanded && (
-                      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+                      <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
                         {readingTime} min read
                       </span>
                     )}
                     <button
                       onClick={(e) => { e.stopPropagation(); onToggleNote(); }}
-                      className={`p-0.5 ml-1 transition-colors ${noteOpen ? 'text-[#ff6b2b]' : 'text-[#333] hover:text-[#ff6b2b]'}`}
+                      className={`p-0.5 ml-1 transition-colors ${noteOpen ? 'text-[#ff6b2b]' : 'text-[#666666] hover:text-[#ff6b2b]'}`}
                       title="Add note"
                       aria-label="Add note"
                     >
@@ -1488,7 +1478,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                   </CardTitle>
                 </div>
               </div>
-              <div className="text-[#525252] sm:pr-2">
+              <div className="text-[#8a8a8a] sm:pr-2">
                 {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </div>
             </div>
@@ -1515,11 +1505,11 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
               >
                 <div className="bg-[#0d0d0d] border border-[#262626] p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">
+                    <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
                       <MessageSquare className="size-2.5 inline mr-1" />
                       Personal Notes
                     </span>
-                    <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333]">
+                    <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
                       {noteText.length} chars
                     </span>
                   </div>
@@ -1539,18 +1529,18 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
           <FadeIn delay={0.05}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   Problem Statement
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-[#737373] leading-relaxed">{task.problem}</p>
+                <p className="text-sm text-[#8a8a8a] leading-relaxed">{task.problem}</p>
                 <div className="flex flex-wrap gap-2">
                   {task.constraints.map((c, i) => (
                     <Badge
                       key={i}
                       variant="outline"
-                      className="text-[#525252] border-[#262626] text-[10px] font-normal badge-hover"
+                      className="text-[#8a8a8a] border-[#262626] text-[10px] font-normal badge-hover"
                     >
                       {c}
                     </Badge>
@@ -1566,10 +1556,10 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
               /* Diff view */
               <div className="xl:col-span-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Code Diff</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Code Diff</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
-                    className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                    className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
                     title="Switch to tabbed view"
                   >
                     <Rows3 className="size-3.5" />
@@ -1581,18 +1571,18 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
               /* Side-by-side comparison */
               <div className="xl:col-span-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Code Comparison</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Code Comparison</span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
-                      className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                      className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
                       title="Switch to diff view"
                     >
                       <GitCompareArrows className="size-3.5" />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
-                      className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                      className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
                       title="Switch to tabbed view"
                     >
                       <Rows3 className="size-3.5" />
@@ -1610,14 +1600,14 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                 <div className="flex items-center justify-end mb-0 gap-1">
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleDiff(); }}
-                    className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                    className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
                     title="Switch to diff view"
                   >
                     <GitCompareArrows className="size-3.5" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleCompare(); }}
-                    className="text-[#525252] hover:text-[#ff6b2b] transition-colors p-1"
+                    className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1"
                     title="Switch to side-by-side view"
                   >
                     <Columns2 className="size-3.5" />
@@ -1627,13 +1617,13 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                   <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
                     <TabsTrigger
                       value="baseline"
-                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#525252]"
+                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#8a8a8a]"
                     >
                       <XCircle className="size-3 mr-1" /> Baseline
                     </TabsTrigger>
                     <TabsTrigger
                       value="optimized"
-                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#525252]"
+                      className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#8a8a8a]"
                     >
                       <CheckCircle2 className="size-3 mr-1" /> Optimized
                     </TabsTrigger>
@@ -1654,31 +1644,31 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
           <FadeIn delay={0.1}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   Big O Analysis
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 border border-[#262626] border-l-2 border-l-[#f87171]">
-                    <p className="text-[10px] uppercase tracking-widest text-[#525252] font-[family-name:var(--font-ibm-mono)] mb-3">
+                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">
                       Baseline
                     </p>
                     <div className="flex flex-wrap gap-2 mb-3">
                       <ComplexityBadge label="Time" complexity={task.baseline.timeComplexity} />
                       <ComplexityBadge label="Space" complexity={task.baseline.spaceComplexity} />
                     </div>
-                    <p className="text-xs text-[#525252] leading-relaxed">{task.baseline.explanation}</p>
+                    <p className="text-xs text-[#8a8a8a] leading-relaxed">{task.baseline.explanation}</p>
                   </div>
                   <div className="p-4 border border-[#262626] border-l-2 border-l-[#4ade80]">
-                    <p className="text-[10px] uppercase tracking-widest text-[#525252] font-[family-name:var(--font-ibm-mono)] mb-3">
+                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">
                       Optimized
                     </p>
                     <div className="flex flex-wrap gap-2 mb-3">
                       <ComplexityBadge label="Time" complexity={task.optimized.timeComplexity} />
                       <ComplexityBadge label="Space" complexity={task.optimized.spaceComplexity} />
                     </div>
-                    <p className="text-xs text-[#525252] leading-relaxed">{task.optimized.explanation}</p>
+                    <p className="text-xs text-[#8a8a8a] leading-relaxed">{task.optimized.explanation}</p>
                   </div>
                 </div>
               </CardContent>
@@ -1689,7 +1679,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
           <FadeIn delay={0.15}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
               <CardHeader className="pb-3">
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   Key Optimizations
                 </CardTitle>
               </CardHeader>
@@ -1703,7 +1693,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                         </span>
                         <p className="text-sm font-medium text-[#d4d4d4]">{t.name}</p>
                       </div>
-                      <p className="text-xs text-[#525252] leading-relaxed">{t.desc}</p>
+                      <p className="text-xs text-[#8a8a8a] leading-relaxed">{t.desc}</p>
                     </div>
                   ))}
                 </div>
@@ -1779,7 +1769,7 @@ function ExecutionPipeline({ taskId }: { taskId: number }) {
 
   return (
     <div ref={ref} className="space-y-2">
-      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Execution Pipeline</p>
+      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Execution Pipeline</p>
       <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar py-1">
         {stages.map((stage, i) => (
           <div key={i} className="flex items-center shrink-0">
@@ -1789,8 +1779,8 @@ function ExecutionPipeline({ taskId }: { taskId: number }) {
               transition={{ duration: 0.3, delay: i * 0.1 }}
               className="pipeline-node px-2.5 py-1.5 bg-[#0f0f0f] border border-[#262626] text-center min-w-[100px]"
             >
-              <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#333] block mb-0.5">STEP {i + 1}</span>
-              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#737373] leading-tight block">{stage}</span>
+              <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666] block mb-0.5">STEP {i + 1}</span>
+              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] leading-tight block">{stage}</span>
             </motion.div>
             {i < stages.length - 1 && (
               <motion.div
@@ -1817,16 +1807,16 @@ function OptimizationHeatmap() {
       <div className="min-w-[400px]">
         <div className="grid grid-cols-[100px_repeat(5,1fr)] gap-px">
           {/* Header row */}
-          <div className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest" />
+          <div className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest" />
           {metrics.map((m) => (
-            <div key={m} className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest text-center">
+            <div key={m} className="p-2 text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest text-center">
               {m}
             </div>
           ))}
           {/* Data rows */}
           {HEATMAP_DATA.map((row) => (
             <Fragment key={row.task}>
-              <div className="p-2 text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] flex items-center">
+              <div className="p-2 text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] flex items-center">
                 #{row.task}
               </div>
               {[row.speed, row.memory, row.cache, row.parallelism, row.complexity].map((val, mi) => (
@@ -1868,9 +1858,9 @@ function AchievementToast({ achievement, onDismiss }: { achievement: typeof ACHI
         <div className="flex-1 min-w-0">
           <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-widest mb-0.5">Achievement Unlocked</p>
           <p className="text-sm font-bold text-[#d4d4d4]">{achievement.name}</p>
-          <p className="text-[10px] text-[#525252]">{achievement.desc}</p>
+          <p className="text-[10px] text-[#8a8a8a]">{achievement.desc}</p>
         </div>
-        <button onClick={onDismiss} className="text-[#333] hover:text-[#525252] transition-colors">
+        <button onClick={onDismiss} className="text-[#666666] hover:text-[#8a8a8a] transition-colors">
           <XCircle className="size-3" />
         </button>
       </div>
@@ -1900,11 +1890,11 @@ export default function PerformanceLab() {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [monitorExpanded, setMonitorExpanded] = useState(true);
-  const [reviewedTasks, setReviewedTasks] = usePersistedSet('perf-lab-reviewed');
+  const [reviewedTasks, setReviewedTasks] = usePersisted('perf-lab-reviewed', new Set<number>(), parseNumberSet, serializeNumberSet);
   const [techniqueTag, setTechniqueTag] = useState<string | null>(null);
   const [taskCompareMode, setTaskCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<Set<number>>(new Set());
-  const [starredTasks, setStarredTasks] = usePersistedSet('perf-lab-starred');
+  const [starredTasks, setStarredTasks] = usePersisted('perf-lab-starred', new Set<number>(), parseNumberSet, serializeNumberSet);
   const [starredFilter, setStarredFilter] = useState(false);
   const [noteOpenTask, setNoteOpenTask] = useState<number | null>(null);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
@@ -1917,7 +1907,7 @@ export default function PerformanceLab() {
   const achievementToastRef = useRef<typeof ACHIEVEMENTS[0] | null>(null);
 
   // Task notes — single persisted JSON object for all tasks
-  const [taskNotes, setTaskNotes] = usePersistedString('perf-lab-notes', '{}');
+  const [taskNotes, setTaskNotes] = usePersisted('perf-lab-notes', '{}', parseString, parseString);
   const taskNotesRef = useRef(taskNotes);
   useEffect(() => { taskNotesRef.current = taskNotes; }, [taskNotes]);
 
@@ -1997,7 +1987,7 @@ export default function PerformanceLab() {
       lines.push('### Benchmarks');
       lines.push('| Metric | Baseline | Optimized |');
       lines.push('|--------|----------|-----------|');
-      lines.push(`| Time | ${formatTimeBenchmark(t.baseline.time)} | ${formatTimeBenchmark(t.optimized.time)} |`);
+      lines.push(`| Time | ${formatMs(t.baseline.time)} | ${formatMs(t.optimized.time)} |`);
       lines.push(`| Memory | ${t.baseline.memory} MB | ${t.optimized.memory} MB |`);
       lines.push(`| Speedup | — | ${sp}× |`);
       lines.push(`| Memory Delta | — | ${parseInt(memSave) > 0 ? '-' : '+'}${Math.abs(parseInt(memSave))}% |\n`);
@@ -2045,7 +2035,7 @@ export default function PerformanceLab() {
   const reviewedCount = reviewedTasks.size;
 
   // Accent color — hydration-safe via usePersistedString (starts #ff6b2b, loads from localStorage after mount)
-  const [activeAccent, setActiveAccentRaw] = usePersistedString('perf-lab-accent', '#ff6b2b');
+  const [activeAccent, setActiveAccentRaw] = usePersisted('perf-lab-accent', '#ff6b2b', parseString, parseString);
   const accentRef = useRef(activeAccent);
 
   // Sync CSS variable on mount + when accent changes
@@ -2059,7 +2049,7 @@ export default function PerformanceLab() {
   }, [setActiveAccentRaw]);
 
   // Earned achievements — hydration-safe via usePersistedAchievements (starts empty, loads after mount)
-  const [earnedAchievements, setEarnedAchievements] = usePersistedAchievements('perf-lab-achievements');
+  const [earnedAchievements, setEarnedAchievements] = usePersisted('perf-lab-achievements', new Set<string>(), parseStringSet, serializeStringSet);
   const earnedRef = useRef(earnedAchievements);
 
   // Keep earnedRef in sync
@@ -2087,7 +2077,7 @@ export default function PerformanceLab() {
   // Combine technique tag with search for filtering
   const activeSearch = techniqueTag || searchQuery;
 
-  const filteredTasks = TASKS.filter((t) => {
+  const filteredTasks = useMemo(() => TASKS.filter((t) => {
     const matchDiff = difficultyFilter === "all" || t.difficulty === difficultyFilter;
     const matchStarred = !starredFilter || starredTasks.has(t.id);
     if (!activeSearch.trim()) return matchDiff && matchStarred;
@@ -2097,14 +2087,9 @@ export default function PerformanceLab() {
       t.problem.toLowerCase().includes(q) ||
       t.techniques.some((tech) => tech.name.toLowerCase().includes(q) || tech.desc.toLowerCase().includes(q));
     return matchDiff && matchSearch && matchStarred;
-  });
+  }), [difficultyFilter, starredFilter, starredTasks, activeSearch]);
 
   const difficulties = ["all", "Advanced", "Expert"];
-  const diffCounts = {
-    all: TASKS.length,
-    Advanced: TASKS.filter(t => t.difficulty === "Advanced").length,
-    Expert: TASKS.filter(t => t.difficulty === "Expert").length,
-  };
 
   const registerSection =
     useCallback((id: string) => (el: HTMLElement | null) => {
@@ -2209,40 +2194,29 @@ export default function PerformanceLab() {
  { id: "summary", label: "Summary" },
   ];
 
-  const totalSpeedup = TASKS.reduce(
-    (a, t) => a + t.baseline.time / t.optimized.time,
-    0
-  );
-  const memImprovedTasks = TASKS.filter((t) => t.optimized.memory < t.baseline.memory).length;
 
-  const totalTimeSaved = TASKS.reduce((a, t) => a + (t.baseline.time - t.optimized.time), 0);
-  const totalMemSaved = TASKS.reduce((a, t) => a + (t.baseline.memory - t.optimized.memory), 0);
-  const speedups = TASKS.map(t => t.baseline.time / t.optimized.time);
-  const minSpeedup = Math.min(...speedups);
-  const maxSpeedup = Math.max(...speedups);
-  const avgSpeedup = speedups.reduce((a, b) => a + b, 0) / speedups.length;
 
-  const formatTimeDelta = (ms: number) => {
-    if (Math.abs(ms) >= 1000) return `${(ms / 1000).toFixed(Math.abs(ms) >= 10000 ? 0 : 1)}s`;
-    return `${ms.toFixed(0)}ms`;
-  };
+
 
   // Sort logic for results table
-  const sortedTasks = [...TASKS];
-  if (sortColumn) {
-    sortedTasks.sort((a, b) => {
-      let valA: number, valB: number;
-      switch (sortColumn) {
-        case "id": valA = a.id; valB = b.id; break;
-        case "baseline": valA = a.baseline.time; valB = b.baseline.time; break;
-        case "optimized": valA = a.optimized.time; valB = b.optimized.time; break;
-        case "speedup": valA = a.baseline.time / a.optimized.time; valB = b.baseline.time / b.optimized.time; break;
-        case "memory": valA = (1 - a.optimized.memory / a.baseline.memory) * 100; valB = (1 - b.optimized.memory / b.baseline.memory) * 100; break;
-        default: return 0;
-      }
-      return sortDirection === "desc" ? valB - valA : valA - valB;
-    });
-  }
+  const sortedTasks = useMemo(() => {
+    const sorted = [...TASKS];
+    if (sortColumn) {
+      sorted.sort((a, b) => {
+        let valA: number, valB: number;
+        switch (sortColumn) {
+          case "id": valA = a.id; valB = b.id; break;
+          case "baseline": valA = a.baseline.time; valB = b.baseline.time; break;
+          case "optimized": valA = a.optimized.time; valB = b.optimized.time; break;
+          case "speedup": valA = a.baseline.time / a.optimized.time; valB = b.baseline.time / b.optimized.time; break;
+          case "memory": valA = (1 - a.optimized.memory / a.baseline.memory) * 100; valB = (1 - b.optimized.memory / b.baseline.memory) * 100; break;
+          default: return 0;
+        }
+        return sortDirection === "desc" ? valB - valA : valA - valB;
+      });
+    }
+    return sorted;
+  }, [sortColumn, sortDirection]);
 
   const handleSort = (col: string) => {
     if (sortColumn === col) {
@@ -2302,7 +2276,7 @@ export default function PerformanceLab() {
                   className={`text-[10px] shrink-0 h-8 uppercase tracking-[0.2em] font-[family-name:var(--font-ibm-mono)] px-2.5 nav-btn-underline ${
                     activeSection === item.id
                       ? "text-[#ff6b2b] active"
-                      : "text-[#525252] hover:text-[#737373]"
+                      : "text-[#8a8a8a] hover:text-[#8a8a8a]"
                   }`}
                   onClick={() => scrollTo(item.id)}
                 >
@@ -2313,7 +2287,7 @@ export default function PerformanceLab() {
             <div className="flex items-center gap-3 shrink-0">
               <button
                 onClick={() => setTaskCompareMode(c => !c)}
-                className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] transition-colors flex items-center gap-1 ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#525252] hover:text-[#ff6b2b]'}`}
+                className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] transition-colors flex items-center gap-1 ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#8a8a8a] hover:text-[#ff6b2b]'}`}
                 title="Compare tasks"
               >
                 <GitCompareArrows className="size-3" />
@@ -2321,7 +2295,7 @@ export default function PerformanceLab() {
               </button>
               <button
                 onClick={handleExportMarkdown}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
                 title="Export as Markdown"
               >
                 <Download className="size-3" />
@@ -2329,7 +2303,7 @@ export default function PerformanceLab() {
               </button>
               <button
                 onClick={() => setShowCmdPalette(true)}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
                 title="Command palette (Ctrl+K)"
               >
                 <Command className="size-3" />
@@ -2341,7 +2315,7 @@ export default function PerformanceLab() {
                   setCopiedUrl(true);
                   setTimeout(() => setCopiedUrl(false), 2000);
                 }}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
                 title="Share URL with current state"
               >
                 {copiedUrl ? <Link2 className="size-3 text-[#4ade80]" /> : <Share2 className="size-3" />}
@@ -2349,7 +2323,7 @@ export default function PerformanceLab() {
               </button>
               <button
                 onClick={toggleAll}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors"
+                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors"
               >
                 {expandedTasks.size === TASKS.length ? "Collapse" : "Expand"}
               </button>
@@ -2357,7 +2331,7 @@ export default function PerformanceLab() {
                 <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase tracking-[0.15em] shrink-0">
                   Reviewed {reviewedCount}/{TASKS.length}
                 </span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
                 {/* Accent color switcher */}
                 <div className="flex items-center gap-1">
                   {ACCENT_COLORS.map((c) => (
@@ -2373,7 +2347,7 @@ export default function PerformanceLab() {
                     </button>
                   ))}
                 </div>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
                 {/* Achievement count */}
                 {earnedAchievements.size > 0 && (
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-[0.15em] shrink-0">
@@ -2381,8 +2355,8 @@ export default function PerformanceLab() {
                     {earnedAchievements.size}/{ACHIEVEMENTS.length}
                   </span>
                 )}
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333]">·</span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-[0.15em] shrink-0">
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-[0.15em] shrink-0">
                   5 tasks · rust
                 </span>
               </div>
@@ -2395,25 +2369,25 @@ export default function PerformanceLab() {
           <div className="flex items-center gap-1.5 py-1">
             <button
               onClick={() => scrollTo("hero")}
-              className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#737373] transition-colors uppercase tracking-[0.1em]"
+              className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#8a8a8a] transition-colors uppercase tracking-[0.1em]"
             >
               PERF LAB
             </button>
-            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">&gt;</span>
+            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">&gt;</span>
             {getBreadcrumbSection() !== "OVERVIEW" && (
               <button
                 onClick={() => scrollTo(
                   activeSection.startsWith("task-") ? "hero" : activeSection
                 )}
-                className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#737373] hover:text-[#d4d4d4] transition-colors uppercase tracking-[0.1em]"
+                className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#d4d4d4] transition-colors uppercase tracking-[0.1em]"
               >
                 {getBreadcrumbSection()}
               </button>
             )}
             {getBreadcrumbSection() !== "OVERVIEW" && (
-              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333]">&gt;</span>
+              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">&gt;</span>
             )}
-            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#737373] uppercase tracking-[0.1em]">
+            <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-[0.1em]">
               {getBreadcrumbLabel()}
             </span>
           </div>
@@ -2428,29 +2402,29 @@ export default function PerformanceLab() {
           <div className="terminal-bar px-4 py-1.5 flex items-center gap-3 border border-[#262626] border-b-0">
             <span className="size-1.5 rounded-full bg-[#4ade80] pulse-dot" />
             <span className="font-[family-name:var(--font-ibm-mono)]">
-              <span className="typing-text text-[#525252]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
+              <span className="typing-text text-[#8a8a8a]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
             </span>
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">{currentTime}</span>
+              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">{currentTime}</span>
               <div className="signal-strength">
                 <div className="signal-bar" />
                 <div className="signal-bar" />
                 <div className="signal-bar" />
                 <div className="signal-bar" />
               </div>
-              <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333]">SIG</span>
+              <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">SIG</span>
             </div>
           </div>
 
           <FadeIn>
             <div className="relative overflow-hidden bg-[#141414] border border-[#262626] border-t-0 border-l-2 border-l-[#ff6b2b] p-6 sm:p-8 scanline vignette matrix-grid">
               {/* Decorative data-stream lines */}
-              <div className="data-stream" style={{ left: "15%", height: "120px", animationDelay: "0s" }} />
-              <div className="data-stream" style={{ left: "55%", height: "80px", animationDelay: "2.5s" }} />
-              <div className="data-stream" style={{ left: "85%", height: "100px", animationDelay: "5s" }} />
+              <div aria-hidden="true" className="data-stream" style={{ left: "15%", height: "120px", animationDelay: "0s" }} />
+              <div aria-hidden="true" className="data-stream" style={{ left: "55%", height: "80px", animationDelay: "2.5s" }} />
+              <div aria-hidden="true" className="data-stream" style={{ left: "85%", height: "100px", animationDelay: "5s" }} />
 
               {/* Ambient Particles */}
-              <AmbientParticles />
+              <div aria-hidden="true"><AmbientParticles /></div>
 
               <div className="space-y-6 relative z-10">
                 <div>
@@ -2459,25 +2433,25 @@ export default function PerformanceLab() {
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="size-1.5 rounded-full bg-[#4ade80] pulse-dot" />
-                    <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+                    <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
                       5 задач на высокопроизводительный код
                     </p>
                   </div>
-                  <p className="text-sm text-[#737373] max-w-2xl leading-relaxed mt-4">
+                  <p className="text-sm text-[#8a8a8a] max-w-2xl leading-relaxed mt-4">
                     Каждый challenge — реальная задача системного программирования. Naive
                     vs Optimized подход на Rust с анализом Big O, бенчмарками и
                     объяснением каждой оптимизации.
                   </p>
                   {/* Keyboard shortcut hints */}
                   <div className="flex items-center gap-3 flex-wrap">
-                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">Ctrl+K</kbd>
-                    <span className="text-[10px] text-[#333]">Command palette</span>
-                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">?</kbd>
-                    <span className="text-[10px] text-[#333]">Shortcuts</span>
-                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">E</kbd>
-                    <span className="text-[10px] text-[#333]">Expand all</span>
-                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">1-5</kbd>
-                    <span className="text-[10px] text-[#333]">Jump to task</span>
+                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">Ctrl+K</kbd>
+                    <span className="text-[10px] text-[#666666]">Command palette</span>
+                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">?</kbd>
+                    <span className="text-[10px] text-[#666666]">Shortcuts</span>
+                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">E</kbd>
+                    <span className="text-[10px] text-[#666666]">Expand all</span>
+                    <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">1-5</kbd>
+                    <span className="text-[10px] text-[#666666]">Jump to task</span>
                   </div>
                 </div>
 
@@ -2485,8 +2459,8 @@ export default function PerformanceLab() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-[#262626] border border-[#262626]">
                   {[
                     { val: "5", label: "Tasks", isCounter: true },
-                    { val: totalSpeedup.toFixed(0), label: "Total speedup", suffix: "×", isCounter: true },
-                    { val: `${memImprovedTasks}/${TASKS.length}`, label: "Memory improved", isCounter: false },
+                    { val: TOTAL_SPEEDUP.toFixed(0), label: "Total speedup", suffix: "×", isCounter: true },
+                    { val: `${MEM_IMPROVED_COUNT}/${TASKS.length}`, label: "Memory improved", isCounter: false },
                     { val: "Rust", label: "Language", isCounter: false },
                   ].map((s, i) => (
                     <div key={i} className="px-4 py-3 text-center">
@@ -2497,7 +2471,7 @@ export default function PerformanceLab() {
                           s.val
                         )}
                       </p>
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mt-0.5">
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mt-0.5">
                         {s.label}
                       </p>
                     </div>
@@ -2506,15 +2480,15 @@ export default function PerformanceLab() {
 
                 {/* Quick Stats row */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Quick Stats</span>
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
-                    min {minSpeedup.toFixed(1)}×
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Quick Stats</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
+                    min {MIN_SPEEDUP.toFixed(1)}×
                   </span>
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
-                    max {maxSpeedup.toFixed(1)}×
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
+                    max {MAX_SPEEDUP.toFixed(1)}×
                   </span>
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
-                    avg {avgSpeedup.toFixed(1)}×
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
+                    avg {AVG_SPEEDUP.toFixed(1)}×
                   </span>
                   {reviewedCount > 0 && (
                     <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] bg-[#4ade80]/5 border border-[#4ade80]/20 px-2 py-0.5">
@@ -2528,7 +2502,7 @@ export default function PerformanceLab() {
                   <div className="p-4 border border-[#262626] bg-[#0f0f0f]">
                     <div className="flex items-center gap-2 mb-3">
                       <Trophy className="size-3.5 text-[#ff6b2b]" />
-                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">
+                      <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">
                         Progress Timeline
                       </span>
                       <span className="ml-auto text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase">
@@ -2560,14 +2534,14 @@ export default function PerformanceLab() {
                         >
                           <div className="flex items-center gap-2 mb-1.5">
                             <div className="tech-category-icon">
-                              <TIcon className="size-3 text-[#525252] group-hover:text-[#ff6b2b] transition-colors" />
+                              <TIcon className="size-3 text-[#8a8a8a] group-hover:text-[#ff6b2b] transition-colors" />
                             </div>
-                            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+                            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
                               #{t.id}
                             </span>
                             {reviewedTasks.has(t.id) && <Check className="size-2.5 text-[#4ade80] ml-auto" />}
                           </div>
-                          <p className="text-xs text-[#737373] line-clamp-2 leading-relaxed group-hover:text-[#d4d4d4] transition-colors">
+                          <p className="text-xs text-[#8a8a8a] line-clamp-2 leading-relaxed group-hover:text-[#d4d4d4] transition-colors">
                             {t.title}
                           </p>
                           <div className="flex items-center justify-between mt-2">
@@ -2589,7 +2563,7 @@ export default function PerformanceLab() {
                 {reviewedCount > 0 && (
                   <button
                     onClick={resetProgress}
-                    className="flex items-center gap-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] hover:text-[#f87171] uppercase tracking-[0.15em] transition-colors"
+                    className="flex items-center gap-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#f87171] uppercase tracking-[0.15em] transition-colors"
                   >
                     <RotateCcw className="size-3" />
                     Reset Progress
@@ -2609,10 +2583,10 @@ export default function PerformanceLab() {
               className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors ${
                 difficultyFilter === d
                   ? "text-[#ff6b2b] border-[#ff6b2b]/30"
-                  : "text-[#525252] border-[#262626] hover:text-[#737373]"
+                  : "text-[#8a8a8a] border-[#262626] hover:text-[#8a8a8a]"
               }`}
             >
-              {d} ({diffCounts[d as keyof typeof diffCounts]})
+              {d} ({DIFF_COUNTS[d as keyof typeof DIFF_COUNTS]})
             </button>
           ))}
           <button
@@ -2620,7 +2594,7 @@ export default function PerformanceLab() {
             className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] px-3 py-1.5 border transition-colors flex items-center gap-1 ${
               starredFilter
                 ? "text-[#fbbf24] border-[#fbbf24]/30"
-                : "text-[#525252] border-[#262626] hover:text-[#737373]"
+                : "text-[#8a8a8a] border-[#262626] hover:text-[#8a8a8a]"
             }`}
           >
             <Star className="size-3" fill={starredFilter ? '#fbbf24' : 'none'} />
@@ -2630,7 +2604,7 @@ export default function PerformanceLab() {
 
         {/* ═══ TECHNIQUE SEARCH BAR ═══ */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#333]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#666666]" />
           <input
             type="text"
             value={searchQuery}
@@ -2639,7 +2613,7 @@ export default function PerformanceLab() {
             className="search-industrial search-glow w-full pl-9 pr-16"
           />
           {activeSearch.trim() && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
               {filteredTasks.length} match{filteredTasks.length !== 1 ? "es" : ""}
             </span>
           )}
@@ -2650,9 +2624,9 @@ export default function PerformanceLab() {
           {filteredTasks.length === 0 ? (
             <FadeIn>
               <div className="text-center py-16 border border-[#262626] bg-[#141414]">
-                <Search className="size-8 text-[#333] mx-auto mb-3" />
-                <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-1">No Matches</p>
-                <p className="text-xs text-[#333]">Try a different search query</p>
+                <Search className="size-8 text-[#666666] mx-auto mb-3" />
+                <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">No Matches</p>
+                <p className="text-xs text-[#666666]">Try a different search query</p>
               </div>
             </FadeIn>
           ) : (
@@ -2701,7 +2675,7 @@ export default function PerformanceLab() {
           <FadeIn>
             <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial ind-dot-grid">
               <CardHeader>
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   Methodology
                 </CardTitle>
               </CardHeader>
@@ -2720,11 +2694,11 @@ export default function PerformanceLab() {
                     const PIcon = p.icon;
                     return (
                       <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626] hover:border-[#ff6b2b]/20 transition-colors card-lift">
-                        <PIcon className="size-4 text-[#525252] mb-2" />
+                        <PIcon className="size-4 text-[#8a8a8a] mb-2" />
                         <p className="text-xs uppercase tracking-wider text-[#d4d4d4] font-medium">
                           {p.title}
                         </p>
-                        <p className="text-[10px] text-[#525252] mt-1 leading-relaxed">
+                        <p className="text-[10px] text-[#8a8a8a] mt-1 leading-relaxed">
                           {p.desc}
                         </p>
                       </div>
@@ -2734,7 +2708,7 @@ export default function PerformanceLab() {
 
                 {/* ── Technique Tag Cloud ── */}
                 <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-[0.2em] mb-2">Technique Tags</p>
+                  <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-[0.2em] mb-2">Technique Tags</p>
                   <div className="flex flex-wrap gap-1.5">
                     {ALL_TECHNIQUES.map((tech) => (
                       <button
@@ -2771,11 +2745,11 @@ export default function PerformanceLab() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Sparkles className="size-3.5 text-[#fbbf24]" />
-                  <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                  <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                     Vibe Coder&apos;s Guide
                   </CardTitle>
                 </div>
-                <p className="text-[10px] text-[#333] font-[family-name:var(--font-ibm-mono)] mt-1">
+                <p className="text-[10px] text-[#666666] font-[family-name:var(--font-ibm-mono)] mt-1">
                   Как перевести 5 задач с языка «ментального расстройства Rust-разработчика» на язык «комфортного веб-разработчика»
                 </p>
               </CardHeader>
@@ -2794,7 +2768,7 @@ export default function PerformanceLab() {
                   <p className="text-xs text-[#d4d4d4] font-medium mb-1 font-[family-name:var(--font-ibm-mono)] quote-glow">
                     &quot;Все эти оптимизации уже написаны грустными людьми на Rust и C++. Моя задача — найти их npm-пакет и импортировать.&quot;
                   </p>
-                  <p className="text-[9px] text-[#333] uppercase tracking-widest font-[family-name:var(--font-ibm-mono)]">— Мантра вайб-кодера на 2026</p>
+                  <p className="text-[9px] text-[#666666] uppercase tracking-widest font-[family-name:var(--font-ibm-mono)]">— Мантра вайб-кодера на 2026</p>
                 </div>
 
                 {/* 5 task translations */}
@@ -2841,11 +2815,11 @@ export default function PerformanceLab() {
                         <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] font-bold px-1.5 py-0 border" style={{ color: item.color, borderColor: `${item.color}30` }}>
                           #{item.id}
                         </span>
-                        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Задача {item.id}</span>
+                        <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Задача {item.id}</span>
                       </div>
                       {/* Vibe coder thinks */}
                       <div className="mb-2 pl-3 border-l-2 border-[#262626]">
-                        <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-wider mb-0.5">Вайб кодер думает:</p>
+                        <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-wider mb-0.5">Вайб кодер думает:</p>
                         <code className="vibe-code">{item.vibe}</code>
                       </div>
                       {/* Document says */}
@@ -2864,13 +2838,13 @@ export default function PerformanceLab() {
 
                 {/* Quick reference table */}
                 <div className="overflow-x-auto custom-scrollbar">
-                  <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-2">Quick Reference: Rust → Web</div>
+                  <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-2">Quick Reference: Rust → Web</div>
                   <table className="w-full text-[10px]">
                     <thead>
                       <tr className="border-b border-[#262626]">
-                        <th className="text-left py-1.5 pr-3 text-[#525252] font-[family-name:var(--font-ibm-mono)]">Rust Concept</th>
-                        <th className="text-left py-1.5 pr-3 text-[#525252] font-[family-name:var(--font-ibm-mono)]">Web Equivalent</th>
-                        <th className="text-left py-1.5 text-[#525252] font-[family-name:var(--font-ibm-mono)]">npm Package</th>
+                        <th className="text-left py-1.5 pr-3 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">Rust Concept</th>
+                        <th className="text-left py-1.5 pr-3 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">Web Equivalent</th>
+                        <th className="text-left py-1.5 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">npm Package</th>
                       </tr>
                     </thead>
                     <tbody className="font-[family-name:var(--font-ibm-mono)]">
@@ -2885,7 +2859,7 @@ export default function PerformanceLab() {
                         { rust: 'Cache-line Padding', web: 'Worker Threads isolation', pkg: 'worker_threads, piscina' },
                       ].map((row, i) => (
                         <tr key={i} className="border-b border-[#1c1c1c] vibe-row">
-                          <td className="py-1.5 pr-3 text-[#737373]">{row.rust}</td>
+                          <td className="py-1.5 pr-3 text-[#8a8a8a]">{row.rust}</td>
                           <td className="py-1.5 pr-3 text-[#d4d4d4]">{row.web}</td>
                           <td className="py-1.5 text-[#ff6b2b]">{row.pkg}</td>
                         </tr>
@@ -2915,11 +2889,11 @@ export default function PerformanceLab() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Waypoints className="size-3.5 text-[#a78bfa]" />
-                  <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                  <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                     Optimization Impact Heatmap
                   </CardTitle>
                 </div>
-                <p className="text-[10px] text-[#333] font-[family-name:var(--font-ibm-mono)] mt-1">
+                <p className="text-[10px] text-[#666666] font-[family-name:var(--font-ibm-mono)] mt-1">
                   Multi-dimensional task analysis — intensity shows relative optimization impact (0–100)
                 </p>
               </CardHeader>
@@ -2927,13 +2901,13 @@ export default function PerformanceLab() {
                 <OptimizationHeatmap />
                 {/* Legend */}
                 <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#262626]">
-                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">Low</span>
+                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Low</span>
                   <div className="flex gap-px">
                     {[0.1, 0.3, 0.5, 0.7, 0.9].map((v) => (
                       <div key={v} className="w-5 h-3 heatmap-cell" style={{ '--heat': v } as React.CSSProperties} />
                     ))}
                   </div>
-                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">High</span>
+                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">High</span>
                 </div>
               </CardContent>
             </Card>
@@ -2948,7 +2922,7 @@ export default function PerformanceLab() {
           <FadeIn>
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
               <CardHeader>
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   <BarChart className="size-3 inline mr-1.5 text-[#ff6b2b]" />
                   Dashboard
                 </CardTitle>
@@ -2968,26 +2942,26 @@ export default function PerformanceLab() {
                     return [
                       { label: 'Lines Optimized', value: totalLines, suffix: 'lines', color: '#ff6b2b' },
                       { label: 'Techniques Used', value: allTechniques.size, suffix: 'unique', color: '#4ade80' },
-                      { label: 'Avg Speedup', value: avgSpeedup.toFixed(1), suffix: '×', color: '#ff6b2b' },
+                      { label: 'Avg Speedup', value: AVG_SPEEDUP.toFixed(1), suffix: '×', color: '#ff6b2b' },
                       { label: 'Best Improvement', value: `#${bestTask.id}`, suffix: `${bestSp}×`, color: '#fbbf24' },
-                      { label: 'Total Time Saved', value: totalTimeSaved >= 1000 ? `${(totalTimeSaved / 1000).toFixed(1)}s` : `${totalTimeSaved.toFixed(0)}ms`, suffix: '', color: '#4ade80' },
+                      { label: 'Total Time Saved', value: TOTAL_TIME_SAVED >= 1000 ? `${(TOTAL_TIME_SAVED / 1000).toFixed(1)}s` : `${TOTAL_TIME_SAVED.toFixed(0)}ms`, suffix: '', color: '#4ade80' },
                       { label: 'Complexity Reduced', value: `${complexityReduced}/${TASKS.length}`, suffix: 'tasks', color: '#ff6b2b' },
                     ];
                   })().map((stat, i) => (
                     <div key={i} className="bg-[#0d0d0d] border border-[#262626] p-3 stat-card-hover">
-                      <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-1">{stat.label}</p>
+                      <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-1">{stat.label}</p>
                       <p className="text-xl font-bold font-[family-name:var(--font-ibm-mono)]" style={{ color: stat.color }}>{stat.value}</p>
-                      {stat.suffix && <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] mt-0.5">{stat.suffix}</p>}
+                      {stat.suffix && <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] mt-0.5">{stat.suffix}</p>}
                     </div>
                   ))}
                 </div>
                 {/* Technique distribution bar */}
                 <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-2">Speedup Distribution</p>
+                  <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-2">Speedup Distribution</p>
                   <div className="flex items-end gap-1.5 h-12">
                     {TASKS.map((t) => {
                       const sp = t.baseline.time / t.optimized.time;
-                      const maxSp = maxSpeedup;
+                      const maxSp = MAX_SPEEDUP;
                       const height = Math.max(8, (sp / maxSp) * 100);
                       return (
                         <div key={t.id} className="flex-1 flex flex-col items-center gap-1">
@@ -2995,7 +2969,7 @@ export default function PerformanceLab() {
                           <div className="w-full bg-[#ff6b2b]/10 relative" style={{ height: `${height}%` }}>
                             <div className="absolute inset-0 bg-[#ff6b2b]/40 hover:bg-[#ff6b2b]/60 transition-colors" />
                           </div>
-                          <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#333]">#{t.id}</span>
+                          <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">#{t.id}</span>
                         </div>
                       );
                     })}
@@ -3014,7 +2988,7 @@ export default function PerformanceLab() {
           <FadeIn>
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
               <CardHeader>
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   Results
                 </CardTitle>
               </CardHeader>
@@ -3023,20 +2997,20 @@ export default function PerformanceLab() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[#262626]">
-                        <th className="text-left py-2 pr-4 text-[#525252] sort-header" onClick={() => handleSort("id")}>
+                        <th className="text-left py-2 pr-4 text-[#8a8a8a] sort-header" onClick={() => handleSort("id")} aria-sort={sortColumn === "id" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           # <SortIcon col="id" activeCol={sortColumn} direction={sortDirection} />
                         </th>
-                        <th className="text-left py-2 pr-4 text-[#525252]">Task</th>
-                        <th className="text-right py-2 px-3 text-[#525252] sort-header" onClick={() => handleSort("baseline")}>
+                        <th className="text-left py-2 pr-4 text-[#8a8a8a]">Task</th>
+                        <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("baseline")} aria-sort={sortColumn === "baseline" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           Baseline <SortIcon col="baseline" activeCol={sortColumn} direction={sortDirection} />
                         </th>
-                        <th className="text-right py-2 px-3 text-[#525252] sort-header" onClick={() => handleSort("optimized")}>
+                        <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("optimized")} aria-sort={sortColumn === "optimized" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           Optimized <SortIcon col="optimized" activeCol={sortColumn} direction={sortDirection} />
                         </th>
-                        <th className="text-right py-2 px-3 text-[#525252] sort-header" onClick={() => handleSort("speedup")}>
+                        <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("speedup")} aria-sort={sortColumn === "speedup" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           Speedup <SortIcon col="speedup" activeCol={sortColumn} direction={sortDirection} />
                         </th>
-                        <th className="text-right py-2 text-[#525252] sort-header" onClick={() => handleSort("memory")}>
+                        <th className="text-right py-2 text-[#8a8a8a] sort-header" onClick={() => handleSort("memory")} aria-sort={sortColumn === "memory" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           Memory <SortIcon col="memory" activeCol={sortColumn} direction={sortDirection} />
                         </th>
                       </tr>
@@ -3046,24 +3020,21 @@ export default function PerformanceLab() {
                         const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                         const ms = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
                         const memImproved = t.optimized.memory < t.baseline.memory;
-                        const formatT = (v: number) =>
-                          v >= 1000
-                            ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}s`
-                            : `${v}ms`;
+                        const formatT = formatMs;
                         return (
                           <tr
                             key={t.id}
                             className="border-b border-[#1c1c1c] hover:bg-[#0f0f0f] transition-colors row-stripe"
                           >
                             <td className="py-2.5 pr-4">
-                              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] tabular-nums">
+                              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] tabular-nums">
                                 #{t.id}
                               </span>
                             </td>
                             <td className="py-2.5 pr-4 max-w-[200px]">
-                              <p className="text-[#737373] text-xs truncate">{t.title}</p>
+                              <p className="text-[#8a8a8a] text-xs truncate">{t.title}</p>
                             </td>
-                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#737373] tabular-nums">
+                            <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] tabular-nums">
                               {formatT(t.baseline.time)}
                             </td>
                             <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#4ade80] tabular-nums">
@@ -3142,7 +3113,7 @@ export default function PerformanceLab() {
         <FadeIn>
           <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
             <CardHeader className="pb-3">
-              <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+              <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                 Multi-dimensional Comparison
               </CardTitle>
             </CardHeader>
@@ -3160,7 +3131,7 @@ export default function PerformanceLab() {
           <FadeIn>
             <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial card-lift">
               <CardHeader>
-                <CardTitle className="text-xs uppercase tracking-widest text-[#525252]">
+                <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   Summary
                 </CardTitle>
               </CardHeader>
@@ -3183,11 +3154,11 @@ export default function PerformanceLab() {
                         <p className="text-xl font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
                           {sp}×
                         </p>
-                        <p className="text-[10px] text-[#525252] font-[family-name:var(--font-ibm-mono)] uppercase tracking-widest mt-1">
+                        <p className="text-[10px] text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] uppercase tracking-widest mt-1">
                           #{t.id}
                         </p>
                         <div className="mt-2">
-                          <AnimatedProgressBar value={parseFloat(sp)} max={maxSpeedup} />
+                          <AnimatedProgressBar value={parseFloat(sp)} max={MAX_SPEEDUP} />
                         </div>
                       </div>
                       </motion.div>
@@ -3195,7 +3166,7 @@ export default function PerformanceLab() {
                   })}
                 </div>
                 <div className="mt-4 bg-[#1c1c1c] p-4 border border-[#262626]">
-                  <p className="text-sm text-[#737373] leading-relaxed">
+                  <p className="text-sm text-[#8a8a8a] leading-relaxed">
                     <span className="font-semibold text-[#d4d4d4]">8 принципов high-performance кода:</span>{" "}
                     Big O оптимизация → Кэш-локальность (Data-Oriented Design) →
                     Минимизация аллокаций → Async I/O → Lock-free конкурентность →
@@ -3205,19 +3176,19 @@ export default function PerformanceLab() {
                   <div className="flex items-center gap-4 mt-3">
                     <div className="flex items-center gap-2">
                       <Zap className="size-3.5 text-[#ff6b2b]" />
-                      <span className="text-xs text-[#525252] font-[family-name:var(--font-ibm-mono)]">
+                      <span className="text-xs text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">
                         Total speedup:{" "}
                         <span className="text-[var(--accent-color,#ff6b2b)] font-bold neon-text">
-                          {totalSpeedup.toFixed(0)}×
+                          {TOTAL_SPEEDUP.toFixed(0)}×
                         </span>
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MemoryStick className="size-3.5 text-[#4ade80]" />
-                      <span className="text-xs text-[#525252] font-[family-name:var(--font-ibm-mono)]">
+                      <span className="text-xs text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">
                         Memory improved:{" "}
                         <span className="text-[#4ade80] font-bold">
-                          {memImprovedTasks}/{TASKS.length}
+                          {MEM_IMPROVED_COUNT}/{TASKS.length}
                         </span>
                       </span>
                     </div>
@@ -3242,40 +3213,40 @@ export default function PerformanceLab() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Monitor className="size-3.5 text-[#ff6b2b]" />
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">System Monitor</span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">System Monitor</span>
               </div>
 
               {/* Time saved */}
               <div className="metric-card p-3 border border-[#262626] mb-2" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-1">Total Time Saved</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Time Saved</p>
                 <p className="text-lg font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
-                  {formatTimeDelta(totalTimeSaved)}
+                  {formatMs(Math.abs(TOTAL_TIME_SAVED))}
                 </p>
               </div>
 
               {/* Memory saved */}
-              <div className="metric-card p-3 border border-[#262626] mb-3" style={{ "--metric-color": totalMemSaved >= 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-1">Total Memory Delta</p>
-                <p className={`text-lg font-bold font-[family-name:var(--font-ibm-mono)] tabular-nums ${totalMemSaved >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
-                  {totalMemSaved >= 0 ? "−" : "+"}{Math.abs(totalMemSaved)} MB
+              <div className="metric-card p-3 border border-[#262626] mb-3" style={{ "--metric-color": TOTAL_MEM_SAVED >= 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Memory Delta</p>
+                <p className={`text-lg font-bold font-[family-name:var(--font-ibm-mono)] tabular-nums ${TOTAL_MEM_SAVED >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+                  {TOTAL_MEM_SAVED >= 0 ? "−" : "+"}{Math.abs(TOTAL_MEM_SAVED)} MB
                 </p>
               </div>
 
               {/* Speedup distribution bar chart */}
-              <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest mb-2">Speedup Distribution</p>
+              <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-2">Speedup Distribution</p>
               <div className="flex items-end gap-1 h-16">
                 {TASKS.map((t, i) => {
                   const sp = t.baseline.time / t.optimized.time;
-                  const maxSp = maxSpeedup;
+                  const maxSp = MAX_SPEEDUP;
                   const h = (sp / maxSp) * 100;
                   return (
                     <div key={t.id} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#525252] tabular-nums">{sp.toFixed(0)}×</span>
+                      <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] tabular-nums">{sp.toFixed(0)}×</span>
                       <div
                         className="w-full bg-[#ff6b2b] min-h-[2px] transition-all duration-300"
                         style={{ height: `${h}%` }}
                       />
-                      <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#333]">#{t.id}</span>
+                      <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">#{t.id}</span>
                     </div>
                   );
                 })}
@@ -3287,7 +3258,7 @@ export default function PerformanceLab() {
         {/* Collapsed indicator dot */}
         <button
           onClick={() => setMonitorExpanded(c => !c)}
-          className="size-8 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#525252] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
+          className="size-8 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
           aria-label="Toggle system monitor"
         >
           <Monitor className="size-3.5" />
@@ -3309,10 +3280,10 @@ export default function PerformanceLab() {
           <div className={`compare-panel custom-scrollbar ${compareSelected.size === 2 ? 'open' : ''}`}>
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">Task Comparison</span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Task Comparison</span>
                 <button
                   onClick={() => { setCompareSelected(new Set()); setTaskCompareMode(false); }}
-                  className="text-[#525252] hover:text-[#ff6b2b] transition-colors"
+                  className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
                 >
                   <ChevronUp className="size-4 rotate-90" />
                 </button>
@@ -3332,7 +3303,7 @@ export default function PerformanceLab() {
 
               {/* Speedup comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Speedup Comparison</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Speedup Comparison</p>
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -3353,7 +3324,7 @@ export default function PerformanceLab() {
 
               {/* Memory comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Memory Delta</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Memory Delta</p>
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -3374,20 +3345,20 @@ export default function PerformanceLab() {
 
               {/* Complexity badges */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Complexity</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Complexity</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}</span>
                     <div className="mt-1 space-y-1">
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Time: <span className="text-[#d4d4d4]">{tA.optimized.timeComplexity}</span></p>
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Space: <span className="text-[#d4d4d4]">{tA.optimized.spaceComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Time: <span className="text-[#d4d4d4]">{tA.optimized.timeComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Space: <span className="text-[#d4d4d4]">{tA.optimized.spaceComplexity}</span></p>
                     </div>
                   </div>
                   <div>
                     <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}</span>
                     <div className="mt-1 space-y-1">
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Time: <span className="text-[#d4d4d4]">{tB.optimized.timeComplexity}</span></p>
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252]">Space: <span className="text-[#d4d4d4]">{tB.optimized.spaceComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Time: <span className="text-[#d4d4d4]">{tB.optimized.timeComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Space: <span className="text-[#d4d4d4]">{tB.optimized.spaceComplexity}</span></p>
                     </div>
                   </div>
                 </div>
@@ -3395,26 +3366,26 @@ export default function PerformanceLab() {
 
               {/* Technique count comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Techniques & Category</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Techniques & Category</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}: {tA.techniques.length} techniques</p>
-                    <p className="text-[10px] text-[#525252] mt-0.5">{tA.category} · {tA.difficulty}</p>
+                    <p className="text-[10px] text-[#8a8a8a] mt-0.5">{tA.category} · {tA.difficulty}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}: {tB.techniques.length} techniques</p>
-                    <p className="text-[10px] text-[#525252] mt-0.5">{tB.category} · {tB.difficulty}</p>
+                    <p className="text-[10px] text-[#8a8a8a] mt-0.5">{tB.category} · {tB.difficulty}</p>
                   </div>
                 </div>
               </div>
 
               {/* CSS bar chart - visual comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest mb-3">Relative Performance</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Relative Performance</p>
                 <div className="space-y-2">
                   {[{ label: 'Speedup', valA: spA, valB: spB, max: maxSp }, { label: 'Baseline Time (s)', valA: tA.baseline.time / 1000, valB: tB.baseline.time / 1000, max: Math.max(tA.baseline.time, tB.baseline.time) / 1000, invert: true }].map((row, i) => (
                     <div key={i}>
-                      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#525252] mb-1">{row.label}</p>
+                      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] mb-1">{row.label}</p>
                       <div className="flex gap-1 items-center">
                         <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] w-6 text-right">{row.label === 'Speedup' ? row.valA.toFixed(1) : row.valA.toFixed(1)}</span>
                         <div className="flex-1 compare-bar-track">
@@ -3439,10 +3410,12 @@ export default function PerformanceLab() {
       {/* ─── ACHIEVEMENT TOAST ─── */}
       <AnimatePresence>
         {achievementToastRaw && (
+          <div role="status" aria-live="polite">
           <AchievementToast
             achievement={achievementToastRaw}
             onDismiss={() => setAchievementToastRaw(null)}
           />
+          </div>
         )}
       </AnimatePresence>
 
@@ -3455,7 +3428,7 @@ export default function PerformanceLab() {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 z-50 size-10 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#525252] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
+            className="fixed bottom-6 right-6 z-50 size-10 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
             aria-label="Back to top"
           >
             <ArrowUp className="size-4" />
@@ -3480,12 +3453,12 @@ export default function PerformanceLab() {
 
       {/* ─── FOOTER ─── */}
       <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden">
-        <div className="circuit-pattern absolute inset-0 pointer-events-none" />
+        <div aria-hidden="true" className="circuit-pattern absolute inset-0 pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 relative z-10">
-          <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#525252] uppercase tracking-widest">
+          <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">
             Performance Lab
           </p>
-          <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#333] uppercase tracking-widest">
+          <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
             Rust · SIMD · Lock-free · Zero-copy
           </p>
         </div>

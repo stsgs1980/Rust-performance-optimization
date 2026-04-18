@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo, Fragment, memo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Search, Zap, ArrowUp, Star, Share2, Link2,
   GitCompareArrows, Download, Command, Monitor, Sparkles,
@@ -25,7 +24,7 @@ import { usePersisted, parseNumberSet, serializeNumberSet, parseStringSet, seria
 import {
   FadeIn, SectionDivider, AnimatedCounter, AnimatedProgressBar,
   SortIcon, CodeDiff, CommandPalette, HelpModal,
-  ExecutionPipeline, OptimizationHeatmap, AchievementToast,
+  OptimizationHeatmap, AchievementToast,
   TaskPreviewTooltip, ActivityTimeline, AmbientParticles, useShareURL, ComplexityBadge,
 } from "@/components/perf/SmallComponents";
 import { CodeBlock } from "@/components/perf/CodeBlock";
@@ -1334,7 +1333,7 @@ export default function PerformanceLab() {
                         const sp = (t.baseline.time / t.optimized.time).toFixed(1);
                         const ms = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
                         const memImproved = t.optimized.memory < t.baseline.memory;
-                        const formatT = formatMs;
+
                         return (
                           <tr
                             key={t.id}
@@ -1349,10 +1348,10 @@ export default function PerformanceLab() {
                               <p className="text-[#8a8a8a] text-xs truncate">{t.title}</p>
                             </td>
                             <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] tabular-nums">
-                              {formatT(t.baseline.time)}
+                              {formatMs(t.baseline.time)}
                             </td>
                             <td className="py-2.5 px-3 text-right font-[family-name:var(--font-ibm-mono)] text-[#4ade80] tabular-nums">
-                              {formatT(t.optimized.time)}
+                              {formatMs(t.optimized.time)}
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <span className="font-bold font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] tabular-nums">
@@ -1384,7 +1383,6 @@ export default function PerformanceLab() {
                       const maxMem = Math.max(...items.map(i => Math.abs(i.memory)), 1);
                       const leftPad = 40;
                       const barGroupH = 34;
-                      const gap = 6;
                       const barH = 14;
                       const chartW = 300;
                       const chartH = items.length * barGroupH;

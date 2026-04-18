@@ -971,3 +971,52 @@ Performance Lab is fully optimized with all 38 code review findings resolved. Bu
 1. Continue feature development (new tasks, interactive demos)
 2. Performance profiling and bundle analysis
 3. Add animation/transition polish to new SVG charts
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: Code Review #2 — исправление 15 замечаний (чистка мёртвого кода)
+
+Work Log:
+- Прочитал worklog.md и проанализировал текущее состояние проекта
+- Установил что 6 из 15 замечаний уже исправлены в предыдущих сессиях:
+  - LiveClock уже memo'd ✅
+  - NAV_ITEMS уже const вне компонента ✅
+  - TaskSection уже вынесен ✅
+- Удалил unused Fragment из page.tsx import (строка 3)
+- Удалил unused Separator из page.tsx import (не использовался в JSX)
+- Удалил unused ExecutionPipeline из SmallComponents import в page.tsx
+- Удалил бессмысленный formatT alias → заменил на formatMs напрямую (2 использования)
+- Удалил unused переменную gap (строка 1387, SVG chart)
+- Удалил useRipple функцию из SmallComponents.tsx (17 строк, нигде не вызывалась)
+- Удалил ExecutionPipeline функцию из SmallComponents.tsx (35 строк, нигде не рендерилась)
+- Удалил PIPELINE_STAGES из perf-data.ts (мертвые данные)
+- Удалил unused calcReadingTime из SmallComponents.tsx import
+- Удалил 40 неиспользуемых shadcn/ui компонентов (47 → 7 файлов)
+  Остались: card, badge, tabs, button, separator, toast, toaster
+
+Stage Summary:
+- Удалено ~3000+ строк мёртвого кода (40 shadcn/ui файлов + функции + данные)
+- Lint: 0 ошибок
+- Dev server: 200 OK, компиляция без ошибок
+- page.tsx: 1786 строк (−2 от удаления)
+- SmallComponents.tsx: 548 строк (−52 от удаления)
+- perf-data.ts: 582 строки (−8 от удаления)
+- shadcn/ui: 7 файлов (было 47)
+
+## Current Project Status
+
+### Assessment
+Performance Lab — чистый, стабильный SPA. Все 15 замечаний из Code Review #2 исправлены. Мёртвый код полностью удалён.
+
+### Completed Modifications
+- Удалены: Fragment, Separator, ExecutionPipeline imports (page.tsx)
+- Удалены: formatT alias, gap variable (page.tsx)
+- Удалены: useRipple, ExecutionPipeline (SmallComponents.tsx)
+- Удалены: PIPELINE_STAGES (perf-data.ts)
+- Удалены: calcReadingTime unused import (SmallComponents.tsx)
+- Удалены: 40 shadcn/ui компонентов (~3000 строк мёртвого кода)
+
+### Unresolved Issues / Risks
+1. page.tsx остается большим (~1786 строк) — основные компоненты уже вынесены (TaskSection, LiveClock), дальнейшее разбиение может снизить читаемость из-за пропсов
+2. Industrial Minimalism дизайн — dark-only (по дизайну)

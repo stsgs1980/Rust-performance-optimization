@@ -23,7 +23,7 @@ import {
   Search,
   Keyboard,
 } from "lucide-react";
-import { TaskData, getGrade, ACHIEVEMENTS, HEATMAP_DATA, PIPELINE_STAGES, calcReadingTime } from "@/lib/perf-data";
+import { TaskData, getGrade, ACHIEVEMENTS, HEATMAP_DATA } from "@/lib/perf-data";
 
 /* ── FadeIn ── */
 export function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -40,26 +40,6 @@ export function FadeIn({ children, delay = 0, className = "" }: { children: Reac
       {children}
     </motion.div>
   );
-}
-
-/* ── Click Ripple Hook ── */
-export function useRipple() {
-  const handleClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
-    const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const size = Math.max(rect.width, rect.height) * 2;
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple-effect';
-    ripple.style.width = `${size}px`;
-    ripple.style.height = `${size}px`;
-    ripple.style.left = `${x - size / 2}px`;
-    ripple.style.top = `${y - size / 2}px`;
-    el.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
-  }, []);
-  return handleClick;
 }
 
 /* ── Task Quick-Preview Tooltip ── */
@@ -493,43 +473,6 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
             Tip: Press <span className="help-key text-[8px]">Ctrl+K</span> anytime for quick access
           </span>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Execution Pipeline ── */
-export function ExecutionPipeline({ taskId }: { taskId: number }) {
-  const stages = PIPELINE_STAGES[taskId];
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-20px" });
-  if (!stages) return null;
-
-  return (
-    <div ref={ref} className="space-y-2">
-      <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Execution Pipeline</p>
-      <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar py-1">
-        {stages.map((stage, i) => (
-          <div key={i} className="flex items-center shrink-0">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.3, delay: i * 0.1 }}
-              className="pipeline-node px-2.5 py-1.5 bg-[#0f0f0f] border border-[#262626] text-center min-w-[100px]"
-            >
-              <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666] block mb-0.5">STEP {i + 1}</span>
-              <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] leading-tight block">{stage}</span>
-            </motion.div>
-            {i < stages.length - 1 && (
-              <motion.div
-                initial={{ opacity: 0, scaleX: 0 }}
-                animate={inView ? { opacity: 1, scaleX: 1 } : {}}
-                transition={{ duration: 0.2, delay: i * 0.1 + 0.15 }}
-                className="pipeline-connector w-6 h-px bg-[#333] shrink-0 origin-left"
-              />
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );

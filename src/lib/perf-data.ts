@@ -543,15 +543,7 @@ export function getGrade(speedup: number): { letter: string; className: string }
   return { letter: "C", className: "grade-c" };
 }
 
-/* ─────────────────────── PIPELINE DATA ─────────────────────── */
-
-export const PIPELINE_STAGES: Record<number, string[]> = {
-  1: ["Input 10M strings", "String Interning", "Sort (cache-local)", "Binary Search Groups", "Output duplicates"],
-  2: ["500MB CSV file", "mmap (zero-copy)", "SIMD \\n scan", "Selective parse", "Output columns"],
-  3: ["100K URLs", "Semaphore (500)", "Connection Pool", "buffer_unordered", "Collect results"],
-  4: ["1000×1000 input", "Pack matrix B", "Tile 64×64", "4×4 micro-kernel", "AVX2 vectorize"],
-  5: ["8 producers", "CAS atomic push", "Ring buffer", "Cache-padded H/T", "Consumer pop"],
-};
+/* ─────────────────────── HEATMAP DATA ─────────────────────── */
 
 export const HEATMAP_DATA = [
   // [task, speed, memory, cache, parallelism, complexity]

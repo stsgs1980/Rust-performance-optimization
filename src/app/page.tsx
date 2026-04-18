@@ -1845,6 +1845,16 @@ export default function PerformanceLab() {
         }}
       />
 
+      {/* ─── FLOATING TOUR BUTTON ─── */}
+      <button
+        onClick={() => tourRef.current?.start(0)}
+        className="fixed bottom-6 left-6 z-50 size-10 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all"
+        title="Start guided tour"
+        aria-label="Start guided tour"
+      >
+        <span className="text-sm font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
+      </button>
+
       {/* ─── FOOTER ─── */}
       <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden">
         <div aria-hidden="true" className="circuit-pattern absolute inset-0 pointer-events-none" />
@@ -1855,12 +1865,6 @@ export default function PerformanceLab() {
           <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
             Rust · SIMD · Lock-free · Zero-copy
           </p>
-          <button
-            onClick={() => tourRef.current?.start(0)}
-            className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] hover:text-[#ff6b2b] uppercase tracking-widest transition-colors"
-          >
-            ? Tour
-          </button>
         </div>
       </footer>
     </div>

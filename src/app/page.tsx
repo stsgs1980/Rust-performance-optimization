@@ -288,7 +288,7 @@ export default function PerformanceLab() {
   const [compareMode, setCompareMode] = useState(false);
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [monitorExpanded, setMonitorExpanded] = useState(true);
+  const [monitorExpanded, setMonitorExpanded] = useState(false);
   const [reviewedTasks, setReviewedTasks] = usePersisted('perf-lab-reviewed', new Set<number>(), parseNumberSet, serializeNumberSet);
   const [techniqueTag, setTechniqueTag] = useState<string | null>(null);
   const [taskCompareMode, setTaskCompareMode] = useState(false);
@@ -1582,7 +1582,7 @@ export default function PerformanceLab() {
       </main>
 
       {/* ─── PERFORMANCE SUMMARY WIDGET (System Monitor) ─── */}
-      <div className="fixed bottom-6 left-6 z-50" data-tour-monitor>
+      <div className="fixed bottom-6 right-6 z-50" data-tour-monitor>
         <AnimatePresence>
           {monitorExpanded && (
             <motion.div

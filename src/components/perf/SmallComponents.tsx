@@ -22,6 +22,11 @@ import {
   Target,
   Search,
   Keyboard,
+  Eye,
+  Zap,
+  Trophy,
+  BookOpen,
+  type LucideIcon,
 } from "lucide-react";
 import { TaskData, getGrade, ACHIEVEMENTS, HEATMAP_DATA } from "@/lib/perf-data";
 
@@ -533,7 +538,13 @@ export function AchievementToast({ achievement, onDismiss }: { achievement: type
       className="fixed top-20 right-6 z-[70] glass-accent p-4 w-72"
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl">{achievement.icon}</span>
+        <span className="size-8 shrink-0 flex items-center justify-center bg-[#0f0f0f] border border-[#262626]">
+          {(() => {
+            const iconMap: Record<string, LucideIcon> = { EYE: Eye, MAG: Search, ZAP: Zap, TRO: Trophy, BOK: BookOpen };
+            const Comp = iconMap[achievement.icon] || Award;
+            return <Comp className="size-4 text-[#fbbf24]" />;
+          })()}
+        </span>
         <div className="flex-1 min-w-0">
           <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-widest mb-0.5">Достижение разблокировано</p>
           <p className="text-sm font-bold text-[#d4d4d4]">{achievement.name}</p>

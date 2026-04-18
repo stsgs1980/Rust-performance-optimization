@@ -564,11 +564,11 @@ export interface AchievementCtx {
 }
 
 export const ACHIEVEMENTS = [
-  { id: "first-look", name: "Первый взгляд", desc: "Раскройте первую задачу", icon: "👁", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 1 },
-  { id: "code-reviewer", name: "Ревьюер кода", desc: "Просмотрите 3 задачи", icon: "🔍", check: (ctx: AchievementCtx) => ctx.reviewed >= 3 },
-  { id: "speed-demon", name: "Мастер скорости", desc: "Посмотрите самую быструю задачу (#3)", icon: "⚡", check: (ctx: AchievementCtx) => ctx.viewedTask3 },
-  { id: "completionist", name: "Компletionist", desc: "Просмотрите все 5 задач", icon: "🏆", check: (ctx: AchievementCtx) => ctx.reviewed >= 5 },
-  { id: "bookworm", name: "Книжный червь", desc: "Раскройте все задачи одновременно", icon: "📖", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 5 },
+  { id: "first-look", name: "Первый взгляд", desc: "Раскройте первую задачу", icon: "EYE", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 1 },
+  { id: "code-reviewer", name: "Ревьюер кода", desc: "Просмотрите 3 задачи", icon: "MAG", check: (ctx: AchievementCtx) => ctx.reviewed >= 3 },
+  { id: "speed-demon", name: "Мастер скорости", desc: "Посмотрите самую быструю задачу (#3)", icon: "ZAP", check: (ctx: AchievementCtx) => ctx.viewedTask3 },
+  { id: "completionist", name: "Компletionist", desc: "Просмотрите все 5 задач", icon: "TRO", check: (ctx: AchievementCtx) => ctx.reviewed >= 5 },
+  { id: "bookworm", name: "Книжный червь", desc: "Раскройте все задачи одновременно", icon: "BOK", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 5 },
 ];
 
 /* ─────────────────────── ACCENT COLORS ─────────────────────── */

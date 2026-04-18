@@ -765,7 +765,7 @@ export default function PerformanceLab() {
 
               <div className="space-y-6 relative z-10">
                 <div>
-                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker glitch-hover text-gradient">
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#d4d4d4] tracking-wider uppercase cursor-blink flicker">
                     Performance Lab
                   </h1>
                   <div className="flex items-center gap-2 mt-1">

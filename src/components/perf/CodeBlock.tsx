@@ -16,37 +16,6 @@ const SyntaxHighlighter = dynamic(
   }
 );
 
-let oneDarkStyle: Record<string, React.CSSProperties> | null = null;
-
-async function getOneDarkStyle() {
-  if (!oneDarkStyle) {
-    const mod = await import("react-syntax-highlighter/dist/esm/styles/prism");
-    oneDarkStyle = mod.oneDark;
-  }
-  return oneDarkStyle;
-}
-
-function HighlightedCode({ code, style }: { code: string; style: Record<string, React.CSSProperties> }) {
-  return (
-    <SyntaxHighlighter
-      language="rust"
-      style={style}
-      customStyle={{
-        margin: 0,
-        padding: "1rem",
-        background: "#0d0d0d",
-        fontSize: "0.8rem",
-        lineHeight: "1.5",
-        fontFamily: "var(--font-ibm-mono), monospace",
-      }}
-      showLineNumbers
-      lineNumberStyle={{ color: "#666666", minWidth: "2.5em" }}
-    >
-      {code}
-    </SyntaxHighlighter>
-  );
-}
-
 const HighlightedCodeDynamic = dynamic(
   () =>
     import("react-syntax-highlighter/dist/esm/styles/prism").then((mod) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo, Fragment } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, Fragment, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,14 +11,14 @@ import {
   Search, Zap, ArrowUp, Star, Share2, Link2,
   GitCompareArrows, Download, Command, Monitor, Sparkles,
   Waypoints, Trophy, Medal, RotateCcw, AlertTriangle, BarChart,
-  MemoryStick, Check, Filter, Keyboard, Palette,
+  MemoryStick, Check,
   TrendingUp, Database, Layers, Network, ArrowRightLeft, Cpu, Grid3x3, Gauge,
 } from "lucide-react";
 
 import {
-  TaskData, TASKS, ALL_TECHNIQUES, ACHIEVEMENTS, HEATMAP_DATA, ACCENT_COLORS,
+  TaskData, TASKS, ALL_TECHNIQUES, ACHIEVEMENTS, ACCENT_COLORS,
   TOTAL_SPEEDUP, MEM_IMPROVED_COUNT, TOTAL_TIME_SAVED, TOTAL_MEM_SAVED,
-  SPEEDUPS, MIN_SPEEDUP, MAX_SPEEDUP, AVG_SPEEDUP, DIFF_COUNTS,
+  MIN_SPEEDUP, MAX_SPEEDUP, AVG_SPEEDUP, DIFF_COUNTS,
   formatMs, calcReadingTime, getGrade, AchievementCtx,
 } from "@/lib/perf-data";
 import { usePersisted, parseNumberSet, serializeNumberSet, parseStringSet, serializeStringSet, parseString } from "@/hooks/use-persisted";
@@ -26,7 +26,7 @@ import {
   FadeIn, SectionDivider, AnimatedCounter, AnimatedProgressBar,
   SortIcon, CodeDiff, CommandPalette, HelpModal,
   ExecutionPipeline, OptimizationHeatmap, AchievementToast,
-  TaskPreviewTooltip, ActivityTimeline, AmbientParticles, useRipple, useShareURL, ComplexityBadge,
+  TaskPreviewTooltip, ActivityTimeline, AmbientParticles, useShareURL, ComplexityBadge,
 } from "@/components/perf/SmallComponents";
 import { CodeBlock } from "@/components/perf/CodeBlock";
 import { BenchChart } from "@/components/perf/BenchChart";
@@ -34,6 +34,36 @@ import { RadarChart } from "@/components/perf/RadarChart";
 import {
   ChevronDown, ChevronUp, CheckCircle2, XCircle, Columns2, Rows3,
 } from "lucide-react";
+
+const NAV_ITEMS = [
+  { id: "hero", label: "Overview" },
+  ...TASKS.map((t) => ({ id: `task-${t.id}`, label: `#${t.id}` })),
+  { id: "methodology", label: "Methodology" },
+  { id: "vibe-coder", label: "Vibe Guide" },
+  { id: "heatmap", label: "Heatmap" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "results", label: "Results" },
+  { id: "summary", label: "Summary" },
+];
+
+const DIFFICULTIES = ["all", "Advanced", "Expert"];
+
+/* ── Isolated Live Clock (memo prevents full-page re-render every second) ── */
+const LiveClock = memo(function LiveClock() {
+  const [time, setTime] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      requestAnimationFrame(() => {
+        setTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
+      });
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">{time}</span>;
+});
 
 /* ─────────────── TASK SECTION (inline — tightly coupled to PerformanceLab state) ─────────────── */
 
@@ -222,21 +252,7 @@ export default function PerformanceLab() {
   const taskNotesRef = useRef(taskNotes);
   useEffect(() => { taskNotesRef.current = taskNotes; }, [taskNotes]);
 
-  // Live clock
-  const [currentTime, setCurrentTime] = useState('');
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      requestAnimationFrame(() => {
-        setCurrentTime(
-          `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
-        );
-      });
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Live clock replaced with isolated <LiveClock /> component (no re-renders of parent)
 
   // Sync ref with state (for reading in effects)
   useEffect(() => { achievementToastRef.current = achievementToastRaw; }, [achievementToastRaw]);
@@ -400,7 +416,7 @@ export default function PerformanceLab() {
     return matchDiff && matchSearch && matchStarred;
   }), [difficultyFilter, starredFilter, starredTasks, activeSearch]);
 
-  const difficulties = ["all", "Advanced", "Expert"];
+
 
   const registerSection =
     useCallback((id: string) => (el: HTMLElement | null) => {
@@ -494,19 +510,6 @@ export default function PerformanceLab() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleAll, scrollTo]);
 
-  const navItems = [
-    { id: "hero", label: "Overview" },
-    ...TASKS.map((t) => ({ id: `task-${t.id}`, label: `#${t.id}` })),
-    { id: "methodology", label: "Methodology" },
-    { id: "vibe-coder", label: "Vibe Guide" },
-    { id: "heatmap", label: "Heatmap" },
-    { id: "dashboard", label: "Dashboard" },
-    { id: "results", label: "Results" },
- { id: "summary", label: "Summary" },
-  ];
-
-
-
 
 
   // Sort logic for results table
@@ -579,7 +582,7 @@ export default function PerformanceLab() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar max-w-[75vw]">
-              {navItems.map((item) => (
+              {NAV_ITEMS.map((item) => (
                 <Button
                   key={item.id}
                   variant="ghost"
@@ -716,7 +719,7 @@ export default function PerformanceLab() {
               <span className="typing-text text-[#8a8a8a]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
             </span>
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">{currentTime}</span>
+              <LiveClock />
               <div className="signal-strength">
                 <div className="signal-bar" />
                 <div className="signal-bar" />
@@ -887,7 +890,7 @@ export default function PerformanceLab() {
 
         {/* ═══ DIFFICULTY FILTER PILLS ═══ */}
         <div className="flex items-center gap-2 flex-wrap">
-          {difficulties.map((d) => (
+          {DIFFICULTIES.map((d) => (
             <button
               key={d}
               onClick={() => setDifficultyFilter(d)}

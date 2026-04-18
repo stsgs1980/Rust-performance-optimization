@@ -1586,11 +1586,11 @@ export default function PerformanceLab() {
         {/* Floating Tour Button */}
         <button
           onClick={() => tourRef.current?.start(0)}
-          className="size-10 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all shrink-0"
+          className="size-8 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all shrink-0"
           title="Start guided tour"
           aria-label="Start guided tour"
         >
-          <span className="text-sm font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
+          <span className="text-xs font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
         </button>
         <AnimatePresence>
           {monitorExpanded && (

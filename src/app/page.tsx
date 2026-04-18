@@ -1582,7 +1582,16 @@ export default function PerformanceLab() {
       </main>
 
       {/* ─── PERFORMANCE SUMMARY WIDGET (System Monitor) ─── */}
-      <div className="fixed bottom-6 right-6 z-50" data-tour-monitor>
+      <div className="fixed bottom-6 right-6 z-50 flex items-end gap-2" data-tour-monitor>
+        {/* Floating Tour Button */}
+        <button
+          onClick={() => tourRef.current?.start(0)}
+          className="size-10 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all shrink-0"
+          title="Start guided tour"
+          aria-label="Start guided tour"
+        >
+          <span className="text-sm font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
+        </button>
         <AnimatePresence>
           {monitorExpanded && (
             <motion.div
@@ -1844,16 +1853,6 @@ export default function PerformanceLab() {
           stepOf: "Шаг",
         }}
       />
-
-      {/* ─── FLOATING TOUR BUTTON ─── */}
-      <button
-        onClick={() => tourRef.current?.start(0)}
-        className="fixed bottom-6 left-6 z-50 size-10 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all"
-        title="Start guided tour"
-        aria-label="Start guided tour"
-      >
-        <span className="text-sm font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
-      </button>
 
       {/* ─── FOOTER ─── */}
       <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden">

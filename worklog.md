@@ -1084,3 +1084,23 @@ Stage Summary:
 - System Monitor panel expands above footer when toggled
 - Lint: 0 errors, Dev server: 200 OK
 - No TASKS data changes
+
+---
+Task ID: 1-3
+Agent: main
+Task: Перевести все английские UI-элементы на русскую кириллицу
+
+Work Log:
+- Прочитал все файлы: page.tsx (1840 строк), perf-data.ts (583 строки), SmallComponents.tsx (549 строк), CodeBlock.tsx, BenchChart.tsx, RadarChart.tsx
+- Выявлены все английские UI-тексты по всем файлам
+- perf-data.ts: переведены 5 subtitles, 3 difficulty values (Advanced→Продвинутый, Expert→Экспертный), DIFF_COUNTS ключи, 5 achievements (name+desc), 5 accent color names
+- page.tsx: переведены tour step #1, star aria-labels, reading time label, CodeBlock titles (Naive→Наивный, Optimized→Оптимизированный, Diff→Различия), hero description, terminal status bar, breadcrumb OVERVIEW→ОБЗОР, Methodology→Методология, Technique Tags→Теги техник, Vibe Coder's Guide→Вайб-гайд разработчика, Quick Reference table headers, Optimization Impact Heatmap→Тепловая карта влияния оптимизаций, Results table headers (Baseline, Optimized, Speedup, Memory), Compare panel labels, Markdown export (20+ строк)
+- SmallComponents.tsx: переведены TaskPreviewTooltip (Speedup, Memory, Time Complex, Key Techniques), ActivityTimeline (Reviewed/Not reviewed), AchievementToast (Achievement Unlocked), OptimizationHeatmap metrics (Speed, Memory, Cache Locality, Parallelism, Code Complexity)
+- CodeBlock.tsx, BenchChart.tsx, RadarChart.tsx — уже были на русском
+- Исправлен баг: difficulty filter сравнивал "Продвинутый"/"Экспертный" с "Advanced"/"Expert" — значения в perf-data.ts обновлены
+
+Stage Summary:
+- Все 5 файлов полностью переведены на русский
+- Lint: 0 ошибок
+- Dev server: 200 OK
+- Исправлен баг несовпадения difficulty filter keys

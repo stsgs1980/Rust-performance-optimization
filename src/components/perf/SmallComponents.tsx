@@ -63,12 +63,12 @@ export function TaskPreviewTooltip({ task, visible, anchorRect }: { task: TaskDa
       </div>
       <p className="text-xs text-[#d4d4d4] font-medium line-clamp-2 mb-2">{task.title}</p>
       <div className="space-y-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)]">
-        <div className="flex justify-between"><span className="text-[#8a8a8a]">Speedup</span><span className="text-[#ff6b2b] font-bold">{sp}×</span></div>
-        <div className="flex justify-between"><span className="text-[#8a8a8a]">Memory</span><span className={parseInt(memSave) > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}>{parseInt(memSave) > 0 ? '-' : '+'}{Math.abs(parseInt(memSave))}%</span></div>
-        <div className="flex justify-between"><span className="text-[#8a8a8a]">Time Complex</span><span className="text-[#d4d4d4]">{task.optimized.timeComplexity}</span></div>
+        <div className="flex justify-between"><span className="text-[#8a8a8a]">Ускорение</span><span className="text-[#ff6b2b] font-bold">{sp}×</span></div>
+        <div className="flex justify-between"><span className="text-[#8a8a8a]">Память</span><span className={parseInt(memSave) > 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}>{parseInt(memSave) > 0 ? '-' : '+'}{Math.abs(parseInt(memSave))}%</span></div>
+        <div className="flex justify-between"><span className="text-[#8a8a8a]">Сложность (время)</span><span className="text-[#d4d4d4]">{task.optimized.timeComplexity}</span></div>
       </div>
       <div className="mt-2 pt-2 border-t border-[#1c1c1c]">
-        <p className="text-[9px] text-[#666666] uppercase tracking-widest mb-1">Key Techniques</p>
+        <p className="text-[9px] text-[#666666] uppercase tracking-widest mb-1">Ключевые техники</p>
         <div className="flex flex-wrap gap-1">
           {task.techniques.slice(0, 3).map((t, i) => (
             <span key={i} className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#1c1c1c] px-1.5 py-0.5">{t.name}</span>
@@ -109,7 +109,7 @@ export function ActivityTimeline({ tasks, reviewedTasks }: { tasks: TaskData[]; 
             </div>
           </div>
           <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
-            {a.reviewed ? 'Reviewed' : 'Not reviewed'} · {a.difficulty}
+            {a.reviewed ? 'Просмотрено' : 'Не просмотрено'} · {a.difficulty}
           </div>
         </div>
       ))}
@@ -480,7 +480,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
 
 /* ── Optimization Heatmap ── */
 export function OptimizationHeatmap() {
-  const metrics = ["Speed", "Memory", "Cache Locality", "Parallelism", "Code Complexity"] as const;
+  const metrics = ["Скорость", "Память", "Кэш-локальность", "Параллелизм", "Сложность кода"] as const;
 
   return (
     <div className="overflow-x-auto custom-scrollbar">
@@ -535,7 +535,7 @@ export function AchievementToast({ achievement, onDismiss }: { achievement: type
       <div className="flex items-start gap-3">
         <span className="text-2xl">{achievement.icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-widest mb-0.5">Achievement Unlocked</p>
+          <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-widest mb-0.5">Достижение разблокировано</p>
           <p className="text-sm font-bold text-[#d4d4d4]">{achievement.name}</p>
           <p className="text-[10px] text-[#8a8a8a]">{achievement.desc}</p>
         </div>

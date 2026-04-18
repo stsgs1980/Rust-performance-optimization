@@ -40,7 +40,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "#hero",
     title: "Performance Lab",
-    description: "5 real-world Rust optimization challenges. Each task shows naive vs optimized code with Big O analysis and benchmarks.",
+    description: "5 реальных задач оптимизации на Rust. Каждая задача показывает наивный и оптимизированный код с анализом Big O и бенчмарками.",
     position: "bottom",
   },
   {
@@ -151,7 +151,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                     {compareSelected && <Check className="size-2.5" />}
                   </div>
                 )}
-                <button onClick={(e) => { e.stopPropagation(); onToggleStar(); }} className="star-btn" aria-label={starred ? "Remove star" : "Add star"}>
+                <button onClick={(e) => { e.stopPropagation(); onToggleStar(); }} className="star-btn" aria-label={starred ? "Убрать из избранного" : "Добавить в избранное"}>
                   <Star className="size-3.5" fill={starred ? '#fbbf24' : 'none'} />
                 </button>
                 <div className="size-10 bg-[#1c1c1c] flex items-center justify-center shrink-0">
@@ -164,7 +164,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                     <Badge variant="outline" className="text-[#8a8a8a] border-[#262626] text-[10px] badge-hover">{task.category}</Badge>
                     <Badge variant="outline" className="border-[#ff6b2b]/30 text-[#ff6b2b] text-[10px] badge-hover">{speedup}×</Badge>
                     {reviewed && <Check className="size-2.5 text-[#4ade80]" />}
-                    {readingTime > 0 && expanded && <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">{readingTime} min read</span>}
+                    {readingTime > 0 && expanded && <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">{readingTime} мин чтения</span>}
                   </div>
                   <CardTitle className="text-sm font-medium text-[#d4d4d4]">{task.title}</CardTitle>
                 </div>
@@ -204,8 +204,8 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                   <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Переключить на вкладки"><Rows3 className="size-3.5" /></button>
                 </div>
                 <div className="code-compare-grid">
-                  <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
-                  <CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" />
+                  <CodeBlock code={task.baseline.code} title={`Наивный — ${task.title}`} variant="baseline" />
+                  <CodeBlock code={task.optimized.code} title={`Оптимизированный — ${task.title}`} variant="optimized" />
                 </div>
               </div>
             ) : (
@@ -214,15 +214,15 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
                   <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Переключить на сравнение"><Columns2 className="size-3.5" /></button>
                 </div>
                 {diffMode ? (
-                  <CodeDiff baseline={task.baseline.code} optimized={task.optimized.code} title={`Diff — ${task.title}`} />
+                  <CodeDiff baseline={task.baseline.code} optimized={task.optimized.code} title={`Различия — ${task.title}`} />
                 ) : (
                   <Tabs defaultValue="baseline" className="w-full">
                     <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
                       <TabsTrigger value="baseline" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#8a8a8a]"><XCircle className="size-3 mr-1" /> Базовый</TabsTrigger>
                       <TabsTrigger value="optimized" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#8a8a8a]"><CheckCircle2 className="size-3 mr-1" /> Оптимизированный</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="baseline" className="mt-3"><CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" /></TabsContent>
-                    <TabsContent value="optimized" className="mt-3"><CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" /></TabsContent>
+                    <TabsContent value="baseline" className="mt-3"><CodeBlock code={task.baseline.code} title={`Наивный — ${task.title}`} variant="baseline" /></TabsContent>
+                    <TabsContent value="optimized" className="mt-3"><CodeBlock code={task.optimized.code} title={`Оптимизированный — ${task.title}`} variant="optimized" /></TabsContent>
                   </Tabs>
                 )}
               </div>
@@ -351,42 +351,42 @@ export default function PerformanceLab() {
   // Markdown export handler
   const handleExportMarkdown = useCallback(() => {
     const lines: string[] = [];
-    lines.push('# Performance Lab — Rust Optimization Challenges\n');
-    lines.push(`> ${TASKS.length} tasks · Total speedup: ×\n`);
+    lines.push('# Performance Lab — Задачи оптимизации на Rust\n');
+    lines.push(`> ${TASKS.length} задач · Общее ускорение: ×\n`);
     for (const t of TASKS) {
       const sp = (t.baseline.time / t.optimized.time).toFixed(1);
       const memSave = ((1 - t.optimized.memory / t.baseline.memory) * 100).toFixed(0);
       lines.push(`## ${t.id}. ${t.title}`);
-      lines.push(`**Category:** ${t.category} · **Difficulty:** ${t.difficulty} · **Speedup:** ${sp}×\n`);
-      lines.push('### Problem');
+      lines.push(`**Категория:** ${t.category} · **Сложность:** ${t.difficulty} · **Ускорение:** ${sp}×\n`);
+      lines.push('### Задача');
       lines.push(t.problem + '\n');
-      lines.push('### Constraints');
+      lines.push('### Ограничения');
       t.constraints.forEach(c => { lines.push(`- ${c}`); });
       lines.push('');
-      lines.push('### Baseline Code');
+      lines.push('### Базовый код');
       lines.push('```rust');
       lines.push(t.baseline.code);
       lines.push('```\n');
-      lines.push('### Optimized Code');
+      lines.push('### Оптимизированный код');
       lines.push('```rust');
       lines.push(t.optimized.code);
       lines.push('```\n');
-      lines.push('### Benchmarks');
-      lines.push('| Metric | Baseline | Optimized |');
-      lines.push('|--------|----------|-----------|');
-      lines.push(`| Time | ${formatMs(t.baseline.time)} | ${formatMs(t.optimized.time)} |`);
-      lines.push(`| Memory | ${t.baseline.memory} MB | ${t.optimized.memory} MB |`);
-      lines.push(`| Speedup | — | ${sp}× |`);
-      lines.push(`| Memory Delta | — | ${parseInt(memSave) > 0 ? '-' : '+'}${Math.abs(parseInt(memSave))}% |\n`);
-      lines.push('### Complexity');
-      lines.push(`- **Baseline:** Time ${t.baseline.timeComplexity}, Space ${t.baseline.spaceComplexity}`);
-      lines.push(`- **Optimized:** Time ${t.optimized.timeComplexity}, Space ${t.optimized.spaceComplexity}\n`);
-      lines.push('### Key Techniques');
+      lines.push('### Бенчмарки');
+      lines.push('| Метрика | Базовый | Оптимизированный |');
+      lines.push('|---------|----------|----------------|');
+      lines.push(`| Время | ${formatMs(t.baseline.time)} | ${formatMs(t.optimized.time)} |`);
+      lines.push(`| Память | ${t.baseline.memory} MB | ${t.optimized.memory} MB |`);
+      lines.push(`| Ускорение | — | ${sp}× |`);
+      lines.push(`| Дельта памяти | — | ${parseInt(memSave) > 0 ? '-' : '+'}${Math.abs(parseInt(memSave))}% |\n`);
+      lines.push('### Сложность');
+      lines.push(`- **Базовый:** Время ${t.baseline.timeComplexity}, Память ${t.baseline.spaceComplexity}`);
+      lines.push(`- **Оптимизированный:** Время ${t.optimized.timeComplexity}, Память ${t.optimized.spaceComplexity}\n`);
+      lines.push('### Ключевые техники');
       t.techniques.forEach((tech, i) => { lines.push(`${i + 1}. **${tech.name}** — ${tech.desc}`); });
       lines.push('\n---\n');
     }
     const ts = TASKS.reduce((a, t) => a + t.baseline.time / t.optimized.time, 0);
-    lines.splice(1, 1, `> ${TASKS.length} tasks · Total speedup: ${ts.toFixed(0)}×\n`);
+    lines.splice(1, 1, `> ${TASKS.length} задач · Общее ускорение: ${ts.toFixed(0)}×\n`);
     const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -711,7 +711,7 @@ export default function PerformanceLab() {
               PERF LAB
             </button>
             <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">&gt;</span>
-            {getBreadcrumbSection() !== "OVERVIEW" && (
+            {getBreadcrumbSection() !== "ОБЗОР" && (
               <button
                 onClick={() => scrollTo(
                   activeSection.startsWith("task-") ? "hero" : activeSection
@@ -721,7 +721,7 @@ export default function PerformanceLab() {
                 {getBreadcrumbSection()}
               </button>
             )}
-            {getBreadcrumbSection() !== "OVERVIEW" && (
+            {getBreadcrumbSection() !== "ОБЗОР" && (
               <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">&gt;</span>
             )}
             <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-[0.1em]">
@@ -739,7 +739,7 @@ export default function PerformanceLab() {
           <div className="terminal-bar px-4 py-1.5 flex items-center gap-3 border border-[#262626] border-b-0">
             <span className="size-1.5 rounded-full bg-[#4ade80] pulse-dot" />
             <span className="font-[family-name:var(--font-ibm-mono)]">
-              <span className="typing-text text-[#8a8a8a]">&gt; system.init() | rust v1.78.0 | 5 tasks loaded | status: operational</span>
+              <span className="typing-text text-[#8a8a8a]">&gt; system.init() | rust v1.78.0 | 5 задач загружено | статус: работает</span>
             </span>
             <div className="ml-auto flex items-center gap-2">
               <LiveClock />
@@ -775,8 +775,8 @@ export default function PerformanceLab() {
                     </p>
                   </div>
                   <p className="text-sm text-[#8a8a8a] max-w-2xl leading-relaxed mt-4">
-                    Каждый challenge — реальная задача системного программирования. Naive
-                    vs Optimized подход на Rust с анализом Big O, бенчмарками и
+                    Каждый челлендж — реальная задача системного программирования. Подход Naive
+                    vs Optimized на Rust с анализом Big O, бенчмарками и
                     объяснением каждой оптимизации.
                   </p>
                   {/* Keyboard shortcut hints */}
@@ -1013,7 +1013,7 @@ export default function PerformanceLab() {
             <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial ind-dot-grid">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                  Methodology
+                  Методология
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1045,7 +1045,7 @@ export default function PerformanceLab() {
 
                 {/* ── Technique Tag Cloud ── */}
                 <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-[0.2em] mb-2">Technique Tags</p>
+                  <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-[0.2em] mb-2">Теги техник</p>
                   <div className="flex flex-wrap gap-1.5">
                     {ALL_TECHNIQUES.map((tech) => (
                       <button
@@ -1083,7 +1083,7 @@ export default function PerformanceLab() {
                 <div className="flex items-center gap-2">
                   <Sparkles className="size-3.5 text-[#fbbf24]" />
                   <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                    Vibe Coder&apos;s Guide
+                    Вайб-гайд разработчика
                   </CardTitle>
                 </div>
                 <p className="text-[10px] text-[#666666] font-[family-name:var(--font-ibm-mono)] mt-1">
@@ -1175,13 +1175,13 @@ export default function PerformanceLab() {
 
                 {/* Quick reference table */}
                 <div className="overflow-x-auto custom-scrollbar">
-                  <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-2">Quick Reference: Rust → Web</div>
+                  <div className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-2">Быстрый справочник: Rust → Web</div>
                   <table className="w-full text-[10px]">
                     <thead>
                       <tr className="border-b border-[#262626]">
-                        <th className="text-left py-1.5 pr-3 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">Rust Concept</th>
-                        <th className="text-left py-1.5 pr-3 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">Web Equivalent</th>
-                        <th className="text-left py-1.5 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">npm Package</th>
+                        <th className="text-left py-1.5 pr-3 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">Концепция Rust</th>
+                        <th className="text-left py-1.5 pr-3 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">Эквивалент в Web</th>
+                        <th className="text-left py-1.5 text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">npm-пакет</th>
                       </tr>
                     </thead>
                     <tbody className="font-[family-name:var(--font-ibm-mono)]">
@@ -1227,7 +1227,7 @@ export default function PerformanceLab() {
                 <div className="flex items-center gap-2">
                   <Waypoints className="size-3.5 text-[#a78bfa]" />
                   <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                    Optimization Impact Heatmap
+                    Тепловая карта влияния оптимизаций
                   </CardTitle>
                 </div>
                 <p className="text-[10px] text-[#666666] font-[family-name:var(--font-ibm-mono)] mt-1">
@@ -1339,16 +1339,16 @@ export default function PerformanceLab() {
                         </th>
                         <th className="text-left py-2 pr-4 text-[#8a8a8a]">Задача</th>
                         <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("baseline")} aria-sort={sortColumn === "baseline" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
-                          Baseline <SortIcon col="baseline" activeCol={sortColumn} direction={sortDirection} />
+                          Базовый <SortIcon col="baseline" activeCol={sortColumn} direction={sortDirection} />
                         </th>
                         <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("optimized")} aria-sort={sortColumn === "optimized" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
-                          Optimized <SortIcon col="optimized" activeCol={sortColumn} direction={sortDirection} />
+                          Оптим. <SortIcon col="optimized" activeCol={sortColumn} direction={sortDirection} />
                         </th>
                         <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("speedup")} aria-sort={sortColumn === "speedup" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
-                          Speedup <SortIcon col="speedup" activeCol={sortColumn} direction={sortDirection} />
+                          Ускорение <SortIcon col="speedup" activeCol={sortColumn} direction={sortDirection} />
                         </th>
                         <th className="text-right py-2 text-[#8a8a8a] sort-header" onClick={() => handleSort("memory")} aria-sort={sortColumn === "memory" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
-                          Memory <SortIcon col="memory" activeCol={sortColumn} direction={sortDirection} />
+                          Память <SortIcon col="memory" activeCol={sortColumn} direction={sortDirection} />
                         </th>
                       </tr>
                     </thead>
@@ -1718,17 +1718,17 @@ export default function PerformanceLab() {
               <div className="p-3 bg-[#141414] border border-[#262626]">
                 <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Относительная производительность</p>
                 <div className="space-y-2">
-                  {[{ label: 'Speedup', valA: spA, valB: spB, max: maxSp }, { label: 'Baseline Time (s)', valA: tA.baseline.time / 1000, valB: tB.baseline.time / 1000, max: Math.max(tA.baseline.time, tB.baseline.time) / 1000, invert: true }].map((row, i) => (
+                  {[{ label: 'Ускорение', valA: spA, valB: spB, max: maxSp }, { label: 'Баз. время (с)', valA: tA.baseline.time / 1000, valB: tB.baseline.time / 1000, max: Math.max(tA.baseline.time, tB.baseline.time) / 1000, invert: true }].map((row, i) => (
                     <div key={i}>
                       <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] mb-1">{row.label}</p>
                       <div className="flex gap-1 items-center">
-                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] w-6 text-right">{row.label === 'Speedup' ? row.valA.toFixed(1) : row.valA.toFixed(1)}</span>
+                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b] w-6 text-right">{row.label === 'Ускорение' ? row.valA.toFixed(1) : row.valA.toFixed(1)}</span>
                         <div className="flex-1 compare-bar-track">
                           <div className="compare-bar-fill bg-[#ff6b2b]" style={{ width: `${row.invert ? Math.max(5, 100 - (row.valA / row.max) * 95) : (row.valA / row.max) * 100}%` }} />
                         </div>
                       </div>
                       <div className="flex gap-1 items-center">
-                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] w-6 text-right">{row.label === 'Speedup' ? row.valB.toFixed(1) : row.valB.toFixed(1)}</span>
+                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] w-6 text-right">{row.label === 'Ускорение' ? row.valB.toFixed(1) : row.valB.toFixed(1)}</span>
                         <div className="flex-1 compare-bar-track">
                           <div className="compare-bar-fill bg-[#4ade80]" style={{ width: `${row.invert ? Math.max(5, 100 - (row.valB / row.max) * 95) : (row.valB / row.max) * 100}%` }} />
                         </div>

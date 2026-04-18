@@ -28,11 +28,11 @@ export const TASKS: TaskData[] = [
   {
     id: 1,
     title: "Поиск дубликатов в массиве 10M строк",
-    subtitle: "Algorithm + Memory",
+    subtitle: "Алгоритмы + Память",
     icon: Search,
     category: "Алгоритмы",
     categoryColor: "bg-[#4589ff]/10 text-[#4589ff]",
-    difficulty: "Advanced",
+    difficulty: "Продвинутый",
     difficultyColor: "bg-[#f1c21b]/10 text-[#f1c21b]",
     problem: "Найти все дублирующиеся строки в массиве из 10 миллионов строк (средняя длина 32 символа). Задача требует оптимального баланса между скоростью и потреблением памяти.",
     constraints: ["10M строк, avg 32 chars", "Возвратить уникальные дубликаты", "Минимизировать аллокации", "Строки содержат UTF-8"],
@@ -93,11 +93,11 @@ fn find_duplicates_optimized(data: &mut [String]) -> Vec<String> {
   {
     id: 2,
     title: "Парсинг CSV 500MB без загрузки в память",
-    subtitle: "I/O + Allocations",
+    subtitle: "I/O + Аллокации",
     icon: FileText,
     category: "I/O",
     categoryColor: "bg-[#a56eff]/10 text-[#a56eff]",
-    difficulty: "Expert",
+    difficulty: "Экспертный",
     difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
     problem: "Парсинг CSV файла 500MB с 5M строками и 10 колонками. Необходимо извлечь только 3 конкретные колонки, минимизируя использование памяти и I/O операции.",
     constraints: ["500MB файл, 5M строк, 10 колонок", "Извлечь колонки 2, 5, 8", "Zero-copy где возможно", "Не загружать весь файл в память"],
@@ -184,11 +184,11 @@ fn parse_csv_optimized(path: &str) -> Vec<Vec<&'static str>> {
   {
     id: 3,
     title: "Обработка 100K HTTP-запросов concurrently",
-    subtitle: "Concurrency",
+    subtitle: "Конкурентность",
     icon: Network,
     category: "Конкурентность",
     categoryColor: "bg-[#a56eff]/10 text-[#a56eff]",
-    difficulty: "Advanced",
+    difficulty: "Продвинутый",
     difficultyColor: "bg-[#f1c21b]/10 text-[#f1c21b]",
     problem: "Выполнить 100K HTTP GET запросов к REST API, собрав все ответы. Необходимо максимизировать throughput при ограниченных ресурсах клиента.",
     constraints: ["100K запросов", "Максимальный throughput", "Ограничение: 500 concurrent", "Обработка ошибок и таймаутов"],
@@ -263,11 +263,11 @@ async fn fetch_all_concurrent(
   {
     id: 4,
     title: "Умножение матриц 1000×1000 (SIMD + кэш)",
-    subtitle: "SIMD + Cache",
+    subtitle: "SIMD + Кэш",
     icon: Grid3x3,
     category: "Вычисления",
     categoryColor: "bg-[#08bdba]/10 text-[#08bdba]",
-    difficulty: "Expert",
+    difficulty: "Экспертный",
     difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
     problem: "Умножить две матрицы 1000×1000 (f32). Наивная реализация страдает от cache misses — необходимо оптимизировать доступ к памяти.",
     constraints: ["1000×1000 f32 матрицы", "12MB на матрицу", "Оптимизировать для L3 cache", "No external dependencies"],
@@ -366,11 +366,11 @@ fn pack_matrix(b: &[f32], n: usize, _t: usize)
   {
     id: 5,
     title: "Lock-free очередь для Producer-Consumer",
-    subtitle: "Parallelism",
+    subtitle: "Параллелизм",
     icon: ArrowRightLeft,
     category: "Параллелизм",
     categoryColor: "bg-[#08bdba]/10 text-[#08bdba]",
-    difficulty: "Expert",
+    difficulty: "Экспертный",
     difficultyColor: "bg-[#fa4d56]/10 text-[#fa4d56]",
     problem: "Реализовать bounded MPSC очередь: 8 producer threads, 1 consumer thread, 10M сообщений. Mutex-блокировки создают contention bottleneck.",
     constraints: ["8 producers, 1 consumer", "10M сообщений", "Bounded ring buffer", "Wait-free для producers"],
@@ -503,8 +503,8 @@ export const MAX_SPEEDUP = Math.max(...SPEEDUPS);
 export const AVG_SPEEDUP = SPEEDUPS.reduce((a, b) => a + b, 0) / SPEEDUPS.length;
 export const DIFF_COUNTS = {
   all: TASKS.length,
-  Advanced: TASKS.filter(t => t.difficulty === "Advanced").length,
-  Expert: TASKS.filter(t => t.difficulty === "Expert").length,
+  "Продвинутый": TASKS.filter(t => t.difficulty === "Продвинутый").length,
+  "Экспертный": TASKS.filter(t => t.difficulty === "Экспертный").length,
 };
 
 /* ─────────────────────── TECHNIQUE TAG CLOUD DATA ─────────────────────── */
@@ -564,19 +564,19 @@ export interface AchievementCtx {
 }
 
 export const ACHIEVEMENTS = [
-  { id: "first-look", name: "First Look", desc: "Expand your first task", icon: "👁", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 1 },
-  { id: "code-reviewer", name: "Code Reviewer", desc: "Review 3 tasks", icon: "🔍", check: (ctx: AchievementCtx) => ctx.reviewed >= 3 },
-  { id: "speed-demon", name: "Speed Demon", desc: "View the fastest task (#3)", icon: "⚡", check: (ctx: AchievementCtx) => ctx.viewedTask3 },
-  { id: "completionist", name: "Completionist", desc: "Review all 5 tasks", icon: "🏆", check: (ctx: AchievementCtx) => ctx.reviewed >= 5 },
-  { id: "bookworm", name: "Bookworm", desc: "Expand all tasks at once", icon: "📖", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 5 },
+  { id: "first-look", name: "Первый взгляд", desc: "Раскройте первую задачу", icon: "👁", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 1 },
+  { id: "code-reviewer", name: "Ревьюер кода", desc: "Просмотрите 3 задачи", icon: "🔍", check: (ctx: AchievementCtx) => ctx.reviewed >= 3 },
+  { id: "speed-demon", name: "Мастер скорости", desc: "Посмотрите самую быструю задачу (#3)", icon: "⚡", check: (ctx: AchievementCtx) => ctx.viewedTask3 },
+  { id: "completionist", name: "Компletionist", desc: "Просмотрите все 5 задач", icon: "🏆", check: (ctx: AchievementCtx) => ctx.reviewed >= 5 },
+  { id: "bookworm", name: "Книжный червь", desc: "Раскройте все задачи одновременно", icon: "📖", check: (ctx: AchievementCtx) => ctx.totalExpanded >= 5 },
 ];
 
 /* ─────────────────────── ACCENT COLORS ─────────────────────── */
 
 export const ACCENT_COLORS = [
-  { name: "Orange", value: "#ff6b2b" },
-  { name: "Cyan", value: "#22d3ee" },
-  { name: "Rose", value: "#f43f5e" },
-  { name: "Lime", value: "#84cc16" },
-  { name: "Violet", value: "#a78bfa" },
+  { name: "Оранжевый", value: "#ff6b2b" },
+  { name: "Голубой", value: "#22d3ee" },
+  { name: "Розовый", value: "#f43f5e" },
+  { name: "Лаймовый", value: "#84cc16" },
+  { name: "Фиолетовый", value: "#a78bfa" },
 ];

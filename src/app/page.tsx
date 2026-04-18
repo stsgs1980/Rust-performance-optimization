@@ -1829,7 +1829,7 @@ export default function PerformanceLab() {
       <GuidedTour
         ref={tourRef}
         steps={TOUR_STEPS}
-        storageKey="perf-lab-tour-done"
+        autoStartDelay={0}
         labels={{
           next: "Далее →",
           prev: "← Назад",

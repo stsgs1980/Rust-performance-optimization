@@ -10,7 +10,7 @@ const SyntaxHighlighter = dynamic(
     ssr: false,
     loading: () => (
       <div className="p-4 text-center text-[#666] font-[family-name:var(--font-ibm-mono)] text-xs animate-pulse">
-        Loading syntax highlighter...
+        Загрузка подсветки синтаксиса...
       </div>
     ),
   }
@@ -45,7 +45,7 @@ const HighlightedCodeDynamic = dynamic(
     ssr: false,
     loading: () => (
       <div className="p-4 text-center text-[#666] font-[family-name:var(--font-ibm-mono)] text-xs animate-pulse">
-        Loading syntax highlighter...
+        Загрузка подсветки синтаксиса...
       </div>
     ),
   }
@@ -69,9 +69,9 @@ export function CodeBlock({ code, title, variant }: { code: string; title: strin
           <Code2 className="size-3.5 text-[#8a8a8a] shrink-0" />
           <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] truncate">{title}</span>
           <span className="tooltip-container">
-            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] cursor-help">{lineCount} lines</span>
+            <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] cursor-help">{lineCount} строк</span>
             <span className="tooltip-content">
-              {lineCount} lines · {charCount} chars · ~{tokenEstimate} tokens
+              {lineCount} строк · {charCount} символов · ~{tokenEstimate} токенов
             </span>
           </span>
         </div>
@@ -89,7 +89,7 @@ export function CodeBlock({ code, title, variant }: { code: string; title: strin
                 : "text-[#4ade80] bg-[#4ade80]/10"
             }`}
           >
-            {variant === "baseline" ? "Baseline" : "Optimized"}
+            {variant === "baseline" ? "Базовый" : "Оптимизированный"}
           </span>
         </div>
       </div>

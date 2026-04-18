@@ -45,66 +45,66 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     target: "header",
-    title: "Navigation Bar",
-    description: "Jump to any section. Scroll-spy auto-highlights the current section as you scroll.",
+    title: "Панель навигации",
+    description: "Переход к любой секции. Scroll-spy автоматически подсвечивает текущую секцию при прокрутке.",
     position: "bottom",
   },
   {
     target: "[data-tour-search]",
-    title: "Search & Filter",
-    description: "Find tasks by technique, title, or description. Filter by difficulty or starred tasks.",
+    title: "Поиск и фильтрация",
+    description: "Поиск задач по техникам, названиям или описаниям. Фильтрация по сложности или избранным задачам.",
     position: "bottom",
   },
   {
     target: "[data-tour-task]",
-    title: "Task Card",
-    description: "Click to expand. Each task has baseline vs optimized code, benchmarks, Big O analysis, and key techniques.",
+    title: "Карточка задачи",
+    description: "Нажмите для раскрытия. Каждая задача содержит базовый и оптимизированный код, бенчмарки, анализ Big O и ключевые техники.",
     position: "bottom",
   },
   {
     target: "[data-tour-compare]",
-    title: "Compare Mode",
-    description: "Select 2 tasks and compare their speedup, memory, and techniques side-by-side.",
+    title: "Режим сравнения",
+    description: "Выберите 2 задачи и сравните ускорение, память и техники рядом.",
     position: "bottom",
   },
   {
     target: "[data-tour-export]",
-    title: "Export to Markdown",
-    description: "Download the entire performance report as a .md file with all code, benchmarks, and techniques.",
+    title: "Экспорт в Markdown",
+    description: "Скачайте полный отчёт о производительности как .md файл со всем кодом, бенчмарками и техниками.",
     position: "bottom",
   },
   {
     target: "[data-tour-cmd]",
-    title: "Command Palette",
-    description: "Press Ctrl+K to quickly navigate, export, toggle compare, or filter starred tasks.",
+    title: "Палитра команд",
+    description: "Нажмите Ctrl+K для быстрой навигации, экспорта, переключения сравнения или фильтрации избранных задач.",
     position: "bottom",
   },
   {
     target: "[data-tour-monitor]",
-    title: "System Monitor",
-    description: "Toggle the Monitor icon in the footer to see total time saved, memory delta, and speedup distribution across all tasks.",
+    title: "Системный монитор",
+    description: "Нажмите иконку монитора в футере, чтобы увидеть общее время экономии, дельту памяти и распределение ускорения.",
     position: "top",
   },
   {
     target: "[data-tour-help]",
-    title: "Keyboard Shortcuts",
-    description: "Press ? to see all shortcuts. E toggles expand all, 1-5 jumps to tasks, Ctrl+K opens command palette.",
+    title: "Горячие клавиши",
+    description: "Нажмите ? для списка всех клавиш. E — развернуть/свернуть все, 1-5 — переход к задачам, Ctrl+K — палитра команд.",
     position: "left",
   },
 ];
 
 const NAV_ITEMS = [
-  { id: "hero", label: "Overview" },
+  { id: "hero", label: "Обзор" },
   ...TASKS.map((t) => ({ id: `task-${t.id}`, label: `#${t.id}` })),
-  { id: "methodology", label: "Methodology" },
-  { id: "vibe-coder", label: "Vibe Guide" },
-  { id: "heatmap", label: "Heatmap" },
-  { id: "dashboard", label: "Dashboard" },
-  { id: "results", label: "Results" },
-  { id: "summary", label: "Summary" },
+  { id: "methodology", label: "Методология" },
+  { id: "vibe-coder", label: "Вайб-гайд" },
+  { id: "heatmap", label: "Тепловая карта" },
+  { id: "dashboard", label: "Дашборд" },
+  { id: "results", label: "Результаты" },
+  { id: "summary", label: "Итоги" },
 ];
 
-const DIFFICULTIES = ["all", "Advanced", "Expert"];
+const DIFFICULTIES = ["all", "Продвинутый", "Экспертный"];
 
 /* ── Isolated Live Clock (memo prevents full-page re-render every second) ── */
 const LiveClock = memo(function LiveClock() {
@@ -171,7 +171,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
               </div>
               <div className="flex items-center gap-1">
                 {diffMode !== undefined && (
-                  <button onClick={(e) => { e.stopPropagation(); onToggleDiff(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Toggle diff view">
+                  <button onClick={(e) => { e.stopPropagation(); onToggleDiff(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Переключить diff">
                     <GitCompareArrows className="size-3.5" />
                   </button>
                 )}
@@ -186,7 +186,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
         <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="mt-4 space-y-4">
           <FadeIn delay={0.05}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial">
-              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Problem Statement</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Постановка задачи</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-[#8a8a8a] leading-relaxed">{task.problem}</p>
                 <div className="flex flex-wrap gap-2">{task.constraints.map((c, i) => (
@@ -200,8 +200,8 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
             {compareMode ? (
               <div className="xl:col-span-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Code Comparison</span>
-                  <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Switch to tabbed view"><Rows3 className="size-3.5" /></button>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Сравнение кода</span>
+                  <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Переключить на вкладки"><Rows3 className="size-3.5" /></button>
                 </div>
                 <div className="code-compare-grid">
                   <CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" />
@@ -211,15 +211,15 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
             ) : (
               <div className="xl:col-span-1">
                 <div className="flex items-center justify-end mb-0">
-                  <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Switch to side-by-side view"><Columns2 className="size-3.5" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); onToggleCompare(); }} className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors p-1" title="Переключить на сравнение"><Columns2 className="size-3.5" /></button>
                 </div>
                 {diffMode ? (
                   <CodeDiff baseline={task.baseline.code} optimized={task.optimized.code} title={`Diff — ${task.title}`} />
                 ) : (
                   <Tabs defaultValue="baseline" className="w-full">
                     <TabsList className="w-full bg-[#0f0f0f] border border-[#262626] h-9">
-                      <TabsTrigger value="baseline" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#8a8a8a]"><XCircle className="size-3 mr-1" /> Baseline</TabsTrigger>
-                      <TabsTrigger value="optimized" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#8a8a8a]"><CheckCircle2 className="size-3 mr-1" /> Optimized</TabsTrigger>
+                      <TabsTrigger value="baseline" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#f87171] data-[state=active]:border-b data-[state=active]:border-[#f87171] text-[#8a8a8a]"><XCircle className="size-3 mr-1" /> Базовый</TabsTrigger>
+                      <TabsTrigger value="optimized" className="flex-1 text-xs font-[family-name:var(--font-ibm-mono)] data-[state=active]:text-[#4ade80] data-[state=active]:border-b data-[state=active]:border-[#4ade80] text-[#8a8a8a]"><CheckCircle2 className="size-3 mr-1" /> Оптимизированный</TabsTrigger>
                     </TabsList>
                     <TabsContent value="baseline" className="mt-3"><CodeBlock code={task.baseline.code} title={`Naive — ${task.title}`} variant="baseline" /></TabsContent>
                     <TabsContent value="optimized" className="mt-3"><CodeBlock code={task.optimized.code} title={`Optimized — ${task.title}`} variant="optimized" /></TabsContent>
@@ -232,17 +232,17 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
 
           <FadeIn delay={0.1}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial">
-              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Big O Analysis</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Анализ Big O</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 border border-[#262626] border-l-2 border-l-[#f87171]">
-                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">Baseline</p>
-                    <div className="flex flex-wrap gap-2 mb-3"><ComplexityBadge label="Time" complexity={task.baseline.timeComplexity} /><ComplexityBadge label="Space" complexity={task.baseline.spaceComplexity} /></div>
+                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">Базовый</p>
+                    <div className="flex flex-wrap gap-2 mb-3"><ComplexityBadge label="Время" complexity={task.baseline.timeComplexity} /><ComplexityBadge label="Память" complexity={task.baseline.spaceComplexity} /></div>
                     <p className="text-xs text-[#8a8a8a] leading-relaxed">{task.baseline.explanation}</p>
                   </div>
                   <div className="p-4 border border-[#262626] border-l-2 border-l-[#4ade80]">
-                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">Optimized</p>
-                    <div className="flex flex-wrap gap-2 mb-3"><ComplexityBadge label="Time" complexity={task.optimized.timeComplexity} /><ComplexityBadge label="Space" complexity={task.optimized.spaceComplexity} /></div>
+                    <p className="text-[10px] uppercase tracking-widest text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)] mb-3">Оптимизированный</p>
+                    <div className="flex flex-wrap gap-2 mb-3"><ComplexityBadge label="Время" complexity={task.optimized.timeComplexity} /><ComplexityBadge label="Память" complexity={task.optimized.spaceComplexity} /></div>
                     <p className="text-xs text-[#8a8a8a] leading-relaxed">{task.optimized.explanation}</p>
                   </div>
                 </div>
@@ -252,7 +252,7 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
 
           <FadeIn delay={0.15}>
             <Card className="bg-[#141414] border border-[#262626] card-industrial">
-              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Key Optimizations</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Ключевые оптимизации</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{task.techniques.map((t, i) => (
                   <div key={i} className="bg-[#0f0f0f] p-3 border border-[#262626]">
@@ -266,8 +266,8 @@ function TaskSection({ task, expanded, onToggle, compareMode, onToggleCompare, r
 
           {noteOpen && (
             <FadeIn><Card className="bg-[#141414] border border-[#262626] card-industrial">
-              <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Notes</CardTitle></CardHeader>
-              <CardContent><textarea value={noteText} onChange={(e) => onSaveNote(e.target.value)} placeholder="Add notes for this task..." className="w-full bg-[#0f0f0f] border border-[#262626] text-sm text-[#d4d4d4] p-3 font-[family-name:var(--font-ibm-mono)] resize-y min-h-[80px] focus:outline-none focus:border-[#ff6b2b]/30" /></CardContent>
+              <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">Заметки</CardTitle></CardHeader>
+              <CardContent><textarea value={noteText} onChange={(e) => onSaveNote(e.target.value)} placeholder="Добавить заметку к задаче..." className="w-full bg-[#0f0f0f] border border-[#262626] text-sm text-[#d4d4d4] p-3 font-[family-name:var(--font-ibm-mono)] resize-y min-h-[80px] focus:outline-none focus:border-[#ff6b2b]/30" /></CardContent>
             </Card></FadeIn>
           )}
         </motion.div>
@@ -591,30 +591,30 @@ export default function PerformanceLab() {
 
   // Breadcrumb logic
   const getBreadcrumbLabel = () => {
-    if (activeSection === "hero") return "OVERVIEW";
-    if (activeSection === "methodology") return "METHODOLOGY";
-    if (activeSection === "vibe-coder") return "VIBE GUIDE";
-    if (activeSection === "heatmap") return "HEATMAP";
-    if (activeSection === "dashboard") return "DASHBOARD";
-    if (activeSection === "results") return "RESULTS";
-    if (activeSection === "summary") return "SUMMARY";
+    if (activeSection === "hero") return "ОБЗОР";
+    if (activeSection === "methodology") return "МЕТОДОЛОГИЯ";
+    if (activeSection === "vibe-coder") return "ВАЙБ-ГАЙД";
+    if (activeSection === "heatmap") return "ТЕПЛОВАЯ КАРТА";
+    if (activeSection === "dashboard") return "ДАШБОРД";
+    if (activeSection === "results") return "РЕЗУЛЬТАТЫ";
+    if (activeSection === "summary") return "ИТОГИ";
     if (activeSection.startsWith("task-")) {
       const id = parseInt(activeSection.replace("task-", ""));
       const task = TASKS.find(t => t.id === id);
       if (task) return `#${task.id} ${task.title.substring(0, 30).toUpperCase()}`;
     }
-    return "OVERVIEW";
+    return "ОБЗОР";
   };
 
   const getBreadcrumbSection = () => {
-    if (activeSection.startsWith("task-")) return "TASKS";
-    if (activeSection === "methodology") return "METHODS";
-    if (activeSection === "vibe-coder") return "VIBE";
-    if (activeSection === "heatmap") return "HEATMAP";
-    if (activeSection === "dashboard") return "DASHBOARD";
-    if (activeSection === "results") return "RESULTS";
-    if (activeSection === "summary") return "SUMMARY";
-    return "OVERVIEW";
+    if (activeSection.startsWith("task-")) return "ЗАДАЧИ";
+    if (activeSection === "methodology") return "МЕТОДЫ";
+    if (activeSection === "vibe-coder") return "ВАЙБ";
+    if (activeSection === "heatmap") return "ТЕПЛОВАЯ КАРТА";
+    if (activeSection === "dashboard") return "ДАШБОРД";
+    if (activeSection === "results") return "РЕЗУЛЬТАТЫ";
+    if (activeSection === "summary") return "ИТОГИ";
+    return "ОБЗОР";
   };
 
   return (
@@ -651,7 +651,7 @@ export default function PerformanceLab() {
                 data-tour-compare
                 onClick={() => setTaskCompareMode(c => !c)}
                 className={`size-8 flex items-center justify-center transition-colors ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#8a8a8a] hover:text-[#ff6b2b]'}`}
-                title="Compare tasks"
+                title="Сравнить задачи"
               >
                 <GitCompareArrows className="size-3.5" />
               </button>
@@ -659,7 +659,7 @@ export default function PerformanceLab() {
                 data-tour-export
                 onClick={handleExportMarkdown}
                 className="size-8 flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
-                title="Export as Markdown"
+                title="Экспорт в Markdown"
               >
                 <Download className="size-3.5" />
               </button>
@@ -667,7 +667,7 @@ export default function PerformanceLab() {
                 data-tour-cmd
                 onClick={() => setShowCmdPalette(true)}
                 className="size-8 flex items-center justify-center text-[#666666] hover:text-[#ff6b2b] transition-colors"
-                title="Command palette (Ctrl+K)"
+                title="Палитра команд (Ctrl+K)"
               >
                 <Command className="size-3.5" />
               </button>
@@ -678,14 +678,14 @@ export default function PerformanceLab() {
                   setTimeout(() => setCopiedUrl(false), 2000);
                 }}
                 className="size-8 flex items-center justify-center text-[#666666] hover:text-[#ff6b2b] transition-colors"
-                title="Share URL with current state"
+                title="Поделиться URL"
               >
                 {copiedUrl ? <Link2 className="size-3.5 text-[#4ade80]" /> : <Share2 className="size-3.5" />}
               </button>
               <button
                 onClick={toggleAll}
                 className="size-8 flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
-                title={expandedTasks.size === TASKS.length ? "Collapse all" : "Expand all"}
+                title={expandedTasks.size === TASKS.length ? "Свернуть все" : "Развернуть все"}
               >
                 {expandedTasks.size === TASKS.length ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
               </button>
@@ -782,23 +782,23 @@ export default function PerformanceLab() {
                   {/* Keyboard shortcut hints */}
                   <div className="flex items-center gap-3 flex-wrap" data-tour-help>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">Ctrl+K</kbd>
-                    <span className="text-[10px] text-[#666666]">Command palette</span>
+                    <span className="text-[10px] text-[#666666]">Палитра команд</span>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">?</kbd>
-                    <span className="text-[10px] text-[#666666]">Shortcuts</span>
+                    <span className="text-[10px] text-[#666666]">Горячие клавиши</span>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">E</kbd>
-                    <span className="text-[10px] text-[#666666]">Expand all</span>
+                    <span className="text-[10px] text-[#666666]">Развернуть все</span>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">1-5</kbd>
-                    <span className="text-[10px] text-[#666666]">Jump to task</span>
+                    <span className="text-[10px] text-[#666666]">Перейти к задаче</span>
                   </div>
                 </div>
 
                 {/* Stats row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-[#262626] border border-[#262626]">
                   {[
-                    { val: "5", label: "Tasks", isCounter: true },
-                    { val: TOTAL_SPEEDUP.toFixed(0), label: "Total speedup", suffix: "×", isCounter: true },
-                    { val: `${MEM_IMPROVED_COUNT}/${TASKS.length}`, label: "Memory improved", isCounter: false },
-                    { val: "Rust", label: "Language", isCounter: false },
+                    { val: "5", label: "Задач", isCounter: true },
+                    { val: TOTAL_SPEEDUP.toFixed(0), label: "Общий ускорение", suffix: "×", isCounter: true },
+                    { val: `${MEM_IMPROVED_COUNT}/${TASKS.length}`, label: "Память улучшена", isCounter: false },
+                    { val: "Rust", label: "Язык", isCounter: false },
                   ].map((s, i) => (
                     <div key={i} className="px-4 py-3 text-center">
                       <p className="text-4xl sm:text-5xl font-bold font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4] [text-shadow:0_0_8px_rgba(255,107,43,0.3)] stat-hero stat-counter-glow">
@@ -817,7 +817,7 @@ export default function PerformanceLab() {
 
                 {/* Quick Stats row */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Quick Stats</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Быстрая статистика</span>
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
                     min {MIN_SPEEDUP.toFixed(1)}×
                   </span>
@@ -829,7 +829,7 @@ export default function PerformanceLab() {
                   </span>
                   {reviewedCount > 0 && (
                     <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] bg-[#4ade80]/5 border border-[#4ade80]/20 px-2 py-0.5">
-                      reviewed {reviewedCount}/{TASKS.length}
+                      просмотрено {reviewedCount}/{TASKS.length}
                     </span>
                   )}
                 </div>
@@ -840,7 +840,7 @@ export default function PerformanceLab() {
                     <div className="flex items-center gap-2 mb-3">
                       <Trophy className="size-3.5 text-[#ff6b2b]" />
                       <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">
-                        Progress Timeline
+                        Прогресс
                       </span>
                       <span className="ml-auto text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase">
                         {reviewedCount}/{TASKS.length}
@@ -903,7 +903,7 @@ export default function PerformanceLab() {
                     className="flex items-center gap-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#f87171] uppercase tracking-[0.15em] transition-colors"
                   >
                     <RotateCcw className="size-3" />
-                    Reset Progress
+                    Сбросить прогресс
                   </button>
                 )}
               </div>
@@ -935,7 +935,7 @@ export default function PerformanceLab() {
             }`}
           >
             <Star className="size-3" fill={starredFilter ? '#fbbf24' : 'none'} />
-            Starred ({starredTasks.size})
+            Избранное ({starredTasks.size})
           </button>
         </div>
 
@@ -946,12 +946,12 @@ export default function PerformanceLab() {
             type="text"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setTechniqueTag(null); }}
-            placeholder="Search techniques, titles, or descriptions..."
+            placeholder="Поиск по техникам, названиям или описаниям..."
             className="search-industrial search-glow w-full pl-9 pr-16"
           />
           {activeSearch.trim() && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">
-              {filteredTasks.length} match{filteredTasks.length !== 1 ? "es" : ""}
+              {filteredTasks.length} {filteredTasks.length === 1 ? "совпадение" : filteredTasks.length < 5 ? "совпадения" : "совпадений"}
             </span>
           )}
         </div>
@@ -962,8 +962,8 @@ export default function PerformanceLab() {
             <FadeIn>
               <div className="text-center py-16 border border-[#262626] bg-[#141414]">
                 <Search className="size-8 text-[#666666] mx-auto mb-3" />
-                <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">No Matches</p>
-                <p className="text-xs text-[#666666]">Try a different search query</p>
+                <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Нет совпадений</p>
+                <p className="text-xs text-[#666666]">Попробуйте другой запрос</p>
               </div>
             </FadeIn>
           ) : (
@@ -1231,20 +1231,20 @@ export default function PerformanceLab() {
                   </CardTitle>
                 </div>
                 <p className="text-[10px] text-[#666666] font-[family-name:var(--font-ibm-mono)] mt-1">
-                  Multi-dimensional task analysis — intensity shows relative optimization impact (0–100)
+                  Многомерный анализ задач — интенсивность показывает относительный эффект оптимизации (0–100)
                 </p>
               </CardHeader>
               <CardContent>
                 <OptimizationHeatmap />
                 {/* Legend */}
                 <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#262626]">
-                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Low</span>
+                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Низкий</span>
                   <div className="flex gap-px">
                     {[0.1, 0.3, 0.5, 0.7, 0.9].map((v) => (
                       <div key={v} className="w-5 h-3 heatmap-cell" style={{ '--heat': v } as React.CSSProperties} />
                     ))}
                   </div>
-                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">High</span>
+                  <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Высокий</span>
                 </div>
               </CardContent>
             </Card>
@@ -1261,7 +1261,7 @@ export default function PerformanceLab() {
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
                   <BarChart className="size-3 inline mr-1.5 text-[#ff6b2b]" />
-                  Dashboard
+                  Дашборд
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1277,12 +1277,12 @@ export default function PerformanceLab() {
                       return oo.length > 0 && bo.length > 0 && oo.length < bo.length;
                     }).length;
                     return [
-                      { label: 'Lines Optimized', value: totalLines, suffix: 'lines', color: '#ff6b2b' },
-                      { label: 'Techniques Used', value: allTechniques.size, suffix: 'unique', color: '#4ade80' },
-                      { label: 'Avg Speedup', value: AVG_SPEEDUP.toFixed(1), suffix: '×', color: '#ff6b2b' },
-                      { label: 'Best Improvement', value: `#${bestTask.id}`, suffix: `${bestSp}×`, color: '#fbbf24' },
-                      { label: 'Total Time Saved', value: TOTAL_TIME_SAVED >= 1000 ? `${(TOTAL_TIME_SAVED / 1000).toFixed(1)}s` : `${TOTAL_TIME_SAVED.toFixed(0)}ms`, suffix: '', color: '#4ade80' },
-                      { label: 'Complexity Reduced', value: `${complexityReduced}/${TASKS.length}`, suffix: 'tasks', color: '#ff6b2b' },
+                      { label: 'Строк оптимизировано', value: totalLines, suffix: 'строк', color: '#ff6b2b' },
+                      { label: 'Техник использовано', value: allTechniques.size, suffix: 'уник.', color: '#4ade80' },
+                      { label: 'Среднее ускорение', value: AVG_SPEEDUP.toFixed(1), suffix: '×', color: '#ff6b2b' },
+                      { label: 'Лучший результат', value: `#${bestTask.id}`, suffix: `${bestSp}×`, color: '#fbbf24' },
+                      { label: 'Общее время сэкономлено', value: TOTAL_TIME_SAVED >= 1000 ? `${(TOTAL_TIME_SAVED / 1000).toFixed(1)}s` : `${TOTAL_TIME_SAVED.toFixed(0)}ms`, suffix: '', color: '#4ade80' },
+                      { label: 'Сложность снижена', value: `${complexityReduced}/${TASKS.length}`, suffix: 'задач', color: '#ff6b2b' },
                     ];
                   })().map((stat, i) => (
                     <div key={i} className="bg-[#0d0d0d] border border-[#262626] p-3 stat-card-hover">
@@ -1294,7 +1294,7 @@ export default function PerformanceLab() {
                 </div>
                 {/* Technique distribution bar */}
                 <div className="mt-4 pt-4 border-t border-[#262626]">
-                  <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-2">Speedup Distribution</p>
+                  <p className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-2">Распределение ускорения</p>
                   <div className="flex items-end gap-1.5 h-12">
                     {TASKS.map((t) => {
                       const sp = t.baseline.time / t.optimized.time;
@@ -1326,7 +1326,7 @@ export default function PerformanceLab() {
             <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                  Results
+                  Итоги
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1337,7 +1337,7 @@ export default function PerformanceLab() {
                         <th className="text-left py-2 pr-4 text-[#8a8a8a] sort-header" onClick={() => handleSort("id")} aria-sort={sortColumn === "id" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           # <SortIcon col="id" activeCol={sortColumn} direction={sortDirection} />
                         </th>
-                        <th className="text-left py-2 pr-4 text-[#8a8a8a]">Task</th>
+                        <th className="text-left py-2 pr-4 text-[#8a8a8a]">Задача</th>
                         <th className="text-right py-2 px-3 text-[#8a8a8a] sort-header" onClick={() => handleSort("baseline")} aria-sort={sortColumn === "baseline" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                           Baseline <SortIcon col="baseline" activeCol={sortColumn} direction={sortDirection} />
                         </th>
@@ -1438,9 +1438,9 @@ export default function PerformanceLab() {
                           })}
                           {/* Legend */}
                           <rect x={leftPad} y={chartH + 30} width={8} height={8} fill="#ff6b2b" />
-                          <text x={leftPad + 12} y={chartH + 37} fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Speedup (×)</text>
+                          <text x={leftPad + 12} y={chartH + 37} fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Ускорение (×)</text>
                           <rect x={leftPad + 100} y={chartH + 30} width={8} height={8} fill="#4ade80" />
-                          <text x={leftPad + 112} y={chartH + 37} fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Memory save (%)</text>
+                          <text x={leftPad + 112} y={chartH + 37} fill="#525252" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Экономия памяти (%)</text>
                         </>
                       );
                     })()}
@@ -1456,7 +1456,7 @@ export default function PerformanceLab() {
           <Card className="bg-[#141414] border border-[#262626] card-industrial card-lift">
             <CardHeader className="pb-3">
               <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                Multi-dimensional Comparison
+                Многомерное сравнение
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1474,7 +1474,7 @@ export default function PerformanceLab() {
             <Card className="border border-[#262626] bg-[#141414] border-l-2 border-l-[#ff6b2b] card-industrial card-lift">
               <CardHeader>
                 <CardTitle className="text-xs uppercase tracking-widest text-[#8a8a8a]">
-                  Summary
+                  Итоги
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1519,7 +1519,7 @@ export default function PerformanceLab() {
                     <div className="flex items-center gap-2">
                       <Zap className="size-3.5 text-[#ff6b2b]" />
                       <span className="text-xs text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">
-                        Total speedup:{" "}
+                        Общее ускорение:{" "}
                         <span className="text-[#ff6b2b] font-bold neon-text">
                           {TOTAL_SPEEDUP.toFixed(0)}×
                         </span>
@@ -1528,7 +1528,7 @@ export default function PerformanceLab() {
                     <div className="flex items-center gap-2">
                       <MemoryStick className="size-3.5 text-[#4ade80]" />
                       <span className="text-xs text-[#8a8a8a] font-[family-name:var(--font-ibm-mono)]">
-                        Memory improved:{" "}
+                        Память улучшена:{" "}
                         <span className="text-[#4ade80] font-bold">
                           {MEM_IMPROVED_COUNT}/{TASKS.length}
                         </span>
@@ -1556,12 +1556,12 @@ export default function PerformanceLab() {
               >
                 <div className="flex items-center gap-2 mb-3">
                   <Monitor className="size-3.5 text-[#ff6b2b]" />
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">System Monitor</span>
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Системный монитор</span>
                 </div>
 
                 {/* Time saved */}
                 <div className="metric-card p-3 border border-[#262626] mb-2" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
-                  <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Time Saved</p>
+                  <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Общее время сэкономлено</p>
                   <p className="text-lg font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
                     {formatMs(Math.abs(TOTAL_TIME_SAVED))}
                   </p>
@@ -1569,14 +1569,14 @@ export default function PerformanceLab() {
 
                 {/* Memory saved */}
                 <div className="metric-card p-3 border border-[#262626] mb-3" style={{ "--metric-color": TOTAL_MEM_SAVED >= 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
-                  <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Memory Delta</p>
+                  <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Общая дельта памяти</p>
                   <p className={`text-lg font-bold font-[family-name:var(--font-ibm-mono)] tabular-nums ${TOTAL_MEM_SAVED >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
                     {TOTAL_MEM_SAVED >= 0 ? "−" : "+"}{Math.abs(TOTAL_MEM_SAVED)} MB
                   </p>
                 </div>
 
                 {/* Speedup distribution bar chart */}
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-2">Speedup Distribution</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-2">Распределение ускорения</p>
                 <div className="flex items-end gap-1 h-16">
                   {TASKS.map((t, i) => {
                     const sp = t.baseline.time / t.optimized.time;
@@ -1615,7 +1615,7 @@ export default function PerformanceLab() {
           <div className={`compare-panel custom-scrollbar ${compareSelected.size === 2 ? 'open' : ''}`}>
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Task Comparison</span>
+                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Сравнение задач</span>
                 <button
                   onClick={() => { setCompareSelected(new Set()); setTaskCompareMode(false); }}
                   className="text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
@@ -1638,7 +1638,7 @@ export default function PerformanceLab() {
 
               {/* Speedup comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Speedup Comparison</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Сравнение ускорения</p>
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -1659,7 +1659,7 @@ export default function PerformanceLab() {
 
               {/* Memory comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Memory Delta</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Дельта памяти</p>
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -1680,20 +1680,20 @@ export default function PerformanceLab() {
 
               {/* Complexity badges */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Complexity</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Сложность</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}</span>
                     <div className="mt-1 space-y-1">
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Time: <span className="text-[#d4d4d4]">{tA.optimized.timeComplexity}</span></p>
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Space: <span className="text-[#d4d4d4]">{tA.optimized.spaceComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Время: <span className="text-[#d4d4d4]">{tA.optimized.timeComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Память: <span className="text-[#d4d4d4]">{tA.optimized.spaceComplexity}</span></p>
                     </div>
                   </div>
                   <div>
                     <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}</span>
                     <div className="mt-1 space-y-1">
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Time: <span className="text-[#d4d4d4]">{tB.optimized.timeComplexity}</span></p>
-                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Space: <span className="text-[#d4d4d4]">{tB.optimized.spaceComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Время: <span className="text-[#d4d4d4]">{tB.optimized.timeComplexity}</span></p>
+                      <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a]">Память: <span className="text-[#d4d4d4]">{tB.optimized.spaceComplexity}</span></p>
                     </div>
                   </div>
                 </div>
@@ -1701,14 +1701,14 @@ export default function PerformanceLab() {
 
               {/* Technique count comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Techniques & Category</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Техники и категория</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}: {tA.techniques.length} techniques</p>
+                    <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#ff6b2b]">#{tA.id}: {tA.techniques.length} техник</p>
                     <p className="text-[10px] text-[#8a8a8a] mt-0.5">{tA.category} · {tA.difficulty}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}: {tB.techniques.length} techniques</p>
+                    <p className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">#{tB.id}: {tB.techniques.length} техник</p>
                     <p className="text-[10px] text-[#8a8a8a] mt-0.5">{tB.category} · {tB.difficulty}</p>
                   </div>
                 </div>
@@ -1716,7 +1716,7 @@ export default function PerformanceLab() {
 
               {/* CSS bar chart - visual comparison */}
               <div className="p-3 bg-[#141414] border border-[#262626]">
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Relative Performance</p>
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest mb-3">Относительная производительность</p>
                 <div className="space-y-2">
                   {[{ label: 'Speedup', valA: spA, valB: spB, max: maxSp }, { label: 'Baseline Time (s)', valA: tA.baseline.time / 1000, valB: tB.baseline.time / 1000, max: Math.max(tA.baseline.time, tB.baseline.time) / 1000, invert: true }].map((row, i) => (
                     <div key={i}>
@@ -1764,7 +1764,7 @@ export default function PerformanceLab() {
             transition={{ duration: 0.2 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="fixed bottom-6 right-6 z-50 size-10 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
-            aria-label="Back to top"
+            aria-label="Наверх"
           >
             <ArrowUp className="size-4" />
           </motion.button>
@@ -1811,8 +1811,8 @@ export default function PerformanceLab() {
             <button
               onClick={() => tourRef.current?.start(0)}
               className="size-8 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all"
-              title="Guided Tour"
-              aria-label="Start guided tour"
+              title="Обзорная экскурсия"
+              aria-label="Запустить экскурсию"
             >
               <span className="text-xs font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
             </button>
@@ -1824,8 +1824,8 @@ export default function PerformanceLab() {
                   ? 'border-[#ff6b2b]/30 text-[#ff6b2b]'
                   : 'border-[#262626] text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30'
               }`}
-              title="System Monitor"
-              aria-label="Toggle system monitor"
+              title="Системный монитор"
+              aria-label="Переключить монитор"
             >
               <Monitor className="size-3.5" />
             </button>

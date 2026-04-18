@@ -354,19 +354,19 @@ export function CommandPalette({
   }, []);
 
   const navItems = [
-    { id: "hero", label: "Overview", icon: Sparkles, group: "Navigation" },
-    ...allTasks.map(t => ({ id: `task-${t.id}`, label: `#${t.id} ${t.title}`, icon: Hash, group: "Tasks" })),
-    { id: "methodology", label: "Methodology", icon: Brain, group: "Navigation" },
-    { id: "results", label: "Results", icon: Award, group: "Navigation" },
-    { id: "summary", label: "Summary", icon: Target, group: "Navigation" },
+    { id: "hero", label: "Обзор", icon: Sparkles, group: "Навигация" },
+    ...allTasks.map(t => ({ id: `task-${t.id}`, label: `#${t.id} ${t.title}`, icon: Hash, group: "Задачи" })),
+    { id: "methodology", label: "Методология", icon: Brain, group: "Навигация" },
+    { id: "results", label: "Результаты", icon: Award, group: "Навигация" },
+    { id: "summary", label: "Итоги", icon: Target, group: "Навигация" },
   ];
 
   const actions = [
-    { id: "expand-all", label: "Expand All Tasks", icon: ChevronDown, group: "Actions" },
-    { id: "collapse-all", label: "Collapse All Tasks", icon: ChevronUp, group: "Actions" },
-    { id: "export-md", label: "Export as Markdown", icon: Download, group: "Actions" },
-    { id: "compare", label: "Toggle Compare Mode", icon: GitCompareArrows, group: "Actions" },
-    { id: "starred-filter", label: "Filter Starred Tasks", icon: Star, group: "Actions" },
+    { id: "expand-all", label: "Развернуть все задачи", icon: ChevronDown, group: "Действия" },
+    { id: "collapse-all", label: "Свернуть все задачи", icon: ChevronUp, group: "Действия" },
+    { id: "export-md", label: "Экспорт в Markdown", icon: Download, group: "Действия" },
+    { id: "compare", label: "Переключить сравнение", icon: GitCompareArrows, group: "Действия" },
+    { id: "starred-filter", label: "Фильтр избранных", icon: Star, group: "Действия" },
   ];
 
   const q = query.toLowerCase().trim();
@@ -395,14 +395,14 @@ export function CommandPalette({
         <input
           ref={inputRef}
           className="cmd-input"
-          placeholder="Type a command or search..."
+          placeholder="Введите команду или поисковый запрос..."
           value={query}
           onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
           onKeyDown={handleKeyDown}
         />
         <div className="cmd-list">
           {allItems.length === 0 ? (
-            <div className="p-4 text-center text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">No results</div>
+            <div className="p-4 text-center text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Нет результатов</div>
           ) : (
             allItems.map((item, i) => {
               const Icon = item.icon;
@@ -417,16 +417,16 @@ export function CommandPalette({
                     <Icon className="size-3.5 text-[#8a8a8a]" />
                   </div>
                   <div className="cmd-label">{item.label}</div>
-                  <span className="cmd-hint">{item.type === 'nav' ? 'Go to' : 'Action'}</span>
+                  <span className="cmd-hint">{item.type === 'nav' ? 'Перейти' : 'Действие'}</span>
                 </div>
               );
             })
           )}
         </div>
         <div className="px-3 py-2 border-t border-[#1c1c1c] flex items-center gap-3">
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↑↓</span> Navigate</span>
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↵</span> Select</span>
-          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">Esc</span> Close</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↑↓</span> Навигация</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">↵</span> Выбрать</span>
+          <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] flex items-center gap-1"><span className="help-key text-[8px]">Esc</span> Закрыть</span>
         </div>
       </div>
     </div>
@@ -437,11 +437,11 @@ export function CommandPalette({
 export function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
   const shortcuts = [
-    { keys: ["Ctrl+K"], desc: "Open command palette" },
-    { keys: ["?"], desc: "Show keyboard shortcuts" },
-    { keys: ["E"], desc: "Expand / Collapse all tasks" },
-    { keys: ["1", "-", "5"], desc: "Jump to task 1-5" },
-    { keys: ["Esc"], desc: "Close dialogs" },
+    { keys: ["Ctrl+K"], desc: "Открыть палитру команд" },
+    { keys: ["?"], desc: "Показать горячие клавиши" },
+    { keys: ["E"], desc: "Развернуть / свернуть все задачи" },
+    { keys: ["1", "-", "5"], desc: "Перейти к задаче 1-5" },
+    { keys: ["Esc"], desc: "Закрыть диалоги" },
   ];
 
   return (
@@ -450,7 +450,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
         <div className="px-4 py-3 border-b border-[#262626] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Keyboard className="size-3.5 text-[#ff6b2b]" />
-            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Keyboard Shortcuts</span>
+            <span className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">Горячие клавиши</span>
           </div>
           <button onClick={onClose} className="text-[#666666] hover:text-[#d4d4d4] transition-colors">
             <ChevronUp className="size-4 rotate-45" />
@@ -470,7 +470,7 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
         </div>
         <div className="px-4 py-2 border-t border-[#1c1c1c]">
           <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">
-            Tip: Press <span className="help-key text-[8px]">Ctrl+K</span> anytime for quick access
+            Совет: нажмите <span className="help-key text-[8px]">Ctrl+K</span> в любой момент для быстрого доступа
           </span>
         </div>
       </div>

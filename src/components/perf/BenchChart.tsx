@@ -43,9 +43,9 @@ function MiniBarChart({ data }: {
       })}
       {/* Legend */}
       <rect x={leftPad} y={chartH + 4} width={8} height={8} fill="#3a3a3a" />
-      <text x={leftPad + 12} y={chartH + 11} fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Baseline</text>
+      <text x={leftPad + 12} y={chartH + 11} fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Базовый</text>
       <rect x={leftPad + 70} y={chartH + 4} width={8} height={8} fill="#ff6b2b" />
-      <text x={leftPad + 82} y={chartH + 11} fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Optimized</text>
+      <text x={leftPad + 82} y={chartH + 11} fill="#8a8a8a" fontSize={9} fontFamily="var(--font-ibm-mono), monospace">Оптимизированный</text>
     </svg>
   );
 }
@@ -55,8 +55,8 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
   const memSave = ((1 - task.optimized.memory / task.baseline.memory) * 100).toFixed(0);
 
   const chartData = [
-    { label: "Time (ms)", baseline: task.baseline.time, optimized: task.optimized.time },
-    { label: "Memory (MB)", baseline: task.baseline.memory, optimized: task.optimized.memory },
+    { label: "Время (мс)", baseline: task.baseline.time, optimized: task.optimized.time },
+    { label: "Память (МБ)", baseline: task.baseline.memory, optimized: task.optimized.memory },
   ];
 
   return (
@@ -64,7 +64,7 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#8a8a8a]">
           <Gauge className="size-3.5" />
-          Benchmark
+          Бенчмарк
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -74,7 +74,7 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
               {speedup}×
             </p>
             <p className="text-[10px] text-[#8a8a8a] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
-              Speedup
+              Ускорение
             </p>
           </div>
           <div className="p-4 text-center border border-[#262626] metric-card depth-shadow-1" style={{ "--metric-color": parseInt(memSave) > 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
@@ -82,7 +82,7 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
               {parseInt(memSave) > 0 ? `−${memSave}%` : `+${Math.abs(parseInt(memSave))}%`}
             </p>
             <p className="text-[10px] text-[#8a8a8a] uppercase tracking-widest mt-1 font-[family-name:var(--font-ibm-mono)]">
-              Memory
+              Память
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <Clock className="size-3" /> baseline
+              <Clock className="size-3" /> базовый
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
               {formatMs(task.baseline.time)}
@@ -98,7 +98,7 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <Clock className="size-3" /> optimized
+              <Clock className="size-3" /> оптимизированный
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
               {formatMs(task.optimized.time)}
@@ -107,18 +107,18 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
           <Separator className="bg-[#262626]" />
           <div className="flex items-center justify-between">
             <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <MemoryStick className="size-3" /> baseline
+              <MemoryStick className="size-3" /> базовый
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#d4d4d4]">
-              {task.baseline.memory} MB
+              {task.baseline.memory} МБ
             </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[#8a8a8a] flex items-center gap-1.5 text-xs font-[family-name:var(--font-ibm-mono)]">
-              <MemoryStick className="size-3" /> optimized
+              <MemoryStick className="size-3" /> оптимизированный
             </span>
             <span className="font-[family-name:var(--font-ibm-mono)] text-[#4ade80]">
-              {task.optimized.memory} MB
+              {task.optimized.memory} МБ
             </span>
           </div>
         </div>
@@ -128,7 +128,7 @@ const BenchChart = memo(function BenchChart({ task }: { task: TaskData }) {
           <div className="flex items-start gap-2 p-2.5 bg-[#fbbf24]/5 border border-[#fbbf24]/20">
             <AlertTriangle className="size-3.5 text-[#fbbf24] shrink-0 mt-0.5" />
             <p className="text-[10px] text-[#fbbf24] leading-relaxed font-[family-name:var(--font-ibm-mono)]">
-              Memory tradeoff: +{task.optimized.memory - task.baseline.memory} MB in exchange for {(task.baseline.time / task.optimized.time).toFixed(1)}× speed improvement
+              Компромисс по памяти: +{task.optimized.memory - task.baseline.memory} МБ в обмен на {(task.baseline.time / task.optimized.time).toFixed(1)}× ускорение
             </p>
           </div>
         )}

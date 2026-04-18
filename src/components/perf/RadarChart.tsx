@@ -4,7 +4,7 @@ import { memo } from "react";
 import { TaskData } from "@/lib/perf-data";
 
 const RadarChart = memo(function RadarChart({ tasks }: { tasks: TaskData[] }) {
-  const dimensions = ["Speed", "Memory", "Complexity", "Techniques", "Code Quality"];
+  const dimensions = ["Скорость", "Память", "Сложность", "Техники", "Качество кода"];
   const n = dimensions.length;
   const cx = 150, cy = 150, r = 110;
   const angleStep = (2 * Math.PI) / n;

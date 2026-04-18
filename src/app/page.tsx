@@ -289,6 +289,7 @@ export default function PerformanceLab() {
   const [sortColumn, setSortColumn] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [monitorExpanded, setMonitorExpanded] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [reviewedTasks, setReviewedTasks] = usePersisted('perf-lab-reviewed', new Set<number>(), parseNumberSet, serializeNumberSet);
   const [techniqueTag, setTechniqueTag] = useState<string | null>(null);
   const [taskCompareMode, setTaskCompareMode] = useState(false);
@@ -549,6 +550,7 @@ export default function PerformanceLab() {
       if (e.key === 'Escape') {
         setShowCmdPalette(false);
         setShowHelpModal(false);
+        setPaletteOpen(false);
         return;
       }
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -707,22 +709,6 @@ export default function PerformanceLab() {
                 <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase tracking-[0.15em] shrink-0">
                   Reviewed {reviewedCount}/{TASKS.length}
                 </span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
-                {/* Accent color switcher */}
-                <div className="flex items-center gap-1">
-                  {ACCENT_COLORS.map((c) => (
-                    <button
-                      key={c.value}
-                      onClick={() => setActiveAccent(c.value)}
-                      className="accent-swatch hover-glow"
-                      style={{ background: c.value, '--swatch-size': '12px' } as React.CSSProperties}
-                      title={c.name}
-                      aria-label={`Switch to ${c.name} accent`}
-                    >
-                      {activeAccent === c.value && <span className="accent-swatch-active" />}
-                    </button>
-                  ))}
-                </div>
                 <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
                 {/* Achievement count */}
                 {earnedAchievements.size > 0 && (
@@ -1845,7 +1831,7 @@ export default function PerformanceLab() {
           <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">
             Performance Lab
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Guided Tour button */}
             <button
               onClick={() => tourRef.current?.start(0)}
@@ -1855,6 +1841,49 @@ export default function PerformanceLab() {
             >
               <span className="text-xs font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
             </button>
+            {/* Accent Color Palette button */}
+            <div className="relative">
+              <button
+                onClick={() => setPaletteOpen(o => !o)}
+                className={`size-8 flex items-center justify-center border transition-colors ${
+                  paletteOpen
+                    ? 'border-[#ff6b2b]/30 bg-[#1a1a1a]'
+                    : 'border-[#333] bg-[#1a1a1a] hover:border-[#ff6b2b]/30'
+                }`}
+                title="Accent Color"
+                aria-label="Change accent color"
+              >
+                <span
+                  className="size-3.5 rounded-full transition-colors"
+                  style={{ background: activeAccent }}
+                />
+              </button>
+              <AnimatePresence>
+                {paletteOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full right-0 mb-2 bg-[#141414] border border-[#262626] p-1.5 flex flex-col gap-1 glass-dark"
+                  >
+                    {ACCENT_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        onClick={() => { setActiveAccent(c.value); setPaletteOpen(false); }}
+                        className="flex items-center gap-2 px-2.5 py-1.5 text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#d4d4d4] hover:bg-[#1c1c1c] transition-colors uppercase tracking-wider text-left min-w-[100px]"
+                      >
+                        <span
+                          className="size-3 shrink-0 rounded-full"
+                          style={{ background: c.value }}
+                        />
+                        {c.name}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             {/* System Monitor toggle */}
             <button
               onClick={() => setMonitorExpanded(c => !c)}

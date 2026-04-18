@@ -659,33 +659,30 @@ export default function PerformanceLab() {
                 </Button>
               ))}
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 data-tour-compare
                 onClick={() => setTaskCompareMode(c => !c)}
-                className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] transition-colors flex items-center gap-1 ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#8a8a8a] hover:text-[#ff6b2b]'}`}
+                className={`size-8 flex items-center justify-center transition-colors ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#8a8a8a] hover:text-[#ff6b2b]'}`}
                 title="Compare tasks"
               >
-                <GitCompareArrows className="size-3" />
-                <span className="hidden sm:inline">Compare</span>
+                <GitCompareArrows className="size-3.5" />
               </button>
               <button
                 data-tour-export
                 onClick={handleExportMarkdown}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                className="size-8 flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
                 title="Export as Markdown"
               >
-                <Download className="size-3" />
-                <span className="hidden sm:inline">Export</span>
+                <Download className="size-3.5" />
               </button>
               <button
                 data-tour-cmd
                 onClick={() => setShowCmdPalette(true)}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                className="size-8 flex items-center justify-center text-[#666666] hover:text-[#ff6b2b] transition-colors"
                 title="Command palette (Ctrl+K)"
               >
-                <Command className="size-3" />
-                <span className="hidden sm:inline">Cmd</span>
+                <Command className="size-3.5" />
               </button>
               <button
                 onClick={() => {
@@ -693,35 +690,26 @@ export default function PerformanceLab() {
                   setCopiedUrl(true);
                   setTimeout(() => setCopiedUrl(false), 2000);
                 }}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
+                className="size-8 flex items-center justify-center text-[#666666] hover:text-[#ff6b2b] transition-colors"
                 title="Share URL with current state"
               >
-                {copiedUrl ? <Link2 className="size-3 text-[#4ade80]" /> : <Share2 className="size-3" />}
-                <span className="hidden sm:inline">{copiedUrl ? 'Copied' : 'Share'}</span>
+                {copiedUrl ? <Link2 className="size-3.5 text-[#4ade80]" /> : <Share2 className="size-3.5" />}
               </button>
               <button
                 onClick={toggleAll}
-                className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors"
+                className="size-8 flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
+                title={expandedTasks.size === TASKS.length ? "Collapse all" : "Expand all"}
               >
-                {expandedTasks.size === TASKS.length ? "Collapse" : "Expand"}
+                {expandedTasks.size === TASKS.length ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
               </button>
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase tracking-[0.15em] shrink-0">
-                  Reviewed {reviewedCount}/{TASKS.length}
+              <span className="hidden lg:inline text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] uppercase tracking-[0.15em] ml-1">
+                {reviewedCount}/{TASKS.length}
+              </span>
+              {earnedAchievements.size > 0 && (
+                <span className="hidden lg:inline text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-[0.15em]">
+                  <Medal className="size-2.5 inline mr-0.5" />{earnedAchievements.size}
                 </span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
-                {/* Achievement count */}
-                {earnedAchievements.size > 0 && (
-                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#fbbf24] uppercase tracking-[0.15em] shrink-0">
-                    <Medal className="size-2.5 inline mr-0.5" />
-                    {earnedAchievements.size}/{ACHIEVEMENTS.length}
-                  </span>
-                )}
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">·</span>
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-[0.15em] shrink-0">
-                  5 tasks · rust
-                </span>
-              </div>
+              )}
             </div>
           </div>
         </div>

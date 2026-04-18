@@ -82,8 +82,8 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "[data-tour-monitor]",
     title: "System Monitor",
-    description: "Floating widget showing total time saved, memory delta, and speedup distribution across all tasks.",
-    position: "left",
+    description: "Toggle the Monitor icon in the footer to see total time saved, memory delta, and speedup distribution across all tasks.",
+    position: "top",
   },
   {
     target: "[data-tour-help]",
@@ -1581,78 +1581,62 @@ export default function PerformanceLab() {
         </section>
       </main>
 
-      {/* ─── PERFORMANCE SUMMARY WIDGET (System Monitor) ─── */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-end gap-2" data-tour-monitor>
-        {/* Floating Tour Button */}
-        <button
-          onClick={() => tourRef.current?.start(0)}
-          className="size-8 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all shrink-0"
-          title="Start guided tour"
-          aria-label="Start guided tour"
-        >
-          <span className="text-xs font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
-        </button>
-        <AnimatePresence>
-          {monitorExpanded && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="bg-[#141414] border border-[#262626] p-4 w-64 mb-2 glass-dark"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Monitor className="size-3.5 text-[#ff6b2b]" />
-                <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">System Monitor</span>
-              </div>
+      {/* ─── PERFORMANCE SUMMARY WIDGET (System Monitor) — expands above footer ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none" data-tour-monitor>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col items-end pb-[68px] pr-4 sm:pr-8">
+          <AnimatePresence>
+            {monitorExpanded && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="bg-[#141414] border border-[#262626] p-4 w-64 mb-2 glass-dark pointer-events-auto"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Monitor className="size-3.5 text-[#ff6b2b]" />
+                  <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">System Monitor</span>
+                </div>
 
-              {/* Time saved */}
-              <div className="metric-card p-3 border border-[#262626] mb-2" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Time Saved</p>
-                <p className="text-lg font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
-                  {formatMs(Math.abs(TOTAL_TIME_SAVED))}
-                </p>
-              </div>
+                {/* Time saved */}
+                <div className="metric-card p-3 border border-[#262626] mb-2" style={{ "--metric-color": "#ff6b2b" } as React.CSSProperties}>
+                  <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Time Saved</p>
+                  <p className="text-lg font-bold text-[#ff6b2b] font-[family-name:var(--font-ibm-mono)] tabular-nums">
+                    {formatMs(Math.abs(TOTAL_TIME_SAVED))}
+                  </p>
+                </div>
 
-              {/* Memory saved */}
-              <div className="metric-card p-3 border border-[#262626] mb-3" style={{ "--metric-color": TOTAL_MEM_SAVED >= 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
-                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Memory Delta</p>
-                <p className={`text-lg font-bold font-[family-name:var(--font-ibm-mono)] tabular-nums ${TOTAL_MEM_SAVED >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
-                  {TOTAL_MEM_SAVED >= 0 ? "−" : "+"}{Math.abs(TOTAL_MEM_SAVED)} MB
-                </p>
-              </div>
+                {/* Memory saved */}
+                <div className="metric-card p-3 border border-[#262626] mb-3" style={{ "--metric-color": TOTAL_MEM_SAVED >= 0 ? "#4ade80" : "#f87171" } as React.CSSProperties}>
+                  <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-1">Total Memory Delta</p>
+                  <p className={`text-lg font-bold font-[family-name:var(--font-ibm-mono)] tabular-nums ${TOTAL_MEM_SAVED >= 0 ? "text-[#4ade80]" : "text-[#f87171]"}`}>
+                    {TOTAL_MEM_SAVED >= 0 ? "−" : "+"}{Math.abs(TOTAL_MEM_SAVED)} MB
+                  </p>
+                </div>
 
-              {/* Speedup distribution bar chart */}
-              <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-2">Speedup Distribution</p>
-              <div className="flex items-end gap-1 h-16">
-                {TASKS.map((t, i) => {
-                  const sp = t.baseline.time / t.optimized.time;
-                  const maxSp = MAX_SPEEDUP;
-                  const h = (sp / maxSp) * 100;
-                  return (
-                    <div key={t.id} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] tabular-nums">{sp.toFixed(0)}×</span>
-                      <div
-                        className="w-full bg-[#ff6b2b] min-h-[2px] transition-all duration-300"
-                        style={{ height: `${h}%` }}
-                      />
-                      <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">#{t.id}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Collapsed indicator dot */}
-        <button
-          onClick={() => setMonitorExpanded(c => !c)}
-          className="size-8 bg-[#141414] border border-[#262626] flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30 transition-colors"
-          aria-label="Toggle system monitor"
-        >
-          <Monitor className="size-3.5" />
-        </button>
+                {/* Speedup distribution bar chart */}
+                <p className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest mb-2">Speedup Distribution</p>
+                <div className="flex items-end gap-1 h-16">
+                  {TASKS.map((t, i) => {
+                    const sp = t.baseline.time / t.optimized.time;
+                    const maxSp = MAX_SPEEDUP;
+                    const h = (sp / maxSp) * 100;
+                    return (
+                      <div key={t.id} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-[8px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] tabular-nums">{sp.toFixed(0)}×</span>
+                        <div
+                          className="w-full bg-[#ff6b2b] min-h-[2px] transition-all duration-300"
+                          style={{ height: `${h}%` }}
+                        />
+                        <span className="text-[7px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">#{t.id}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ─── TASK COMPARISON PANEL ─── */}
@@ -1855,15 +1839,39 @@ export default function PerformanceLab() {
       />
 
       {/* ─── FOOTER ─── */}
-      <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden">
+      <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden sticky bottom-0 z-40">
         <div aria-hidden="true" className="circuit-pattern absolute inset-0 pointer-events-none" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 relative z-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 relative z-10">
           <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] uppercase tracking-widest">
             Performance Lab
           </p>
-          <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
-            Rust · SIMD · Lock-free · Zero-copy
-          </p>
+          <div className="flex items-center gap-3">
+            {/* Guided Tour button */}
+            <button
+              onClick={() => tourRef.current?.start(0)}
+              className="size-8 flex items-center justify-center bg-[#1a1a1a] border border-[#333] hover:border-[#ff6b2b] text-[#525252] hover:text-[#ff6b2b] transition-all"
+              title="Guided Tour"
+              aria-label="Start guided tour"
+            >
+              <span className="text-xs font-[family-name:var(--font-ibm-mono)] font-bold leading-none">?</span>
+            </button>
+            {/* System Monitor toggle */}
+            <button
+              onClick={() => setMonitorExpanded(c => !c)}
+              className={`size-8 bg-[#141414] border flex items-center justify-center transition-colors ${
+                monitorExpanded
+                  ? 'border-[#ff6b2b]/30 text-[#ff6b2b]'
+                  : 'border-[#262626] text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/30'
+              }`}
+              title="System Monitor"
+              aria-label="Toggle system monitor"
+            >
+              <Monitor className="size-3.5" />
+            </button>
+            <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
+              Rust · SIMD · Lock-free · Zero-copy
+            </p>
+          </div>
         </div>
       </footer>
     </div>

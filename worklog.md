@@ -1060,3 +1060,27 @@ Performance Lab — стабильный SPA с 9-шаговым guided tour д�
 - Auto-start при первом визите (localStorage persistence)
 - Кнопка рестарта "? Tour" в footer
 - i18n labels (русский)
+
+---
+Task ID: 12
+Agent: Main Agent
+Task: Move Monitor and Guided Tour buttons from floating position to footer
+
+Work Log:
+- Read page.tsx, worklog.md, globals.css for current state
+- Confirmed dev server running (200 OK), lint clean (0 errors)
+- Moved System Monitor toggle button and Guided Tour button from `fixed bottom-6 right-6` floating div into footer
+- System Monitor expanded panel now renders as fixed overlay above footer (z-50, pointer-events-none wrapper with pointer-events-auto on panel)
+- Footer made sticky bottom-0 with z-40 to always be visible during scroll
+- Monitor button shows active state (orange border/text) when expanded
+- Both buttons are size-8 (32px) with consistent styling
+- Updated Guided Tour step 7 description to reference footer location (position changed from "left" to "top")
+- Footer right side layout: "?" Tour button → Monitor icon button → "Rust · SIMD · Lock-free · Zero-copy" text
+- Reduced footer padding from py-4 to py-3 for compact toolbar feel
+
+Stage Summary:
+- Monitor and Guided Tour buttons successfully moved to footer toolbar
+- Footer is now sticky (always visible) with both action buttons
+- System Monitor panel expands above footer when toggled
+- Lint: 0 errors, Dev server: 200 OK
+- No TASKS data changes

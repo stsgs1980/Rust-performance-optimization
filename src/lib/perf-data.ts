@@ -502,7 +502,7 @@ export const MIN_SPEEDUP = Math.min(...SPEEDUPS);
 export const MAX_SPEEDUP = Math.max(...SPEEDUPS);
 export const AVG_SPEEDUP = SPEEDUPS.reduce((a, b) => a + b, 0) / SPEEDUPS.length;
 export const DIFF_COUNTS = {
-  all: TASKS.length,
+  "Все": TASKS.length,
   "Продвинутый": TASKS.filter(t => t.difficulty === "Продвинутый").length,
   "Экспертный": TASKS.filter(t => t.difficulty === "Экспертный").length,
 };

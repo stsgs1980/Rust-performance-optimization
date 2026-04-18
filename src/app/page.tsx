@@ -104,7 +104,7 @@ const NAV_ITEMS = [
   { id: "summary", label: "Итоги" },
 ];
 
-const DIFFICULTIES = ["all", "Продвинутый", "Экспертный"];
+const DIFFICULTIES = ["Все", "Продвинутый", "Экспертный"];
 
 /* ── Isolated Live Clock (memo prevents full-page re-render every second) ── */
 const LiveClock = memo(function LiveClock() {
@@ -282,7 +282,7 @@ export default function PerformanceLab() {
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
+  const [difficultyFilter, setDifficultyFilter] = useState<string>("Все");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [compareMode, setCompareMode] = useState(false);
@@ -453,7 +453,7 @@ export default function PerformanceLab() {
   const activeSearch = techniqueTag || searchQuery;
 
   const filteredTasks = useMemo(() => TASKS.filter((t) => {
-    const matchDiff = difficultyFilter === "all" || t.difficulty === difficultyFilter;
+    const matchDiff = difficultyFilter === "Все" || t.difficulty === difficultyFilter;
     const matchStarred = !starredFilter || starredTasks.has(t.id);
     if (!activeSearch.trim()) return matchDiff && matchStarred;
     const q = activeSearch.toLowerCase();
@@ -819,13 +819,13 @@ export default function PerformanceLab() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">Быстрая статистика</span>
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
-                    min {MIN_SPEEDUP.toFixed(1)}×
+                    мин {MIN_SPEEDUP.toFixed(1)}×
                   </span>
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
-                    max {MAX_SPEEDUP.toFixed(1)}×
+                    макс {MAX_SPEEDUP.toFixed(1)}×
                   </span>
                   <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 tabular-nums">
-                    avg {AVG_SPEEDUP.toFixed(1)}×
+                    ср {AVG_SPEEDUP.toFixed(1)}×
                   </span>
                   {reviewedCount > 0 && (
                     <span className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#4ade80] bg-[#4ade80]/5 border border-[#4ade80]/20 px-2 py-0.5">
@@ -1509,7 +1509,7 @@ export default function PerformanceLab() {
                 </div>
                 <div className="mt-4 bg-[#1c1c1c] p-4 border border-[#262626]">
                   <p className="text-sm text-[#8a8a8a] leading-relaxed">
-                    <span className="font-semibold text-[#d4d4d4]">8 принципов high-performance кода:</span>{" "}
+                    <span className="font-semibold text-[#d4d4d4]">8 принципов высокопроизводительного кода:</span>{" "}
                     Big O оптимизация → Кэш-локальность (Data-Oriented Design) →
                     Минимизация аллокаций → Async I/O → Lock-free конкурентность →
                     Zero-cost абстракции → SIMD векторизация → Профилирование

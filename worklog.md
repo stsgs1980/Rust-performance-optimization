@@ -1020,3 +1020,43 @@ Performance Lab — чистый, стабильный SPA. Все 15 замеч
 ### Unresolved Issues / Risks
 1. page.tsx остается большим (~1786 строк) — основные компоненты уже вынесены (TaskSection, LiveClock), дальнейшее разбиение может снизить читаемость из-за пропсов
 2. Industrial Minimalism дизайн — dark-only (по дизайну)
+
+---
+Task ID: 10
+Agent: Main Agent
+Task: Создать reusable GuidedTour компонент и интегрировать в Performance Lab
+
+Work Log:
+- Создал `/src/components/ui/guided-tour.tsx` — полностью reusable onboarding tour компонент (472 строки)
+- API: `forwardRef<GuidedTourRef>` с методами `start(fromStep?)`, `stop()`, `currentStep`
+- Props: `steps`, `storageKey`, `onComplete`, `onStart`, `onStepChange`, `spotlightPadding`, `overlayColor`, `tooltipClass`, `showDots`, `showStepCounter`, `labels` (i18n), `autoStartDelay`
+- Auto-positioning: вычисляет лучшую позицию тултипа (top/bottom/left/right) по доступному месту в viewport
+- Spotlight: box-shadow trick для "выреза" в overlay, пульсирующая рамка
+- Клавиатура: ArrowRight/Enter = next, ArrowLeft = prev, Escape = close
+- Accessibility: ARIA role="dialog", aria-modal, role="progressbar" для dots
+- Reduced motion: определяет `prefers-reduced-motion`, отключает анимации
+- Persistent: через `storageKey` + localStorage, auto-start только при первом визите
+- Интеграция в page.tsx: 9 шагов тура (Hero, Nav, Search, Task Card, Compare, Export, Cmd Palette, Monitor, Shortcuts)
+- data-* атрибуты на элементах: `data-tour-search`, `data-tour-task`, `data-tour-compare`, `data-tour-export`, `data-tour-cmd`, `data-tour-monitor`, `data-tour-help`
+- Кнопка "? Tour" в footer для рестарта тура
+- CSS: добавлен `@keyframes tourPulse` в globals.css
+- Лейблы переведены на русский (Далее, Назад, Завершить, Шаг)
+
+Stage Summary:
+- GuidedTour — reusable компонент, можно переиспользовать в любом проекте
+- Lint: 0 errors, 0 warnings
+- Dev server: 200 OK
+- Компонент: 472 строки, полностью типизирован
+- page.tsx: +70 строк (TOUR_STEPS + интеграция + data-attributes + footer button)
+
+## Current Project Status
+
+### Assessment
+Performance Lab — стабильный SPA с 9-шаговым guided tour для onboarding. GuidedTour компонент полностью reusable и может быть использован в других проектах без изменений.
+
+### Completed Modifications
+- GuidedTour reusable компонент с full API (forwardRef, keyboard nav, auto-positioning, a11y)
+- 9 шагов тура интегрированы в Performance Lab
+- Auto-start при первом визите (localStorage persistence)
+- Кнопка рестарта "? Tour" в footer
+- i18n labels (русский)

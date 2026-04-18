@@ -30,9 +30,68 @@ import {
 import { CodeBlock } from "@/components/perf/CodeBlock";
 import { BenchChart } from "@/components/perf/BenchChart";
 import { RadarChart } from "@/components/perf/RadarChart";
+import { GuidedTour, type TourStep, type GuidedTourRef } from "@/components/ui/guided-tour";
 import {
   ChevronDown, ChevronUp, CheckCircle2, XCircle, Columns2, Rows3,
 } from "lucide-react";
+
+/* ── Guided Tour Steps ── */
+const TOUR_STEPS: TourStep[] = [
+  {
+    target: "#hero",
+    title: "Performance Lab",
+    description: "5 real-world Rust optimization challenges. Each task shows naive vs optimized code with Big O analysis and benchmarks.",
+    position: "bottom",
+  },
+  {
+    target: "header",
+    title: "Navigation Bar",
+    description: "Jump to any section. Scroll-spy auto-highlights the current section as you scroll.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour-search]",
+    title: "Search & Filter",
+    description: "Find tasks by technique, title, or description. Filter by difficulty or starred tasks.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour-task]",
+    title: "Task Card",
+    description: "Click to expand. Each task has baseline vs optimized code, benchmarks, Big O analysis, and key techniques.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour-compare]",
+    title: "Compare Mode",
+    description: "Select 2 tasks and compare their speedup, memory, and techniques side-by-side.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour-export]",
+    title: "Export to Markdown",
+    description: "Download the entire performance report as a .md file with all code, benchmarks, and techniques.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour-cmd]",
+    title: "Command Palette",
+    description: "Press Ctrl+K to quickly navigate, export, toggle compare, or filter starred tasks.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour-monitor]",
+    title: "System Monitor",
+    description: "Floating widget showing total time saved, memory delta, and speedup distribution across all tasks.",
+    position: "left",
+  },
+  {
+    target: "[data-tour-help]",
+    title: "Keyboard Shortcuts",
+    description: "Press ? to see all shortcuts. E toggles expand all, 1-5 jumps to tasks, Ctrl+K opens command palette.",
+    position: "left",
+  },
+];
 
 const NAV_ITEMS = [
   { id: "hero", label: "Overview" },
@@ -245,6 +304,7 @@ export default function PerformanceLab() {
   const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null);
   const [achievementToastRaw, setAchievementToastRaw] = useState<typeof ACHIEVEMENTS[0] | null>(null);
   const achievementToastRef = useRef<typeof ACHIEVEMENTS[0] | null>(null);
+  const tourRef = useRef<GuidedTourRef>(null);
 
   // Task notes — single persisted JSON object for all tasks
   const [taskNotes, setTaskNotes] = usePersisted('perf-lab-notes', '{}', parseString, parseString);
@@ -599,6 +659,7 @@ export default function PerformanceLab() {
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <button
+                data-tour-compare
                 onClick={() => setTaskCompareMode(c => !c)}
                 className={`text-[10px] font-[family-name:var(--font-ibm-mono)] uppercase tracking-[0.15em] transition-colors flex items-center gap-1 ${taskCompareMode ? 'text-[#ff6b2b]' : 'text-[#8a8a8a] hover:text-[#ff6b2b]'}`}
                 title="Compare tasks"
@@ -607,6 +668,7 @@ export default function PerformanceLab() {
                 <span className="hidden sm:inline">Compare</span>
               </button>
               <button
+                data-tour-export
                 onClick={handleExportMarkdown}
                 className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
                 title="Export as Markdown"
@@ -615,6 +677,7 @@ export default function PerformanceLab() {
                 <span className="hidden sm:inline">Export</span>
               </button>
               <button
+                data-tour-cmd
                 onClick={() => setShowCmdPalette(true)}
                 className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#ff6b2b] uppercase tracking-[0.15em] transition-colors flex items-center gap-1"
                 title="Command palette (Ctrl+K)"
@@ -756,7 +819,7 @@ export default function PerformanceLab() {
                     объяснением каждой оптимизации.
                   </p>
                   {/* Keyboard shortcut hints */}
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap" data-tour-help>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">Ctrl+K</kbd>
                     <span className="text-[10px] text-[#666666]">Command palette</span>
                     <kbd className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] bg-[#0f0f0f] border border-[#262626] px-1.5 py-0.5">?</kbd>
@@ -916,7 +979,7 @@ export default function PerformanceLab() {
         </div>
 
         {/* ═══ TECHNIQUE SEARCH BAR ═══ */}
-        <div className="relative">
+        <div className="relative" data-tour-search>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#666666]" />
           <input
             type="text"
@@ -944,7 +1007,7 @@ export default function PerformanceLab() {
             </FadeIn>
           ) : (
             filteredTasks.map((task, sectionIndex) => (
-              <div key={task.id}>
+              <div key={task.id} {...(sectionIndex === 0 ? { 'data-tour-task': '' } : {})}>
                 <TaskSection
                   task={task}
                   expanded={expandedTasks.has(task.id)}
@@ -1519,7 +1582,7 @@ export default function PerformanceLab() {
       </main>
 
       {/* ─── PERFORMANCE SUMMARY WIDGET (System Monitor) ─── */}
-      <div className="fixed bottom-6 left-6 z-50">
+      <div className="fixed bottom-6 left-6 z-50" data-tour-monitor>
         <AnimatePresence>
           {monitorExpanded && (
             <motion.div
@@ -1769,6 +1832,19 @@ export default function PerformanceLab() {
         onClose={() => setShowHelpModal(false)}
       />
 
+      {/* ─── GUIDED TOUR ─── */}
+      <GuidedTour
+        ref={tourRef}
+        steps={TOUR_STEPS}
+        storageKey="perf-lab-tour-done"
+        labels={{
+          next: "Далее →",
+          prev: "← Назад",
+          finish: "Завершить",
+          stepOf: "Шаг",
+        }}
+      />
+
       {/* ─── FOOTER ─── */}
       <footer className="mt-auto border-t border-[#262626] bg-[#0a0a0a] relative overflow-hidden">
         <div aria-hidden="true" className="circuit-pattern absolute inset-0 pointer-events-none" />
@@ -1779,6 +1855,12 @@ export default function PerformanceLab() {
           <p className="text-xs font-[family-name:var(--font-ibm-mono)] text-[#666666] uppercase tracking-widest">
             Rust · SIMD · Lock-free · Zero-copy
           </p>
+          <button
+            onClick={() => tourRef.current?.start(0)}
+            className="text-[10px] font-[family-name:var(--font-ibm-mono)] text-[#525252] hover:text-[#ff6b2b] uppercase tracking-widest transition-colors"
+          >
+            ? Tour
+          </button>
         </div>
       </footer>
     </div>

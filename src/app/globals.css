@@ -582,6 +582,12 @@ hr.industrial {
   animation: pulse-ring 2s ease-in-out infinite;
 }
 
+/* ── Guided Tour spotlight pulse ── */
+@keyframes tourPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.04); }
+}
+
 /* ── Code block inner glow ── */
 .code-glow {
   box-shadow: inset 0 0 20px rgba(0,0,0,0.3);

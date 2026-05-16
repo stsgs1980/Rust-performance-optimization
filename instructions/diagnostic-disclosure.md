@@ -47,7 +47,7 @@ ls /tmp/git-log-backup-*.txt        # Git log snapshots
 Were backups created before the operation?
 
 ### Step 5: Session State
-```text
+```bash
 # Is this the same session or a new one?
 # Same session = files likely preserved
 # New session = sandbox may have reset

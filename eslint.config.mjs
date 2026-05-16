@@ -69,6 +69,16 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-undef": "off",
     "no-unreachable": "off",
     "no-useless-escape": "off",
+
+    // Anti-Monolith Standard - file size limits
+    "max-lines": ["warn", { max: 250, skipBlankLines: true, skipComments: true }],
+    "max-lines-per-function": ["warn", { max: 150, skipBlankLines: true, skipComments: true }],
+  },
+}, {
+  // Stricter rules for components
+  files: ['**/components/**/*.tsx', '**/sections/**/*.tsx', '**/features/**/*.tsx'],
+  rules: {
+    'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],
   },
 }, {
   plugins: {

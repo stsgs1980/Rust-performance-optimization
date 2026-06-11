@@ -1,0 +1,3 @@
+[submodule "src/lib/guided-tour"]
+        path = src/lib/guided-tour
+        url = https://github.com/stsgs1980/GuidedTour.git

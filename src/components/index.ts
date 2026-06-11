@@ -6,7 +6,6 @@ export * from "./ui/tabs";
 export * from "./ui/toast";
 export * from "./ui/toaster";
 export * from "./ui/separator";
-export * from "./ui/guided-tour";
 
 // Sections (no state)
 export * from "./sections";

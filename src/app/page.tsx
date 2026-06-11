@@ -45,7 +45,7 @@ import {
 } from "@/components/perf/SmallComponents";
 import { CodeBlock } from "@/components/perf/CodeBlock";
 import { BenchChart } from "@/components/perf/BenchChart";
-import { GuidedTour, type TourStep, type GuidedTourRef } from "@/components/ui/guided-tour";
+import { GuidedTour, type TourStep, type GuidedTourRef } from "@/lib/guided-tour";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

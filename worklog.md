@@ -1205,3 +1205,29 @@ Stage Summary:
 
 ---
 Built with: Next.js 16 + TypeScript + Tailwind CSS
+---
+Task ID: 1
+Agent: main
+Task: Add sandbox-specific content to Anti-hallucination-guard and Cascade-guard repos
+
+Work Log:
+- Cloned both repos to /home/z/my-project/
+- AHG: Added Rule 7 "Sandbox verification (no fake setup)" to AGENT_RULES.md with 4 anti-hallucination patterns
+- AHG: Added sandbox verification checks (5-8) to check-agent.sh for Z.ai Sandbox environment
+- AHG: Created scripts/check-sandbox.sh — standalone sandbox verification script (6 checks)
+- AHG: Updated scripts/validate.sh ALLOWED list with check-sandbox.sh
+- AHG: Fixed grep -c multi-line output bug in both check-agent.sh and check-sandbox.sh
+- Cascade-guard: Created examples/zai-sandbox-setup.json with 3-phase cascade (P0 Init, P1 Project Setup, P2 Recovery)
+- Cascade-guard: Updated .gitignore to allow examples/ directory and examples/*.json
+- Cascade-guard: Updated README.md with Examples section linking to zai-sandbox-setup.json
+- Cascade-guard: Updated version badge to v1.2
+
+- Tested: validate.sh passes for AHG (all files whitelisted)
+- Tested: check-sandbox.sh runs on real sandbox — correctly detects missing .zscripts/dev.sh, stale clones, and healthy dev.log
+- Tested: cascade JSON validated — all dependencies correct, all fields present
+
+Stage Summary:
+- All changes implemented and tested locally in both repos
+- Ready for user confirmation before pushing to GitHub
+- AHG changes: AGENT_RULES.md (Rule 7), check-agent.sh (sandbox checks), check-sandbox.sh (new), validate.sh (whitelist)
+- Cascade-guard changes: examples/zai-sandbox-setup.json (new), README.md (Examples section), .gitignore (examples/ allow)

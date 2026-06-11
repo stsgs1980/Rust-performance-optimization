@@ -91,3 +91,5 @@
  GET / 200 in 54ms (compile: 4ms, render: 50ms)
  GET / 200 in 55ms (compile: 4ms, render: 51ms)
  GET / 200 in 58ms (compile: 4ms, render: 55ms)
+ GET / 200 in 105ms (compile: 4ms, render: 101ms)
+ GET / 200 in 105ms (compile: 50ms, render: 55ms)

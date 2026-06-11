@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Hooks
@@ -50,7 +50,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Check, Star, ChevronDown, ChevronUp, CheckCircle2, XCircle, Columns2, Rows3, GitCompareArrows,
+  Check, Star, ChevronDown, ChevronUp, CheckCircle2, XCircle, Columns2, Rows3, GitCompareArrows, RotateCcw,
 } from "lucide-react";
 
 // Guided Tour Steps
@@ -62,7 +62,7 @@ const TOUR_STEPS: TourStep[] = [
   { target: "[data-tour-compare]", title: "Режим сравнения", description: "Сравните 2 задачи.", position: "bottom" },
   { target: "[data-tour-export]", title: "Экспорт в Markdown", description: "Скачайте отчёт.", position: "bottom" },
   { target: "[data-tour-cmd]", title: "Палитра команд", description: "Нажмите Ctrl+K.", position: "bottom" },
-  { target: "[data-tour-monitor]", title: "Системный монитор", description: "Нажмите иконку монитора.", position: "top" },
+  { target: "[data-tour-monitor]", title: "Панель задач", description: "Разверните или сверните все карточки одной кнопкой.", position: "top" },
   { target: "[data-tour-help]", title: "Горячие клавиши", description: "Нажмите ? для списка.", position: "left" },
 ];
 
@@ -224,9 +224,15 @@ export default function PerformanceLab() {
   const [hoveredTask, setHoveredTask] = useState<TaskData | null>(null);
   const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null);
   const tourRef = useRef<GuidedTourRef>(null);
+  const [tourCompleted, setTourCompleted] = useState(false);
 
   // Share URL
   const shareURL = useShareURL(expandedTasks);
+
+  // Check if tour was already completed
+  useEffect(() => {
+    try { setTourCompleted(localStorage.getItem("perf-lab-tour") === "1"); } catch { /* noop */ }
+  }, []);
 
   // Export handler
   const handleExportMarkdown = useCallback(() => {
@@ -403,7 +409,20 @@ export default function PerformanceLab() {
       {/* Modals */}
       <CommandPalette open={showCmdPalette} onClose={() => setShowCmdPalette(false)} onAction={handleCmdAction} onNavigate={scrollTo} allTasks={TASKS} />
       <HelpModal open={showHelpModal} onClose={() => setShowHelpModal(false)} />
-      <GuidedTour ref={tourRef} steps={TOUR_STEPS} />
+      <GuidedTour ref={tourRef} steps={TOUR_STEPS} storageKey="perf-lab-tour"
+        onComplete={() => setTourCompleted(true)}
+      />
+
+      {/* Restart Tour Button */}
+      {tourCompleted && (
+        <button
+          onClick={() => tourRef.current?.start(0)}
+          className="fixed bottom-6 right-6 z-50 size-10 flex items-center justify-center rounded-full bg-[#1a1a1a] border border-[#333] text-[#8a8a8a] hover:text-[#ff6b2b] hover:border-[#ff6b2b]/40 transition-all shadow-lg shadow-black/40"
+          title="Повторить туториал"
+        >
+          <RotateCcw className="size-4" />
+        </button>
+      )}
 
       {/* Achievement Toast */}
       <AnimatePresence>

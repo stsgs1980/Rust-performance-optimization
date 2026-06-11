@@ -130,6 +130,7 @@ export function Header({
               {copiedUrl ? <Link2 className="size-3.5 text-[#4ade80]" /> : <Share2 className="size-3.5" />}
             </button>
             <button
+              data-tour-monitor
               onClick={toggleAll}
               className="size-8 flex items-center justify-center text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors"
               title={expandedCount === TASKS.length ? "Свернуть все" : "Развернуть все"}

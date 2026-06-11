@@ -1,6 +1,9 @@
+[submodule "src/lib/guided-tour"]
+        path = src/lib/guided-tour
+        url = https://github.com/stsgs1980/GuidedTour.git
 [submodule "anti-hallucination-guard"]
-        path = anti-hallucination-guard
-        url = https://github.com/stsgs1980/Anti-hallucination-guard.git
+	path = anti-hallucination-guard
+	url = https://github.com/stsgs1980/Anti-hallucination-guard.git
 [submodule "cascade-guard"]
-        path = cascade-guard
-        url = https://github.com/stsgs1980/Cascade-guard.git
+	path = cascade-guard
+	url = https://github.com/stsgs1980/Cascade-guard.git

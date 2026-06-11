@@ -1460,3 +1460,6 @@ https://nextjs.org/docs/messages/module-not-found
 ✓ Compiled in 213ms
 ✓ Compiled in 1414ms
  GET / 200 in 194ms (compile: 44ms, render: 151ms)
+ GET / 200 in 154ms (compile: 6ms, render: 147ms)
+ GET / 200 in 76ms (compile: 5ms, render: 71ms)
+ GET / 200 in 71ms (compile: 4ms, render: 67ms)

@@ -10,3 +10,4 @@ mini-services/
 .accesslog
 .stats
 --selector
+tool-results/

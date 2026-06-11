@@ -17,7 +17,7 @@ const ibmMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Performance Lab — 5 tasks on high-performance code",
+  title: "Rust performance optimization — 5 tasks on high-performance code",
   description:
     "Interactive showcase of 5 Rust optimization challenges with baseline vs optimized comparisons, Big O analysis, and benchmarks.",
   icons: {

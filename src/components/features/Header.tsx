@@ -156,7 +156,7 @@ export function Header({
             onClick={() => scrollTo("hero")}
             className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666] hover:text-[#8a8a8a] transition-colors uppercase tracking-[0.1em]"
           >
-            PERF LAB
+            RUST PERF OPTIMIZATION
           </button>
           <span className="text-[9px] font-[family-name:var(--font-ibm-mono)] text-[#666666]">&gt;</span>
           {getBreadcrumbSection() !== "ОБЗОР" && (

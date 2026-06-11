@@ -55,7 +55,7 @@ import {
 
 // Guided Tour Steps
 const TOUR_STEPS: TourStep[] = [
-  { target: "#hero", title: "Performance Lab", description: "5 реальных задач оптимизации на Rust.", position: "bottom" },
+  { target: "#hero", title: "Rust performance optimization", description: "5 реальных задач оптимизации на Rust.", position: "bottom" },
   { target: "header", title: "Панель навигации", description: "Переход к любой секции.", position: "bottom" },
   { target: "[data-tour-search]", title: "Поиск и фильтрация", description: "Поиск задач по техникам.", position: "bottom" },
   { target: "[data-tour-task]", title: "Карточка задачи", description: "Нажмите для раскрытия.", position: "bottom" },
@@ -237,7 +237,7 @@ export default function PerformanceLab() {
   // Export handler
   const handleExportMarkdown = useCallback(() => {
     const lines: string[] = [];
-    lines.push('# Performance Lab - Rust Optimization Tasks\n');
+    lines.push('# Rust performance optimization - Rust Optimization Tasks\n');
     for (const t of TASKS) {
       const sp = (t.baseline.time / t.optimized.time).toFixed(1);
       lines.push(`## ${t.id}. ${t.title}`);

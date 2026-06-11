@@ -1231,3 +1231,23 @@ Stage Summary:
 - Ready for user confirmation before pushing to GitHub
 - AHG changes: AGENT_RULES.md (Rule 7), check-agent.sh (sandbox checks), check-sandbox.sh (new), validate.sh (whitelist)
 - Cascade-guard changes: examples/zai-sandbox-setup.json (new), README.md (Examples section), .gitignore (examples/ allow)
+---
+Task ID: 8
+Agent: main
+Task: Fix pre-push hook conflict between Cascade-guard and Anti-hallucination-guard
+
+Work Log:
+- Analyzed 8 conflict vectors between AHG and CG modules
+- Found 1 real conflict: CG setup.sh line 178 used `cat >` (overwrite) for pre-push hook, destroying AHG's hook
+- Found 1 CG internal bug: pre-push hook referenced `$REPO_ROOT/validate.sh` but file is at `cascade-guard/validate.sh`
+- Rewrote CG setup.sh section 5 with 3-branch logic: no hook -> create fresh, CG already present -> skip, foreign hook -> append
+- Fixed CG pre-push hook to find validate.sh via `CG_DIR` lookup instead of broken `$REPO_ROOT/validate.sh`
+- Fixed all UNICODE_POLICY violations in CG setup.sh (em-dashes, box-drawing)
+- Fixed duplicate section numbering (two "6." -> now "6." and "7.")
+- Updated Rule numbering references (1-6 -> 1-7 for AHG)
+- Tested both scenarios: AHG-first and CG-first - both pass, hooks preserved
+
+Stage Summary:
+- pre-push conflict eliminated: both modules now use append strategy
+- setup.sh is now UNICODE_POLICY clean
+- Both modules can coexist regardless of setup order

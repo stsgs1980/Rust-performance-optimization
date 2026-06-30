@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   GitCompareArrows, Download, Command, Share2, Link2,
-  ChevronDown, ChevronUp, Medal, Check,
+  ChevronDown, ChevronUp, Medal, Check, ArrowLeft,
 } from "lucide-react";
 import { TASKS } from "@/lib/perf-data";
 
@@ -79,6 +80,14 @@ export function Header({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-12">
           <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar max-w-[75vw]">
+            <Link
+              href="https://stanislav-graur.ru"
+              className="inline-flex items-center gap-1.5 px-2.5 h-8 text-[10px] uppercase tracking-[0.2em] font-[family-name:var(--font-ibm-mono)] text-[#8a8a8a] hover:text-[#ff6b2b] transition-colors shrink-0"
+            >
+              <ArrowLeft className="size-3" />
+              Portfolio
+            </Link>
+            <span className="text-[#333] shrink-0">|</span>
             {NAV_ITEMS.map((item) => (
               <Button
                 key={item.id}
